@@ -30,18 +30,18 @@ import {
 /**
  * Client options used to configure SIP Client API requests.
  */
-export interface SipClientOptions extends PipelineOptions {}
+export interface SipRoutingClientOptions extends PipelineOptions {}
 
 /**
  * Checks whether the type of a value is SipClientOptions or not.
  *
  * @param options - The value being checked.
  */
-const isSipClientOptions = (options: any): options is SipClientOptions =>
+const isSipClientOptions = (options: any): options is SipRoutingClientOptions =>
   !!options && !isKeyCredential(options);
 
 
-export class SipClient {
+export class SipRoutingClient {
   private readonly api: SipApiClient;
 
   /**
@@ -50,7 +50,7 @@ export class SipClient {
    *                         Example: "endpoint=https://contoso.eastus.communications.azure.net/;accesskey=secret";
    * @param options - Optional. Options to configure the HTTP pipeline.
    */
-  constructor(connectionString: string, options?: SipClientOptions);
+  constructor(connectionString: string, options?: SipRoutingClientOptions);
 
   /**
    * Initializes a new instance of the SipClient class using an Azure KeyCredential.
@@ -58,7 +58,7 @@ export class SipClient {
    * @param credential - An object that is used to authenticate requests to the service. Use the Azure KeyCredential or `@azure/identity` to create a credential.
    * @param options - Optional. Options to configure the HTTP pipeline.
    */
-  constructor(endpoint: string, credential: KeyCredential, options?: SipClientOptions);
+  constructor(endpoint: string, credential: KeyCredential, options?: SipRoutingClientOptions);
 
   /**
    * Initializes a new instance of the SipClient class using a TokenCredential.
@@ -66,12 +66,12 @@ export class SipClient {
    * @param credential - TokenCredential that is used to authenticate requests to the service.
    * @param options - Optional. Options to configure the HTTP pipeline.
    */
-  constructor(endpoint: string, credential: TokenCredential, options?: SipClientOptions);
+  constructor(endpoint: string, credential: TokenCredential, options?: SipRoutingClientOptions);
 
   constructor(
     connectionStringOrUrl: string,
-    credentialOrOptions?: KeyCredential | TokenCredential | SipClientOptions,
-    maybeOptions: SipClientOptions = {}
+    credentialOrOptions?: KeyCredential | TokenCredential | SipRoutingClientOptions,
+    maybeOptions: SipRoutingClientOptions = {}
   ) {
     const { url, credential } = parseClientArguments(connectionStringOrUrl, credentialOrOptions);
     const options = isSipClientOptions(credentialOrOptions) ? credentialOrOptions : maybeOptions;
