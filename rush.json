@@ -422,8 +422,8 @@
       "versionPolicyName": "client"
     },
 	{
-      "packageName": "@azure/communication-sip",
-      "projectFolder": "sdk/communication/communication-sip",
+      "packageName": "@azure/communication-sip-routing",
+      "projectFolder": "sdk/communication/communication-sip-routing",
       "versionPolicyName": "client"
     },
     {
