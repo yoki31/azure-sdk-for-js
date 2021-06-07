@@ -1,7 +1,7 @@
 {
   "name": "@azure/communication-sip-routing",
   "version": "1.0.0-alpha.20210607.1",
-  "description": "SDK for Azure Communication SIP Routing Configuration.",
+  "description": "SDK for Azure Communication which faciliates the SIP routing configuration.",
   "sdk-type": "client",
   "main": "dist/index.js",
   "module": "dist-esm/src/index.js",
@@ -18,14 +18,7 @@
       }
     ]
   },
-  "types": "types/latest/template.d.ts",
-  "typesVersions": {
-    "<3.6": {
-      "*": [
-        "types/3.1/template.d.ts"
-      ]
-    }
-  },
+  "types": "types/communication-sip-routing.d.ts",
   "scripts": {
     "audit": "node ../../../common/scripts/rush-audit.js && rimraf node_modules package-lock.json && npm i --package-lock-only 2>&1 && npm audit",
     "build:browser": "tsc -p . && cross-env ONLY_BROWSER=true rollup -c 2>&1",
@@ -70,14 +63,17 @@
   "keywords": [
     "azure",
     "cloud",
-    "typescript"
+    "Azure",
+    "communication",
+    "sip",
+    "routing"
   ],
   "author": "Microsoft Corporation",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Azure/azure-sdk-for-js/issues"
   },
-  "homepage": "https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/template/template/README.md",
+  "homepage": "https://github.com/Azure/azure-sdk-for-js/tree/master/sdk/communication/communication-sip-routing/",
   "sideEffects": false,
   "prettier": "@azure/eslint-plugin-azure-sdk/prettier.json",
   "dependencies": {
@@ -130,13 +126,13 @@
     "util": "^0.12.1"
   },
   "//sampleConfiguration": {
-    "skipFolder": false,
-    "disableDocsMs": true,
-    "productName": "Azure Template",
-    "productSlugs": [],
-    "apiRefLink": "https://docs.microsoft.com/javascript/api/",
+    "productName": "Azure Communication Services - SIP",
+    "productSlugs": [
+      "azure",
+      "azure-communication-services"
+    ],
     "requiredResources": {
-      "Azure App Configuration": "https://docs.microsoft.com/azure/azure-app-configuration/"
+      "Azure Communication Services account": "https://docs.microsoft.com/azure/communication-services/quickstarts/create-communication-resource"
     }
   }
 }
