@@ -40,6 +40,10 @@
       "name": "communication-sip-routing",
       "path": "sdk/communication/communication-sip-routing"
     },
+	{
+      "name": "communication-sip",
+      "path": "sdk/communication/communication-sip"
+    },
     {
       "name": "container-registry",
       "path": "sdk/containerregistry/container-registry"
