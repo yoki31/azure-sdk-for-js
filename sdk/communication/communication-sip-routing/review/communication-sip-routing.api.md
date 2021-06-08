@@ -11,24 +11,25 @@ import { PipelineOptions } from '@azure/core-http';
 import { TokenCredential } from '@azure/core-auth';
 
 // @public (undocumented)
-export class SipClient {
-    constructor(connectionString: string, options?: SipClientOptions);
-    constructor(endpoint: string, credential: KeyCredential, options?: SipClientOptions);
-    constructor(endpoint: string, credential: TokenCredential, options?: SipClientOptions);
-    // Warning: (ae-forgotten-export) The symbol "SipApiClientGetSipConfigurationResponse" needs to be exported by the entry point index.d.ts
-    getSipConfiguration(options?: SipConfigurationOptions): Promise<SipApiClientGetSipConfigurationResponse[]>;
-    // Warning: (ae-forgotten-export) The symbol "SipApiClientPatchSipConfigurationOptionalParams" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    updateSipConfiguration(options?: SipApiClientPatchSipConfigurationOptionalParams): Promise<SipApiClientGetSipConfigurationResponse>;
-}
-
-// @public
-export interface SipClientOptions extends PipelineOptions {
+export interface SipConfigurationOptions extends OperationOptions {
 }
 
 // @public (undocumented)
-export interface SipConfigurationOptions extends OperationOptions {
+export class SipRoutingClient {
+    constructor(connectionString: string, options?: SipRoutingClientOptions);
+    constructor(endpoint: string, credential: KeyCredential, options?: SipRoutingClientOptions);
+    constructor(endpoint: string, credential: TokenCredential, options?: SipRoutingClientOptions);
+    // Warning: (ae-forgotten-export) The symbol "SipApiClientGetSipConfigurationResponse" needs to be exported by the entry point index.d.ts
+    getSipConfiguration(options?: SipConfigurationOptions): Promise<SipApiClientGetSipConfigurationResponse[]>;
+    // Warning: (ae-forgotten-export) The symbol "SipApiClientPatchSipConfigurationOptionalParams" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "SipApiClientPatchSipConfigurationResponse" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    updateSipConfiguration(options?: SipApiClientPatchSipConfigurationOptionalParams): Promise<SipApiClientPatchSipConfigurationResponse>;
+}
+
+// @public
+export interface SipRoutingClientOptions extends PipelineOptions {
 }
 
 

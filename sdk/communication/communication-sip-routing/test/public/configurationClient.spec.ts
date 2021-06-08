@@ -4,7 +4,7 @@
 import { assert } from "chai";
 import { Context } from "mocha";
 
-import { SipClient } from "../../src";
+import { SipRoutingClient } from "../../src";
 
 import { ClientSecretCredential } from "@azure/identity";
 import { env, record, Recorder } from "@azure/test-utils-recorder";
@@ -21,7 +21,7 @@ const replaceableVariables: Record<string, string> = {
   AZURE_CLIENT_SECRET: "azure_client_secret"
 };
 
-function createSipClient(): SipClient {
+function createSipClient(): SipRoutingClient {
   // Retrieve the endpoint from the environment variable
   // we saved to the .env file earlier
   const endpoint = env.APPCONFIG_ENDPOINT;
@@ -37,7 +37,7 @@ function createSipClient(): SipClient {
     env.AZURE_CLIENT_SECRET
   );
 
-  return new SipClient(endpoint, credential);
+  return new SipRoutingClient(endpoint, credential);
 }
 
 // You want to give the test suite a descriptive name. Here, I add [AAD] to
@@ -46,7 +46,7 @@ function createSipClient(): SipClient {
 describe("[AAD] SipClient functional tests", function() {
   // Declare the client and recorder instances.  We will set them using the
   // beforeEach hook.
-  let client: SipClient;
+  let client: SipRoutingClient;
   let recorder: Recorder;
 
   // NOTE: use of "function" and not ES6 arrow-style functions with the

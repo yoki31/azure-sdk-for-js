@@ -22,8 +22,9 @@ import { createSpan } from "./tracing";
 import { logger } from "./logger";
 import { extractOperationOptions } from "./extractOperationOptions";
 import { 
-  //SipApiClientPatchSipConfigurationOptionalParams,
-  SipApiClientGetSipConfigurationResponse, SipApiClientPatchSipConfigurationOptionalParams
+  SipApiClientGetSipConfigurationResponse, 
+  SipApiClientPatchSipConfigurationResponse,
+  SipApiClientPatchSipConfigurationOptionalParams
 } from "./generated/src/models";
 
 
@@ -127,7 +128,7 @@ export class SipRoutingClient {
 
   public async updateSipConfiguration(
     options: SipApiClientPatchSipConfigurationOptionalParams = {}
-  ): Promise<SipApiClientGetSipConfigurationResponse> {
+  ): Promise<SipApiClientPatchSipConfigurationResponse> {
     const { operationOptions } = extractOperationOptions(options);
     const { span, updatedOptions } = createSpan("SipClient-UpdateSipConfiguration", operationOptions);
 
