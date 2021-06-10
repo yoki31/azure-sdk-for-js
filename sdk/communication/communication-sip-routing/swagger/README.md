@@ -8,9 +8,10 @@
 package-name: azure-communication-sip
 title: Azure Communication SIP Routing Service
 description: Azure Communication SIP Configuration Service
-input-file: swagger.json
+input-file: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/15d66311cc2b64f04692fdf021d1b235b538e1bc/specification/communication/data-plane/SipRouting/preview/2021-05-01-preview/communicationservicessiprouting.json
 generate-metadata: false
-tag: package-sip-2021-05-01
+openapi-type: data-plane
+tag: package-2021-05-01-preview
 output-folder: ../src/generated
 namespace: azure.communication.sip
 license-header: MICROSOFT_MIT_NO_VERSION

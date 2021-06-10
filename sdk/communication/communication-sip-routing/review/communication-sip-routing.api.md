@@ -19,13 +19,13 @@ export class SipRoutingClient {
     constructor(connectionString: string, options?: SipRoutingClientOptions);
     constructor(endpoint: string, credential: KeyCredential, options?: SipRoutingClientOptions);
     constructor(endpoint: string, credential: TokenCredential, options?: SipRoutingClientOptions);
-    // Warning: (ae-forgotten-export) The symbol "SipApiClientGetSipConfigurationResponse" needs to be exported by the entry point index.d.ts
-    getSipConfiguration(options?: SipConfigurationOptions): Promise<SipApiClientGetSipConfigurationResponse[]>;
-    // Warning: (ae-forgotten-export) The symbol "SipApiClientPatchSipConfigurationOptionalParams" needs to be exported by the entry point index.d.ts
-    // Warning: (ae-forgotten-export) The symbol "SipApiClientPatchSipConfigurationResponse" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "AzureCommunicationSIPRoutingServiceGetSipConfigurationResponse" needs to be exported by the entry point index.d.ts
+    getSipConfiguration(options?: SipConfigurationOptions): Promise<AzureCommunicationSIPRoutingServiceGetSipConfigurationResponse[]>;
+    // Warning: (ae-forgotten-export) The symbol "AzureCommunicationSIPRoutingServicePatchSipConfigurationOptionalParams" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "AzureCommunicationSIPRoutingServicePatchSipConfigurationResponse" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
-    updateSipConfiguration(options?: SipApiClientPatchSipConfigurationOptionalParams): Promise<SipApiClientPatchSipConfigurationResponse>;
+    updateSipConfiguration(options?: AzureCommunicationSIPRoutingServicePatchSipConfigurationOptionalParams): Promise<AzureCommunicationSIPRoutingServicePatchSipConfigurationResponse>;
 }
 
 // @public

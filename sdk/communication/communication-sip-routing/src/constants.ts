@@ -1,4 +1,4 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-export const SDK_VERSION: string = "1.0.0-alpha.20210608.1";
+export const SDK_VERSION: string = "1.0.0-alpha.20210610.1";
