@@ -24,7 +24,7 @@ import { extractOperationOptions } from "./extractOperationOptions";
 import {
   AzureCommunicationSIPRoutingServiceGetSipConfigurationResponse,
   AzureCommunicationSIPRoutingServicePatchSipConfigurationResponse,
-  AzureCommunicationSIPRoutingServicePatchSipConfigurationOptionalParams
+  SipConfigurationPatch
 } from "./generated/src/models";
 
 
@@ -126,15 +126,26 @@ export class SipRoutingClient {
     }
   }
 
+  /**
+   * Updates the the SIP routing configuration.
+   * @param request The updated properties which will be applied to the SIP routing configuration.
+   * @param options The options parameters.
+   */
   public async updateSipConfiguration(
-    options: AzureCommunicationSIPRoutingServicePatchSipConfigurationOptionalParams = {}
-  ): Promise<AzureCommunicationSIPRoutingServicePatchSipConfigurationResponse> {
+    request: SipConfigurationPatch = {},
+    options: OperationOptions = {}
+  ): Promise<AzureCommunicationSIPRoutingServicePatchSipConfigurationResponse> {        
     const { operationOptions } = extractOperationOptions(options);
     const { span, updatedOptions } = createSpan("SipRoutingClient-UpdateSipConfiguration", operationOptions);
 
     try {
-      const reqOptions = operationOptionsToRequestOptionsBase(updatedOptions);
-      const response = await this.api.patchSipConfiguration(reqOptions);
+      const reqOptions = operationOptionsToRequestOptionsBase(updatedOptions);      
+      const payload = {
+        ...reqOptions,
+        body: request
+      };
+
+      const response = await this.api.patchSipConfiguration(payload);
       return response;
     } catch (e) {
       span.setStatus({
