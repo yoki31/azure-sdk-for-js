@@ -1,5 +1,9 @@
 # Release History
 
+## 1.0.0-alpha.20210616.6 (2021-06-16)
+
+- Updated the updateSipConfiguration method signature.
+
 ## 1.0.0-alpha.20210610.1 (2021-06-10)
 
 - Updated the AutoRest-generated code as per the updated API specs.
