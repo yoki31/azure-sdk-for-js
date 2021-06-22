@@ -1,10 +1,21 @@
-# Azure Template client library samples for TypeScript
+---
+page_type: sample
+languages:
+  - typescript
+products:
+  - azure
+  - azure-communication-services
+urlFragment: communication-sip-routing-typescript
+---
 
-These sample programs show how to use the TypeScript client libraries for Azure Template in some common scenarios.
+# Azure Communication Services - SIP Routing client library samples for TypeScript
 
-| **File Name**                                         | **Description**                                                            |
-| ----------------------------------------------------- | -------------------------------------------------------------------------- |
-| [getConfigurationSetting.ts][getconfigurationsetting] | Demonstrates the use of a ConfigurationClient to retrieve a setting value. |
+These sample programs show how to use the TypeScript client libraries for Azure Communication Services - SIP Routing in some common scenarios.
+
+| **File Name**                                 | **Description**                                                         |
+| --------------------------------------------- | ----------------------------------------------------------------------- |
+| [getConfiguration.ts][getconfiguration]       | Demonstrates the use of a SipRoutingClient to retrieve setting value.   |
+| [updateConfiguration.ts][updateconfiguration] | Demonstrates the use of a SipRoutingClient to update existing settings. |
 
 ## Prerequisites
 
@@ -18,7 +29,7 @@ npm install -g typescript
 
 You need [an Azure subscription][freesub] and the following Azure resources to run these sample programs:
 
-- [Azure App Configuration][createinstance_azureappconfiguration]
+- [Azure Communication Services account][createinstance_azurecommunicationservicesaccount]
 
 Samples retrieve credentials to access the service endpoint from environment variables. Alternatively, edit the source code to include the appropriate credentials. See each individual sample for details on which environment variables/credentials it requires to function.
 
@@ -45,22 +56,23 @@ npm run build
 4. Run whichever samples you like (note that some samples may require additional setup, see the table above):
 
 ```bash
-node dist/getConfigurationSetting.ts
+node dist/getConfiguration.js
 ```
 
 Alternatively, run a single sample with the correct environment variables set (setting up the `.env` file is not required if you do this), for example (cross-platform):
 
 ```bash
-npx cross-env APPCONFIG_ENDPOINT="<appconfig endpoint>" APPCONFIG_TEST_SETTING_KEY="<appconfig test setting key>" node dist/getConfigurationSetting.js
+npx cross-env COMMUNICATION_SAMPLES_CONNECTION_STRING="<communication samples connection string>" node dist/getConfiguration.js
 ```
 
 ## Next Steps
 
 Take a look at our [API Documentation][apiref] for more information about the APIs that are available in the clients.
 
-[getconfigurationsetting]: https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/template/template/samples/v1/typescript/src/getConfigurationSetting.ts
-[apiref]: https://docs.microsoft.com/javascript/api/
+[getconfiguration]: https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/communication/communication-sip-routing/samples/v1/typescript/src/getConfiguration.ts
+[updateconfiguration]: https://github.com/Azure/azure-sdk-for-js/blob/master/sdk/communication/communication-sip-routing/samples/v1/typescript/src/updateConfiguration.ts
+[apiref]: https://docs.microsoft.com/javascript/api/@azure/communication-sip-routing
 [freesub]: https://azure.microsoft.com/free/
-[createinstance_azureappconfiguration]: https://docs.microsoft.com/azure/azure-app-configuration/
-[package]: https://github.com/Azure/azure-sdk-for-js/tree/master/sdk/template/template/README.md
+[createinstance_azurecommunicationservicesaccount]: https://docs.microsoft.com/azure/communication-services/quickstarts/create-communication-resource
+[package]: https://github.com/Azure/azure-sdk-for-js/tree/master/sdk/communication/communication-sip-routing/README.md
 [typescript]: https://www.typescriptlang.org/docs/home.html
