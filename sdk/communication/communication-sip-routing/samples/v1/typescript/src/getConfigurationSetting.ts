@@ -2,24 +2,37 @@
 // Licensed under the MIT License.
 
 /**
- * @summary Demonstrates the use of a ConfigurationClient to retrieve a setting value.
+ * @summary Get the current SIP routing configuration
  */
 
-import { ConfigurationClient } from "@azure/template";
-import { DefaultAzureCredential } from "@azure/identity";
+ import { SipRoutingClient } from '@azure/communication-sip-routing';
 
-export async function main() {
-  const endpoint = process.env.APPCONFIG_ENDPOINT ?? "<endpoint>";
-  const key = process.env.APPCONFIG_TEST_SETTING_KEY ?? "test-key";
-
-  const client = new ConfigurationClient(endpoint, new DefaultAzureCredential());
-
-  const setting = await client.getConfigurationSetting(key);
-
-  console.log("The setting has a value of:", setting.value);
-  console.log("Details:", setting);
-}
-
-main().catch((err) => {
-  console.error("The sample encountered an error:", err);
-});
+ // Load the .env file if it exists
+ const dotenv = require("dotenv");
+ dotenv.config();
+ 
+ export async function main() {
+   console.log("== Get SIP Routing Configuration ==");
+ 
+   // You will need to set this environment variable or edit the following values
+   const connectionString =
+     process.env.COMMUNICATION_SAMPLES_CONNECTION_STRING ||
+     "endpoint=https://<resource-name>.communication.azure.com/;<access-key>";
+   
+   // Create a new client
+   const client = new SipRoutingClient(connectionString);
+ 
+   // Get the current configuration
+   const config = await client.getSipConfiguration();
+ 
+   // Print the configururation formatted as JSON into console
+   const json = JSON.stringify(config, null, 4);
+   console.log(json);
+ 
+   console.log("== Done: Get SIP Routing Configuration ==");
+ }
+ 
+ main().catch((error) => {
+   console.error("Encountered an error while getting configuration: ", error);
+   process.exit(1);
+ });
