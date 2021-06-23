@@ -1,5 +1,9 @@
 # Release History
 
+## 1.0.0-alpha.20210623.1 (2021-06-23)
+
+- Fixed the TS types definition path.
+
 ## 1.0.0-alpha.20210616.6 (2021-06-16)
 
 - Updated the updateSipConfiguration method signature.
