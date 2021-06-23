@@ -1,6 +1,6 @@
 # Release History
 
-## 1.0.0-alpha.20210623.1 (2021-06-23)
+## 1.0.0-alpha.20210623.2 (2021-06-23)
 
 - Fixed the TS types definition path.
 
