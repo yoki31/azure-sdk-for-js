@@ -28,7 +28,7 @@ import { bytesToString, stringToBytes } from "./utils/utf8";
 import { _attestationResultFromGenerated } from "./models/attestationResult";
 import { _attestationSignerFromGenerated } from "./models/attestationSigner";
 import { AttestationTokenImpl } from "./models/attestationToken";
-import { convertToUint8ArrayN } from "./utils/blobConvert";
+import { convertToUint8Array } from "./utils/blobConvert";
 /**
  * Attestation Client Construction Options.
  */
@@ -203,7 +203,7 @@ export class AttestationClient {
    * @throws {@link Error} if the `runTimeJson` option is provided and the value of `runTimeJson` is not JSON.
    */
   public async attestOpenEnclave(
-    reportN: Buffer | Uint8Array | Blob,
+    report: Buffer | Uint8Array | Blob,
     options: AttestOpenEnclaveOptions = {}
   ): Promise<AttestationResponse<AttestationResult>> {
     const { span, updatedOptions } = createSpan("AttestationClient-attestOpenEnclave", options);
@@ -221,7 +221,7 @@ export class AttestationClient {
 
       const initTimeData: InitTimeData | undefined = initData
         ? {
-            data: await convertToUint8Array(initData),
+            data: convertToUint8Array(initData),
             dataType: options.initTimeJson !== undefined ? KnownDataType.Json : KnownDataType.Binary
           }
         : undefined;
@@ -230,16 +230,14 @@ export class AttestationClient {
 
       const runTimeData: RuntimeData | undefined = runData
         ? {
-            data: await convertToUint8Array(runData),
+            data: convertToUint8Array(runData),
             dataType: options.runTimeJson !== undefined ? KnownDataType.Json : KnownDataType.Binary
           }
         : undefined;
 
       const attestationResponse = await this._client.attestation.attestOpenEnclave(
         {
-          report: reportB
-            ? await convertToUintArrayB(reportB)
-            : await convertToUint8ArrayN(reportN),
+          report: convertToUint8Array(report),
           initTimeData: initTimeData,
           runtimeData: runTimeData,
           draftPolicyForAttestation: options.draftPolicyForAttestation ?? undefined
