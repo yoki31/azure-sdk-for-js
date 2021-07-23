@@ -29,7 +29,6 @@ import { _attestationResultFromGenerated } from "./models/attestationResult";
 import { _attestationSignerFromGenerated } from "./models/attestationSigner";
 import { AttestationTokenImpl } from "./models/attestationToken";
 import { convertToUint8ArrayN } from "./utils/blobConvert";
-import { convertToUint8ArrayB } from "./utils/blobConvert.browser";
 /**
  * Attestation Client Construction Options.
  */
@@ -100,57 +99,22 @@ export interface AttestSgxEnclaveOptions extends AttestationClientOperationOptio
    *initTimeData : data provided at the time the enclave was initialized, to be interpreted as binary data.
    *
    */
-  initTimeData?: Uint8Array;
+  initTimeData?: Uint8Array | Buffer | Blob;
 
   /**
    * inittimeJson : data provided at the time the enclave was initialized, to be interpreted as JSON data.
    */
-  initTimeJson?: Uint8Array;
+  initTimeJson?: Uint8Array | Buffer | Blob;
 
   /**
    * runTimeData  - data provided at the time the OpenEnclave report being attested was created to be interpreted as binary data.
    */
-  runTimeData?: Uint8Array;
+  runTimeData?: Uint8Array | Buffer | Blob;
 
   /**
    * runTimeJson  - data provided at the time the OpenEnclave report being attested was created to be interpreted as JSON data.
    */
-  runTimeJson?: Uint8Array;
-
-  /**
-   * draftPolicyForAttestation - If specified, the attestation policy to be used during the attestation request.
-   */
-  draftPolicyForAttestation?: string;
-}
-
-/**
- * Optional parameters for the AttestSgxEnclave API.
- *
- * @param initTimeData - data provided at the time the enclave was initialized.
- * @param runTimeData - data provided at the time the SGX quote being attested was created.
- * @param draftPolicyForAttestation - If specified, the attestation policy to be used during the attestation request.
- */
- export interface AttestSgxEnclaveBrowserOptions extends AttestationClientOperationOptions {
-  /**
-   *initTimeData : data provided at the time the enclave was initialized, to be interpreted as binary data.
-   *
-   */
-  initTimeData?: Uint8Array | Blob;
-
-  /**
-   * inittimeJson : data provided at the time the enclave was initialized, to be interpreted as JSON data.
-   */
-  initTimeJson?: Uint8Array | Blob;
-
-  /**
-   * runTimeData  - data provided at the time the OpenEnclave report being attested was created to be interpreted as binary data.
-   */
-  runTimeData?: Uint8Array | Blob;
-
-  /**
-   * runTimeJson  - data provided at the time the OpenEnclave report being attested was created to be interpreted as JSON data.
-   */
-  runTimeJson?: Uint8Array | Blob;
+  runTimeJson?: Uint8Array | Buffer | Blob;
 
   /**
    * draftPolicyForAttestation - If specified, the attestation policy to be used during the attestation request.
@@ -238,12 +202,8 @@ export class AttestationClient {
    * @throws {@link Error} if the `initTimeJson` option is provided and the value of `initTimeJson` is not JSON.
    * @throws {@link Error} if the `runTimeJson` option is provided and the value of `runTimeJson` is not JSON.
    */
-   public async attestOpenEnclave(
-    reportB: Uint8Array | Blob,
-    options: AttestSgxEnclaveBrowserOptions
-  ): Promise<AttestationResponse<AttestationResult>>;
   public async attestOpenEnclave(
-    reportN: Uint8Array,
+    reportN: Buffer | Uint8Array | Blob,
     options: AttestOpenEnclaveOptions = {}
   ): Promise<AttestationResponse<AttestationResult>> {
     const { span, updatedOptions } = createSpan("AttestationClient-attestOpenEnclave", options);
@@ -277,7 +237,9 @@ export class AttestationClient {
 
       const attestationResponse = await this._client.attestation.attestOpenEnclave(
         {
-          report: reportB ? await convertToUintArrayB(reportB) : await convertToUint8ArrayN(reportN),
+          report: reportB
+            ? await convertToUintArrayB(reportB)
+            : await convertToUint8ArrayN(reportN),
           initTimeData: initTimeData,
           runtimeData: runTimeData,
           draftPolicyForAttestation: options.draftPolicyForAttestation ?? undefined
