@@ -234,11 +234,19 @@ function Deploy-TestResources {
     }
 
     if (-not $DryRun) {
-      Write-Verbose "Waiting for all deploy jobs to finish (will timeout after 15 minutes)..."
-      $entryDeployJobs | Wait-Job -TimeoutSec (15*60)
+      Write-Verbose "Waiting for all deploy jobs to finish (will timeout after 10 minutes)..."
+      $entryDeployJobs | Wait-Job -TimeoutSec (10*60)
+      $error = $false
       if ($entryDeployJobs | Where-Object {$_.State -eq "Running"}) {
-        $entryDeployJobs
-        throw "Timed out waiting for deploy jobs to finish:"
+        Write-Host "====================== still running job"
+        $running = $entryDeployJobs | ? { $_.State -eq "Running" }
+        $running
+        $error = $true
+        write-host "-----------------------"
+        try {
+            Write-Host ($running | ConvertTo-Json)
+        } catch {}
+        Write-Host "====================== end running job"
       }
 
       foreach ($job in $entryDeployJobs) {
@@ -254,6 +262,10 @@ function Deploy-TestResources {
         foreach ($key in $deployOutput.Keys) {
           Set-EnvironmentVariable -Name $key -Value $deployOutput[$key]
         }
+      }
+
+      if ($error) {
+        throw "Timed out waiting for deploy jobs to finish"
       }
     }
   } finally {
