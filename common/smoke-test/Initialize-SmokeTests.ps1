@@ -235,17 +235,24 @@ function Deploy-TestResources {
 
     if (-not $DryRun) {
       Write-Verbose "Waiting for all deploy jobs to finish (will timeout after 10 minutes)..."
-      $entryDeployJobs | Wait-Job -TimeoutSec (10*60)
+      $entryDeployJobs | Wait-Job -TimeoutSec (15*60)
       $error = $false
       if ($entryDeployJobs | Where-Object {$_.State -eq "Running"}) {
         Write-Host "====================== still running job"
         $running = $entryDeployJobs | ? { $_.State -eq "Running" }
-        $running
         $error = $true
-        write-host "-----------------------"
         try {
             Write-Host ($running | ConvertTo-Json)
-        } catch {}
+            write-host "debug -----------------------"
+            Write-Host $running[0].ChildJobs[0].Debug
+            write-host "warn -----------------------"
+            Write-Host $running[0].ChildJobs[0].Warning
+            write-host "verbose -----------------------"
+            Write-Host $running[0].ChildJobs[0].Verbose
+        } catch {
+            Write-Host "bbp exception"
+            Write-Host $errors[0]
+        }
         Write-Host "====================== end running job"
       }
 
