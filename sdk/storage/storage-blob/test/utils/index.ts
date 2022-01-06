@@ -15,10 +15,10 @@ import {
   AccountSASPermissions,
   SASProtocol,
   AccountSASResourceTypes,
-  AccountSASServices,
+  AccountSASServices
 } from "../../src";
 import { extractConnectionStringParts } from "../../src/utils/utils.common";
-import { TokenCredential } from "@azure/core-http";
+import { AccessToken, TokenCredential } from "@azure/core-http";
 import { env } from "@azure-tools/test-recorder";
 import { DefaultAzureCredential } from "@azure/identity";
 
@@ -76,7 +76,7 @@ export function getGenericBSU(
     const credential = getGenericCredential(accountType) as StorageSharedKeyCredential;
 
     const pipeline = newPipeline(credential, {
-      ...pipelineOptions,
+      ...pipelineOptions
       // Enable logger when debugging
       // logger: new ConsoleHttpPipelineLogger(HttpPipelineLogLevel.INFO)
     });
@@ -128,10 +128,15 @@ export function getTokenBSUWithDefaultCredential(
 
   const credential = new DefaultAzureCredential();
   const pipeline = newPipeline(credential, {
-    ...pipelineOptions,
+    ...pipelineOptions
   });
   const blobPrimaryURL = `https://${accountName}${accountNameSuffix}.blob.core.windows.net/`;
   return new BlobServiceClient(blobPrimaryURL, pipeline);
+}
+
+export async function getStorageAccessTokenWithDefaultCredential(): Promise<AccessToken | null> {
+  const credential = new DefaultAzureCredential();
+  return await credential.getToken(["https://storage.azure.com/.default"]);
 }
 
 export function getBSU(pipelineOptions: StoragePipelineOptions = {}): BlobServiceClient {
@@ -292,7 +297,7 @@ export function getSASConnectionStringFromEnvironment(): string {
       resourceTypes: AccountSASResourceTypes.parse("sco").toString(),
       services: AccountSASServices.parse("btqf").toString(),
       startsOn: now,
-      version: "2020-08-04",
+      version: "2020-08-04"
     },
     sharedKeyCredential as StorageSharedKeyCredential
   ).toString();
