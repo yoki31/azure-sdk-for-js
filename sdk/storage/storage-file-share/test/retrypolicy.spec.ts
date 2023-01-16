@@ -2,13 +2,15 @@
 // Licensed under the MIT license.
 
 import { assert } from "chai";
+import { Context } from "mocha";
+
+import { record, Recorder } from "@azure-tools/test-recorder";
 import { AbortController } from "@azure/abort-controller";
+
 import { RestError, ShareClient } from "../src";
 import { newPipeline, Pipeline } from "../src/Pipeline";
 import { getBSU, recorderEnvSetup } from "./utils";
 import { InjectorPolicyFactory } from "./utils/InjectorPolicyFactory";
-import { record, Recorder } from "@azure-tools/test-recorder";
-import { Context } from "mocha";
 
 describe("RetryPolicy", () => {
   let shareName: string;
@@ -82,7 +84,7 @@ describe("RetryPolicy", () => {
       await injectShareClient.setMetadata(metadata, {
         abortSignal: AbortController.timeout(2 * 1000),
       });
-    } catch (err) {
+    } catch (err: any) {
       hasError = true;
     }
     assert.ok(hasError);
@@ -111,7 +113,7 @@ describe("RetryPolicy", () => {
         keyb: "valb",
       };
       await injectShareClient.setMetadata(metadata);
-    } catch (err) {
+    } catch (err: any) {
       hasError = true;
     }
     assert.ok(hasError);

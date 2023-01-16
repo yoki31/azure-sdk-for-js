@@ -3,8 +3,17 @@
 
 import { AmqpAnnotatedMessage, Constants } from "@azure/core-amqp";
 import { BodyTypes, defaultDataTransformer } from "./dataTransformer";
-import { DeliveryAnnotations, MessageAnnotations, Message as RheaMessage } from "rhea-promise";
-import { isDefined, isObjectWithProperties, objectHasProperty } from "./util/typeGuards";
+import {
+  DeliveryAnnotations,
+  MessageAnnotations,
+  Message as RheaMessage,
+  types,
+} from "rhea-promise";
+import { isDefined, isObjectWithProperties, objectHasProperty } from "@azure/core-util";
+import {
+  idempotentProducerAmqpPropertyNames,
+  PENDING_PUBLISH_SEQ_NUM_SYMBOL,
+} from "./util/constants";
 
 /**
  * Describes the delivery annotations.
@@ -135,6 +144,16 @@ export interface EventDataInternal {
    * Returns the underlying raw amqp message.
    */
   getRawAmqpMessage(): AmqpAnnotatedMessage;
+  /**
+   * The pending publish sequence number, set while the event
+   * is being published with idempotent partitions enabled.
+   */
+  [PENDING_PUBLISH_SEQ_NUM_SYMBOL]?: number;
+  /**
+   * The sequence number the event was published with
+   * when idempotent partitions are enabled.
+   */
+  _publishedSequenceNumber?: number;
 }
 
 const messagePropertiesMap = {
@@ -464,12 +483,58 @@ function convertDatesToNumbers<T = unknown>(thing: T): T {
     Examples:
     { foo: new Date(), children: { nested: new Date() }}
   */
-  if (typeof thing === "object" && isDefined(thing)) {
-    thing = { ...thing };
-    for (const key of Object.keys(thing)) {
-      (thing as any)[key] = convertDatesToNumbers((thing as any)[key]);
+  if (typeof thing === "object" && isDefined<object>(thing)) {
+    const thingShallowCopy = { ...thing };
+    for (const key of Object.keys(thingShallowCopy)) {
+      (thingShallowCopy as any)[key] = convertDatesToNumbers((thingShallowCopy as any)[key]);
     }
+    return thingShallowCopy;
   }
 
   return thing;
+}
+
+/**
+ * @internal
+ */
+export interface PopulateIdempotentMessageAnnotationsParameters {
+  isIdempotentPublishingEnabled: boolean;
+  ownerLevel?: number;
+  producerGroupId?: number;
+  publishSequenceNumber?: number;
+}
+
+/**
+ * Populates a rhea message with idempotent producer properties.
+ * @internal
+ */
+export function populateIdempotentMessageAnnotations(
+  rheaMessage: RheaMessage,
+  {
+    isIdempotentPublishingEnabled,
+    ownerLevel,
+    producerGroupId,
+    publishSequenceNumber,
+  }: PopulateIdempotentMessageAnnotationsParameters
+): void {
+  if (!isIdempotentPublishingEnabled) {
+    return;
+  }
+
+  const messageAnnotations = rheaMessage.message_annotations || {};
+  if (!rheaMessage.message_annotations) {
+    rheaMessage.message_annotations = messageAnnotations;
+  }
+
+  if (isDefined(ownerLevel)) {
+    messageAnnotations[idempotentProducerAmqpPropertyNames.epoch] = types.wrap_short(ownerLevel);
+  }
+  if (isDefined(producerGroupId)) {
+    messageAnnotations[idempotentProducerAmqpPropertyNames.producerId] =
+      types.wrap_long(producerGroupId);
+  }
+  if (isDefined(publishSequenceNumber)) {
+    messageAnnotations[idempotentProducerAmqpPropertyNames.producerSequenceNumber] =
+      types.wrap_int(publishSequenceNumber);
+  }
 }

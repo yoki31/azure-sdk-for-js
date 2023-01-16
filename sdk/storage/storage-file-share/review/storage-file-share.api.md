@@ -133,6 +133,7 @@ export interface CommonOptions {
 // @public
 export interface CopyFileSmbInfo {
     fileAttributes?: string;
+    fileChangeTime?: string;
     fileCreationTime?: string;
     fileLastWriteTime?: string;
     filePermissionCopyMode?: PermissionCopyModeType;
@@ -391,6 +392,44 @@ export interface DirectoryProperties extends FileAndDirectorySetPropertiesCommon
 }
 
 // @public
+export interface DirectoryRenameHeaders {
+    date?: Date;
+    etag?: string;
+    fileAttributes?: string;
+    fileChangeTime?: Date;
+    fileCreationTime?: Date;
+    fileId?: string;
+    fileLastWriteTime?: Date;
+    fileParentId?: string;
+    filePermissionKey?: string;
+    isServerEncrypted?: boolean;
+    lastModified?: Date;
+    requestId?: string;
+    version?: string;
+}
+
+// @public
+export interface DirectoryRenameOptions extends CommonOptions {
+    abortSignal?: AbortSignalLike;
+    copyFileSmbInfo?: CopyFileSmbInfo;
+    destinationLeaseAccessConditions?: LeaseAccessConditions;
+    filePermission?: string;
+    filePermissionKey?: string;
+    ignoreReadOnly?: boolean;
+    metadata?: Metadata;
+    replaceIfExists?: boolean;
+    sourceLeaseAccessConditions?: LeaseAccessConditions;
+    timeoutInSeconds?: number;
+}
+
+// @public
+export type DirectoryRenameResponse = DirectoryRenameHeaders & {
+    _response: coreHttp.HttpResponse & {
+        parsedHeaders: DirectoryRenameHeaders;
+    };
+};
+
+// @public
 export interface DirectorySetMetadataHeaders {
     date?: Date;
     errorCode?: string;
@@ -460,6 +499,7 @@ export type FileAbortCopyResponse = FileAbortCopyHeaders & {
 
 // @public (undocumented)
 export interface FileAndDirectoryCreateCommonOptions {
+    changeTime?: Date | TimeNowType;
     creationTime?: Date | TimeNowType;
     fileAttributes?: FileSystemAttributes;
     filePermission?: string | FilePermissionInheritType;
@@ -469,6 +509,7 @@ export interface FileAndDirectoryCreateCommonOptions {
 
 // @public (undocumented)
 export interface FileAndDirectorySetPropertiesCommonOptions {
+    changeTime?: Date | TimeNowType;
     creationTime?: Date | TimeNowType | TimePreserveType;
     fileAttributes?: FileSystemAttributes | FileAttributesPreserveType;
     filePermission?: string | FilePermissionInheritType | FilePermissionPreserveType;
@@ -482,6 +523,7 @@ export type FileAttributesPreserveType = "preserve";
 // @public
 export interface FileClearRangeOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
+    fileLastWrittenMode?: FileLastWrittenMode;
     leaseAccessConditions?: LeaseAccessConditions;
 }
 
@@ -773,6 +815,9 @@ export interface FileItem {
 }
 
 // @public
+export type FileLastWrittenMode = "Now" | "Preserve";
+
+// @public
 export interface FileListHandlesHeaders {
     contentType?: string;
     date?: Date;
@@ -841,6 +886,45 @@ export interface FileProperty {
     // (undocumented)
     lastWriteTime?: Date;
 }
+
+// @public
+export interface FileRenameHeaders {
+    date?: Date;
+    etag?: string;
+    fileAttributes?: string;
+    fileChangeTime?: Date;
+    fileCreationTime?: Date;
+    fileId?: string;
+    fileLastWriteTime?: Date;
+    fileParentId?: string;
+    filePermissionKey?: string;
+    isServerEncrypted?: boolean;
+    lastModified?: Date;
+    requestId?: string;
+    version?: string;
+}
+
+// @public
+export interface FileRenameOptions extends CommonOptions {
+    abortSignal?: AbortSignalLike;
+    contentType?: string;
+    copyFileSmbInfo?: CopyFileSmbInfo;
+    destinationLeaseAccessConditions?: LeaseAccessConditions;
+    filePermission?: string;
+    filePermissionKey?: string;
+    ignoreReadOnly?: boolean;
+    metadata?: Metadata;
+    replaceIfExists?: boolean;
+    sourceLeaseAccessConditions?: LeaseAccessConditions;
+    timeoutInSeconds?: number;
+}
+
+// @public
+export type FileRenameResponse = FileRenameHeaders & {
+    _response: coreHttp.HttpResponse & {
+        parsedHeaders: FileRenameHeaders;
+    };
+};
 
 // @public
 export interface FileResizeOptions extends FileAndDirectorySetPropertiesCommonOptions, CommonOptions {
@@ -996,6 +1080,7 @@ export interface FileUploadRangeFromURLHeaders {
     date?: Date;
     errorCode?: string;
     etag?: string;
+    fileLastWriteTime?: Date;
     isServerEncrypted?: boolean;
     lastModified?: Date;
     requestId?: string;
@@ -1006,6 +1091,7 @@ export interface FileUploadRangeFromURLHeaders {
 // @public
 export interface FileUploadRangeFromURLOptionalParams extends coreHttp.OperationOptions {
     copySourceAuthorization?: string;
+    fileLastWrittenMode?: FileLastWrittenMode;
     leaseAccessConditions?: LeaseAccessConditions;
     sourceContentCrc64?: Uint8Array;
     sourceModifiedAccessConditions?: SourceModifiedAccessConditions;
@@ -1016,6 +1102,7 @@ export interface FileUploadRangeFromURLOptionalParams extends coreHttp.Operation
 // @public
 export interface FileUploadRangeFromURLOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
+    fileLastWrittenMode?: FileLastWrittenMode;
     leaseAccessConditions?: LeaseAccessConditions;
     sourceAuthorization?: HttpAuthorization;
     sourceConditions?: SourceModifiedAccessConditions;
@@ -1036,6 +1123,7 @@ export interface FileUploadRangeHeaders {
     date?: Date;
     errorCode?: string;
     etag?: string;
+    fileLastWriteTime?: Date;
     isServerEncrypted?: boolean;
     lastModified?: Date;
     requestId?: string;
@@ -1046,6 +1134,7 @@ export interface FileUploadRangeHeaders {
 export interface FileUploadRangeOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
     contentMD5?: Uint8Array;
+    fileLastWrittenMode?: FileLastWrittenMode;
     leaseAccessConditions?: LeaseAccessConditions;
     onProgress?: (progress: TransferProgressEvent) => void;
 }
@@ -1565,6 +1654,10 @@ export class ShareDirectoryClient extends StorageClient {
     listHandles(options?: DirectoryListHandlesOptions): PagedAsyncIterableIterator<HandleItem, DirectoryListHandlesResponse>;
     get name(): string;
     get path(): string;
+    rename(destinationPath: string, options?: DirectoryRenameOptions): Promise<{
+        destinationDirectoryClient: ShareDirectoryClient;
+        directoryRenameResponse: DirectoryRenameResponse;
+    }>;
     setMetadata(metadata?: Metadata, options?: DirectorySetMetadataOptions): Promise<DirectorySetMetadataResponse>;
     setProperties(properties?: DirectoryProperties): Promise<DirectorySetPropertiesResponse>;
     get shareName(): string;
@@ -1600,6 +1693,10 @@ export class ShareFileClient extends StorageClient {
     listHandles(options?: FileListHandlesOptions): PagedAsyncIterableIterator<HandleItem, FileListHandlesResponse>;
     get name(): string;
     get path(): string;
+    rename(destinationPath: string, options?: FileRenameOptions): Promise<{
+        destinationFileClient: ShareFileClient;
+        fileRenameResponse: FileRenameResponse;
+    }>;
     resize(length: number, options?: FileResizeOptions): Promise<FileSetHTTPHeadersResponse>;
     setHttpHeaders(fileHttpHeaders?: FileHttpHeaders, options?: FileSetHttpHeadersOptions): Promise<FileSetHTTPHeadersResponse>;
     setMetadata(metadata?: Metadata, options?: FileSetMetadataOptions): Promise<FileSetMetadataResponse>;

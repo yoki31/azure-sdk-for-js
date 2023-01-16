@@ -117,7 +117,7 @@ export class AuthenticationError extends Error {
         // in the response body
         const oauthErrorResponse: OAuthErrorResponse = JSON.parse(errorBody);
         errorResponse = convertOAuthErrorResponseToErrorResponse(oauthErrorResponse);
-      } catch (e) {
+      } catch (e: any) {
         if (statusCode === 400) {
           errorResponse = {
             error: "authority_not_found",
@@ -138,7 +138,7 @@ export class AuthenticationError extends Error {
     }
 
     super(
-      `${errorResponse.error}(status code ${statusCode}).\nMore details:\n${errorResponse.errorDescription}`
+      `${errorResponse.error} Status code: ${statusCode}\nMore details:\n${errorResponse.errorDescription}`
     );
     this.statusCode = statusCode;
     this.errorResponse = errorResponse;

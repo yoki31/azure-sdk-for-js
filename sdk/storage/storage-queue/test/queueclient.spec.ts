@@ -6,7 +6,7 @@ import { getQSU, getSASConnectionStringFromEnvironment } from "./utils";
 import { QueueClient, QueueServiceClient } from "../src";
 import { setSpan, context } from "@azure/core-tracing";
 import { SpanGraph, setTracer } from "@azure/test-utils";
-import { URLBuilder, RestError } from "@azure/core-http";
+import { RestError } from "@azure/core-http";
 import { Recorder, record } from "@azure-tools/test-recorder";
 import { recorderEnvSetup } from "./utils/testutils.common";
 import { Context } from "mocha";
@@ -58,7 +58,7 @@ describe("QueueClient", () => {
     let error: RestError | undefined;
     try {
       await queueClient2.getProperties();
-    } catch (err) {
+    } catch (err: any) {
       error = err;
     }
     assert.ok(error);
@@ -88,7 +88,7 @@ describe("QueueClient", () => {
     try {
       const qClient = queueServiceClient.getQueueClient("");
       await qClient.create();
-    } catch (err) {
+    } catch (err: any) {
       error = err;
     }
     assert.ok(error);
@@ -152,7 +152,7 @@ describe("QueueClient", () => {
     let error;
     try {
       await queueClient.setAccessPolicy(queueAcl);
-    } catch (err) {
+    } catch (err: any) {
       error = err;
     }
     assert.ok(error); // For browser, permission denied; For node, invalid permission
@@ -186,7 +186,7 @@ describe("QueueClient", () => {
     try {
       new QueueClient(getSASConnectionStringFromEnvironment(), "");
       assert.fail("Expecting an thrown error but didn't get one.");
-    } catch (error) {
+    } catch (error: any) {
       assert.equal(
         "Expecting non-empty strings for queueName parameter",
         error.message,
@@ -209,8 +209,6 @@ describe("QueueClient", () => {
     assert.strictEqual(rootSpans.length, 1, "Should only have one root span.");
     assert.strictEqual(rootSpan, rootSpans[0], "The root span should match what was passed in.");
 
-    const urlPath = URLBuilder.parse(queueClient.url).getPath() || "";
-
     const expectedGraph: SpanGraph = {
       roots: [
         {
@@ -220,7 +218,7 @@ describe("QueueClient", () => {
               name: "Azure.Storage.Queue.QueueClient-getProperties",
               children: [
                 {
-                  name: urlPath,
+                  name: "HTTP GET",
                   children: [],
                 },
               ],

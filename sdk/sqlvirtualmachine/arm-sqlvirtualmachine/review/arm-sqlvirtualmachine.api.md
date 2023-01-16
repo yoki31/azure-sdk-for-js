@@ -16,9 +16,37 @@ export interface AdditionalFeaturesServerConfigurations {
 }
 
 // @public
+export interface AgConfiguration {
+    replicas?: AgReplica[];
+}
+
+// @public
+export interface AgReplica {
+    commit?: Commit;
+    failover?: Failover;
+    readableSecondary?: ReadableSecondary;
+    role?: Role;
+    sqlVirtualMachineInstanceId?: string;
+}
+
+// @public
+export type AssessmentDayOfWeek = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday";
+
+// @public
+export interface AssessmentSettings {
+    enable?: boolean;
+    runImmediately?: boolean;
+    schedule?: Schedule;
+}
+
+// @public
+export type AutoBackupDaysOfWeek = string;
+
+// @public
 export interface AutoBackupSettings {
     backupScheduleType?: BackupScheduleType;
     backupSystemDbs?: boolean;
+    daysOfWeek?: AutoBackupDaysOfWeek[];
     enable?: boolean;
     enableEncryption?: boolean;
     fullBackupFrequency?: FullBackupFrequencyType;
@@ -29,6 +57,7 @@ export interface AutoBackupSettings {
     retentionPeriod?: number;
     storageAccessKey?: string;
     storageAccountUrl?: string;
+    storageContainerName?: string;
 }
 
 // @public
@@ -40,13 +69,16 @@ export interface AutoPatchingSettings {
 }
 
 // @public
-export type AvailabilityGroupListener = ProxyResource & {
-    readonly provisioningState?: string;
+export interface AvailabilityGroupListener extends ProxyResource {
+    availabilityGroupConfiguration?: AgConfiguration;
     availabilityGroupName?: string;
-    loadBalancerConfigurations?: LoadBalancerConfiguration[];
     createDefaultAvailabilityGroupIfNotExist?: boolean;
+    loadBalancerConfigurations?: LoadBalancerConfiguration[];
+    multiSubnetIpConfigurations?: MultiSubnetIpConfiguration[];
     port?: number;
-};
+    readonly provisioningState?: string;
+    readonly systemData?: SystemData;
+}
 
 // @public
 export interface AvailabilityGroupListenerListResult {
@@ -81,6 +113,7 @@ export interface AvailabilityGroupListenersDeleteOptionalParams extends coreClie
 
 // @public
 export interface AvailabilityGroupListenersGetOptionalParams extends coreClient.OperationOptions {
+    expand?: string;
 }
 
 // @public
@@ -110,13 +143,25 @@ export type ClusterConfiguration = string;
 export type ClusterManagerType = string;
 
 // @public
+export type ClusterSubnetType = string;
+
+// @public
+export type Commit = string;
+
+// @public
 export type ConnectivityType = string;
 
 // @public
-export type DayOfWeek = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday";
+export type CreatedByType = string;
+
+// @public
+export type DayOfWeek = "Everyday" | "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday";
 
 // @public
 export type DiskConfigurationType = string;
+
+// @public
+export type Failover = string;
 
 // @public
 export type FullBackupFrequencyType = string;
@@ -134,134 +179,158 @@ export interface KeyVaultCredentialSettings {
 }
 
 // @public
+export enum KnownAutoBackupDaysOfWeek {
+    Friday = "Friday",
+    Monday = "Monday",
+    Saturday = "Saturday",
+    Sunday = "Sunday",
+    Thursday = "Thursday",
+    Tuesday = "Tuesday",
+    Wednesday = "Wednesday"
+}
+
+// @public
 export enum KnownBackupScheduleType {
-    // (undocumented)
     Automated = "Automated",
-    // (undocumented)
     Manual = "Manual"
 }
 
 // @public
 export enum KnownClusterConfiguration {
-    // (undocumented)
     Domainful = "Domainful"
 }
 
 // @public
 export enum KnownClusterManagerType {
-    // (undocumented)
     Wsfc = "WSFC"
 }
 
 // @public
+export enum KnownClusterSubnetType {
+    MultiSubnet = "MultiSubnet",
+    SingleSubnet = "SingleSubnet"
+}
+
+// @public
+export enum KnownCommit {
+    AsynchronousCommit = "ASYNCHRONOUS_COMMIT",
+    SynchronousCommit = "SYNCHRONOUS_COMMIT"
+}
+
+// @public
 export enum KnownConnectivityType {
-    // (undocumented)
     Local = "LOCAL",
-    // (undocumented)
     Private = "PRIVATE",
-    // (undocumented)
     Public = "PUBLIC"
 }
 
 // @public
+export enum KnownCreatedByType {
+    Application = "Application",
+    Key = "Key",
+    ManagedIdentity = "ManagedIdentity",
+    User = "User"
+}
+
+// @public
 export enum KnownDiskConfigurationType {
-    // (undocumented)
     ADD = "ADD",
-    // (undocumented)
     Extend = "EXTEND",
-    // (undocumented)
     NEW = "NEW"
 }
 
 // @public
+export enum KnownFailover {
+    Automatic = "AUTOMATIC",
+    Manual = "MANUAL"
+}
+
+// @public
 export enum KnownFullBackupFrequencyType {
-    // (undocumented)
     Daily = "Daily",
-    // (undocumented)
     Weekly = "Weekly"
 }
 
 // @public
 export enum KnownIdentityType {
-    // (undocumented)
+    None = "None",
     SystemAssigned = "SystemAssigned"
 }
 
 // @public
+export enum KnownLeastPrivilegeMode {
+    Enabled = "Enabled"
+}
+
+// @public
 export enum KnownOperationOrigin {
-    // (undocumented)
     System = "system",
-    // (undocumented)
     User = "user"
 }
 
 // @public
+export enum KnownReadableSecondary {
+    ALL = "ALL",
+    NO = "NO",
+    ReadOnly = "READ_ONLY"
+}
+
+// @public
+export enum KnownRole {
+    Primary = "PRIMARY",
+    Secondary = "SECONDARY"
+}
+
+// @public
 export enum KnownScaleType {
-    // (undocumented)
     HA = "HA"
 }
 
 // @public
 export enum KnownSqlImageSku {
-    // (undocumented)
     Developer = "Developer",
-    // (undocumented)
     Enterprise = "Enterprise",
-    // (undocumented)
     Express = "Express",
-    // (undocumented)
     Standard = "Standard",
-    // (undocumented)
     Web = "Web"
 }
 
 // @public
 export enum KnownSqlManagementMode {
-    // (undocumented)
     Full = "Full",
-    // (undocumented)
     LightWeight = "LightWeight",
-    // (undocumented)
     NoAgent = "NoAgent"
 }
 
 // @public
 export enum KnownSqlServerLicenseType {
-    // (undocumented)
     Ahub = "AHUB",
-    // (undocumented)
     DR = "DR",
-    // (undocumented)
     Payg = "PAYG"
 }
 
 // @public
 export enum KnownSqlVmGroupImageSku {
-    // (undocumented)
     Developer = "Developer",
-    // (undocumented)
     Enterprise = "Enterprise"
 }
 
 // @public
 export enum KnownSqlWorkloadType {
-    // (undocumented)
     DW = "DW",
-    // (undocumented)
     General = "GENERAL",
-    // (undocumented)
     Oltp = "OLTP"
 }
 
 // @public
 export enum KnownStorageWorkloadType {
-    // (undocumented)
     DW = "DW",
-    // (undocumented)
     General = "GENERAL",
-    // (undocumented)
     Oltp = "OLTP"
 }
+
+// @public
+export type LeastPrivilegeMode = string;
 
 // @public
 export interface LoadBalancerConfiguration {
@@ -270,6 +339,12 @@ export interface LoadBalancerConfiguration {
     probePort?: number;
     publicIpAddressResourceId?: string;
     sqlVirtualMachineInstances?: string[];
+}
+
+// @public
+export interface MultiSubnetIpConfiguration {
+    privateIpAddress: PrivateIPAddress;
+    sqlVirtualMachineInstance: string;
 }
 
 // @public
@@ -325,7 +400,11 @@ export interface PrivateIPAddress {
 }
 
 // @public
-export type ProxyResource = Resource & {};
+export interface ProxyResource extends Resource {
+}
+
+// @public
+export type ReadableSecondary = string;
 
 // @public
 export interface Resource {
@@ -342,12 +421,25 @@ export interface ResourceIdentity {
 }
 
 // @public
+export type Role = string;
+
+// @public
 export type ScaleType = string;
+
+// @public
+export interface Schedule {
+    dayOfWeek?: AssessmentDayOfWeek;
+    enable?: boolean;
+    monthlyOccurrence?: number;
+    startTime?: string;
+    weeklyInterval?: number;
+}
 
 // @public
 export interface ServerConfigurationsManagementSettings {
     additionalFeaturesServerConfigurations?: AdditionalFeaturesServerConfigurations;
     sqlConnectivityUpdateSettings?: SqlConnectivityUpdateSettings;
+    sqlInstanceSettings?: SQLInstanceSettings;
     sqlStorageUpdateSettings?: SqlStorageUpdateSettings;
     sqlWorkloadTypeUpdateSettings?: SqlWorkloadTypeUpdateSettings;
 }
@@ -362,6 +454,17 @@ export interface SqlConnectivityUpdateSettings {
 
 // @public
 export type SqlImageSku = string;
+
+// @public
+export interface SQLInstanceSettings {
+    collation?: string;
+    isIfiEnabled?: boolean;
+    isLpimEnabled?: boolean;
+    isOptimizeForAdHocWorkloadsEnabled?: boolean;
+    maxDop?: number;
+    maxServerMemoryMB?: number;
+    minServerMemoryMB?: number;
+}
 
 // @public
 export type SqlManagementMode = string;
@@ -383,33 +486,52 @@ export interface SqlStorageUpdateSettings {
 }
 
 // @public
-export type SqlVirtualMachine = TrackedResource & {
-    identity?: ResourceIdentity;
-    virtualMachineResourceId?: string;
-    readonly provisioningState?: string;
-    sqlImageOffer?: string;
-    sqlServerLicenseType?: SqlServerLicenseType;
-    sqlManagement?: SqlManagementMode;
-    sqlImageSku?: SqlImageSku;
-    sqlVirtualMachineGroupResourceId?: string;
-    wsfcDomainCredentials?: WsfcDomainCredentials;
-    autoPatchingSettings?: AutoPatchingSettings;
-    autoBackupSettings?: AutoBackupSettings;
-    keyVaultCredentialSettings?: KeyVaultCredentialSettings;
-    serverConfigurationsManagementSettings?: ServerConfigurationsManagementSettings;
-    storageConfigurationSettings?: StorageConfigurationSettings;
-};
+export interface SQLTempDbSettings {
+    dataFileCount?: number;
+    dataFileSize?: number;
+    dataGrowth?: number;
+    defaultFilePath?: string;
+    logFileSize?: number;
+    logGrowth?: number;
+    luns?: number[];
+    persistFolder?: boolean;
+    persistFolderPath?: string;
+}
 
 // @public
-export type SqlVirtualMachineGroup = TrackedResource & {
+export interface SqlVirtualMachine extends TrackedResource {
+    assessmentSettings?: AssessmentSettings;
+    autoBackupSettings?: AutoBackupSettings;
+    autoPatchingSettings?: AutoPatchingSettings;
+    enableAutomaticUpgrade?: boolean;
+    identity?: ResourceIdentity;
+    keyVaultCredentialSettings?: KeyVaultCredentialSettings;
+    leastPrivilegeMode?: LeastPrivilegeMode;
     readonly provisioningState?: string;
+    serverConfigurationsManagementSettings?: ServerConfigurationsManagementSettings;
+    sqlImageOffer?: string;
+    sqlImageSku?: SqlImageSku;
+    sqlManagement?: SqlManagementMode;
+    sqlServerLicenseType?: SqlServerLicenseType;
+    sqlVirtualMachineGroupResourceId?: string;
+    storageConfigurationSettings?: StorageConfigurationSettings;
+    readonly systemData?: SystemData;
+    virtualMachineResourceId?: string;
+    wsfcDomainCredentials?: WsfcDomainCredentials;
+    wsfcStaticIp?: string;
+}
+
+// @public
+export interface SqlVirtualMachineGroup extends TrackedResource {
+    readonly clusterConfiguration?: ClusterConfiguration;
+    readonly clusterManagerType?: ClusterManagerType;
+    readonly provisioningState?: string;
+    readonly scaleType?: ScaleType;
     sqlImageOffer?: string;
     sqlImageSku?: SqlVmGroupImageSku;
-    readonly scaleType?: ScaleType;
-    readonly clusterManagerType?: ClusterManagerType;
-    readonly clusterConfiguration?: ClusterConfiguration;
+    readonly systemData?: SystemData;
     wsfcDomainProfile?: WsfcDomainProfile;
-};
+}
 
 // @public
 export interface SqlVirtualMachineGroupListResult {
@@ -534,6 +656,10 @@ export interface SqlVirtualMachines {
     beginCreateOrUpdateAndWait(resourceGroupName: string, sqlVirtualMachineName: string, parameters: SqlVirtualMachine, options?: SqlVirtualMachinesCreateOrUpdateOptionalParams): Promise<SqlVirtualMachinesCreateOrUpdateResponse>;
     beginDelete(resourceGroupName: string, sqlVirtualMachineName: string, options?: SqlVirtualMachinesDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, sqlVirtualMachineName: string, options?: SqlVirtualMachinesDeleteOptionalParams): Promise<void>;
+    beginRedeploy(resourceGroupName: string, sqlVirtualMachineName: string, options?: SqlVirtualMachinesRedeployOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginRedeployAndWait(resourceGroupName: string, sqlVirtualMachineName: string, options?: SqlVirtualMachinesRedeployOptionalParams): Promise<void>;
+    beginStartAssessment(resourceGroupName: string, sqlVirtualMachineName: string, options?: SqlVirtualMachinesStartAssessmentOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginStartAssessmentAndWait(resourceGroupName: string, sqlVirtualMachineName: string, options?: SqlVirtualMachinesStartAssessmentOptionalParams): Promise<void>;
     beginUpdate(resourceGroupName: string, sqlVirtualMachineName: string, parameters: SqlVirtualMachineUpdate, options?: SqlVirtualMachinesUpdateOptionalParams): Promise<PollerLike<PollOperationState<SqlVirtualMachinesUpdateResponse>, SqlVirtualMachinesUpdateResponse>>;
     beginUpdateAndWait(resourceGroupName: string, sqlVirtualMachineName: string, parameters: SqlVirtualMachineUpdate, options?: SqlVirtualMachinesUpdateOptionalParams): Promise<SqlVirtualMachinesUpdateResponse>;
     get(resourceGroupName: string, sqlVirtualMachineName: string, options?: SqlVirtualMachinesGetOptionalParams): Promise<SqlVirtualMachinesGetResponse>;
@@ -608,6 +734,18 @@ export interface SqlVirtualMachinesListOptionalParams extends coreClient.Operati
 export type SqlVirtualMachinesListResponse = SqlVirtualMachineListResult;
 
 // @public
+export interface SqlVirtualMachinesRedeployOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export interface SqlVirtualMachinesStartAssessmentOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
 export interface SqlVirtualMachinesUpdateOptionalParams extends coreClient.OperationOptions {
     resumeFrom?: string;
     updateIntervalInMs?: number;
@@ -639,7 +777,8 @@ export interface StorageConfigurationSettings {
     diskConfigurationType?: DiskConfigurationType;
     sqlDataSettings?: SQLStorageSettings;
     sqlLogSettings?: SQLStorageSettings;
-    sqlTempDbSettings?: SQLStorageSettings;
+    sqlSystemDbOnDataDisk?: boolean;
+    sqlTempDbSettings?: SQLTempDbSettings;
     storageWorkloadType?: StorageWorkloadType;
 }
 
@@ -647,12 +786,22 @@ export interface StorageConfigurationSettings {
 export type StorageWorkloadType = string;
 
 // @public
-export type TrackedResource = Resource & {
+export interface SystemData {
+    createdAt?: Date;
+    createdBy?: string;
+    createdByType?: CreatedByType;
+    lastModifiedAt?: Date;
+    lastModifiedBy?: string;
+    lastModifiedByType?: CreatedByType;
+}
+
+// @public
+export interface TrackedResource extends Resource {
     location: string;
     tags?: {
         [propertyName: string]: string;
     };
-};
+}
 
 // @public
 export interface WsfcDomainCredentials {
@@ -665,6 +814,7 @@ export interface WsfcDomainCredentials {
 export interface WsfcDomainProfile {
     clusterBootstrapAccount?: string;
     clusterOperatorAccount?: string;
+    clusterSubnetType?: ClusterSubnetType;
     domainFqdn?: string;
     fileShareWitnessPath?: string;
     ouPath?: string;

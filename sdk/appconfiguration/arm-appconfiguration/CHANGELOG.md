@@ -1,8 +1,37 @@
 # Release History
-    
-## 3.0.0-beta.1 (2022-01-11)
 
-The package of @azure/arm-appconfiguration is using our next generation design principles since version 3.0.0-beta.1, which contains breaking changes.
+## 3.1.1 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 3.1.0 (2022-11-15)
+    
+**Features**
+
+  - Added Interface ConfigurationStore
+  - Added Interface TrackedResource
+    
+## 3.0.2 (2022-10-08)
+
+**Bugs Fixed**
+
+  -  revert credential scopes
+
+## 3.0.1 (2022-09-30)
+
+**Bugs Fixed**
+
+  -  fix better user experience of credential scopes in government cloud
+
+## 3.0.0 (2022-06-10)
+
+The package of @azure/arm-appconfiguration is using our next generation design principles since version 3.0.0, which contains breaking changes.
 
 To understand the detail of the change, please refer to [Changelog](https://aka.ms/js-track2-changelog).
 

@@ -35,21 +35,15 @@ export class AzureSASCredential implements SASCredential {
 }
 
 // @public
-export interface Context {
-    deleteValue(key: symbol): Context;
-    getValue(key: symbol): unknown;
-    setValue(key: symbol, value: unknown): Context;
-}
-
-// @public
 export interface GetTokenOptions {
     abortSignal?: AbortSignalLike;
+    claims?: string;
     requestOptions?: {
         timeout?: number;
     };
     tenantId?: string;
     tracingOptions?: {
-        tracingContext?: Context;
+        tracingContext?: TracingContext;
     };
 }
 
@@ -83,6 +77,12 @@ export interface TokenCredential {
     getToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken | null>;
 }
 
+// @public
+export interface TracingContext {
+    deleteValue(key: symbol): TracingContext;
+    getValue(key: symbol): unknown;
+    setValue(key: symbol, value: unknown): TracingContext;
+}
 
 // (No @packageDocumentation comment for this package)
 

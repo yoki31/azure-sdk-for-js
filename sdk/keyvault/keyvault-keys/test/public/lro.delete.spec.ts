@@ -1,16 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
+import { assert } from "@azure/test-utils";
 import { Context } from "mocha";
-import { env, Recorder } from "@azure-tools/test-recorder";
-import { PollerStoppedError } from "@azure/core-lro";
+import { Recorder, env } from "@azure-tools/test-recorder";
 
-import { KeyClient, DeletedKey } from "../../src";
-import { testPollerProperties } from "../utils/recorderUtils";
-import { authenticate } from "../utils/testAuthentication";
-import TestClient from "../utils/testClient";
-import { getServiceVersion } from "../utils/utils.common";
+import { DeletedKey, KeyClient } from "../../src";
+import { testPollerProperties } from "./utils/recorderUtils";
+import { authenticate, envSetupForPlayback } from "./utils/testAuthentication";
+import TestClient from "./utils/testClient";
+import { getServiceVersion } from "./utils/common";
 
 describe("Keys client - Long Running Operations - delete", () => {
   const keyPrefix = `lroDelete${env.CERTIFICATE_NAME || "KeyName"}`;
@@ -20,11 +19,13 @@ describe("Keys client - Long Running Operations - delete", () => {
   let recorder: Recorder;
 
   beforeEach(async function (this: Context) {
-    const authentication = await authenticate(this, getServiceVersion());
+    recorder = new Recorder(this.currentTest);
+    await recorder.start(envSetupForPlayback);
+
+    const authentication = await authenticate(getServiceVersion(), recorder);
     keySuffix = authentication.keySuffix;
     client = authentication.client;
     testClient = authentication.testClient;
-    recorder = authentication.recorder;
   });
 
   afterEach(async function () {
@@ -59,7 +60,7 @@ describe("Keys client - Long Running Operations - delete", () => {
     assert.ok(poller.getOperationState().isStarted);
 
     poller.pollUntilDone().catch((e) => {
-      assert.ok(e instanceof PollerStoppedError);
+      assert.ok(e.name === "PollerStoppedError");
       assert.equal(e.name, "PollerStoppedError");
       assert.equal(e.message, "This poller is already stopped");
     });

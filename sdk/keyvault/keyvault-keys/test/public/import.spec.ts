@@ -1,15 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
+import { assert } from "@azure/test-utils";
 import { Context } from "mocha";
-import { env, Recorder } from "@azure-tools/test-recorder";
+import { Recorder, env } from "@azure-tools/test-recorder";
 
 import { KeyClient } from "../../src";
-import { authenticate } from "../utils/testAuthentication";
-import TestClient from "../utils/testClient";
-import { getServiceVersion } from "../utils/utils.common";
-import { createRsaKey } from "../utils/crypto";
+import { authenticate, envSetupForPlayback } from "./utils/testAuthentication";
+import TestClient from "./utils/testClient";
+import { getServiceVersion } from "./utils/common";
+import { createRsaKey } from "./utils/crypto";
 
 describe("Keys client - import keys", () => {
   const prefix = `import${env.CERTIFICATE_NAME || "KeyName"}`;
@@ -19,11 +19,12 @@ describe("Keys client - import keys", () => {
   let recorder: Recorder;
 
   beforeEach(async function (this: Context) {
-    const authentication = await authenticate(this, getServiceVersion());
+    recorder = new Recorder(this.currentTest);
+    await recorder.start(envSetupForPlayback);
+    const authentication = await authenticate(getServiceVersion(), recorder);
     suffix = authentication.keySuffix;
     client = authentication.client;
     testClient = authentication.testClient;
-    recorder = authentication.recorder;
   });
 
   afterEach(async function () {

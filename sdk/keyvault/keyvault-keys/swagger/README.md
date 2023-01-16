@@ -7,14 +7,17 @@ package-name: "@azure/keyvault-keys"
 azure-arm: false
 generate-metadata: false
 add-credentials: false
-use-core-v2: false
+core-http-compat-mode: true
+use-core-v2: true
 license-header: MICROSOFT_MIT_NO_VERSION
-input-file: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/f4a4badda9e19dca5cab216f3dd8b45362aeb90b/specification/keyvault/data-plane/Microsoft.KeyVault/preview/7.3-preview/keys.json
+input-file: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/fead0dec636e7554fb8401370418085136d4f052/specification/keyvault/data-plane/Microsoft.KeyVault/preview/7.4-preview.1/keys.json
 output-folder: ../
 source-code-folder-path: ./src/generated
 disable-async-iterators: true
 api-version-parameter: choice
-package-version: 4.4.0-beta.4
+package-version: 4.7.0-beta.2
+use-extension:
+  "@autorest/typescript": "6.0.0-beta.19"
 ```
 
 ## Customizations for Track 2 Generator

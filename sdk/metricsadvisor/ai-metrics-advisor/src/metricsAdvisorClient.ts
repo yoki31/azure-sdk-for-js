@@ -4,46 +4,52 @@
 /// <reference lib="esnext.asynciterable" />
 
 import {
-  PipelineOptions,
-  operationOptionsToRequestOptionsBase,
-  ServiceClientOptions,
-  OperationOptions,
-} from "@azure/core-http";
-import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
-import "@azure/core-paging";
-import { TokenCredential } from "@azure/core-auth";
+  InternalPipelineOptions,
+  bearerTokenAuthenticationPolicy,
+} from "@azure/core-rest-pipeline";
+import { PageSettings, PagedAsyncIterableIterator } from "@azure/core-paging";
+import { TokenCredential, isTokenCredential } from "@azure/core-auth";
+import { OperationOptions } from "@azure/core-client";
+import { ExtendedCommonClientOptions } from "@azure/core-http-compat";
 import { GeneratedClient } from "./generated/generatedClient";
-import { createSpan } from "./tracing";
-import { MetricsAdvisorKeyCredential } from "./metricsAdvisorKeyCredentialPolicy";
-import { SpanStatusCode } from "@azure/core-tracing";
 import {
-  MetricFeedbackUnion,
+  MetricsAdvisorKeyCredential,
+  createMetricsAdvisorKeyCredentialPolicy,
+} from "./metricsAdvisorKeyCredentialPolicy";
+import {
+  AlertQueryTimeMode,
+  AlertsPageResponse,
+  AnomaliesPageResponse,
+  AnomalyAlert,
   AnomalyIncident,
   DataPointAnomaly,
-  AnomalyAlert,
-  GetMetricEnrichedSeriesDataResponse,
-  GetIncidentRootCauseResponse,
-  AlertsPageResponse,
-  IncidentsPageResponse,
-  AnomaliesPageResponse,
-  DimensionValuesPageResponse,
-  MetricSeriesPageResponse,
-  MetricEnrichmentStatusPageResponse,
-  MetricSeriesDefinition,
   DimensionKey,
+  DimensionValuesPageResponse,
   EnrichmentStatus,
+  GetIncidentRootCauseResponse,
+  GetMetricEnrichedSeriesDataResponse,
   GetMetricSeriesDataResponse,
+  IncidentsPageResponse,
+  MetricEnrichmentStatusPageResponse,
   MetricFeedbackPageResponse,
-  AlertQueryTimeMode,
+  MetricFeedbackUnion,
+  MetricSeriesDefinition,
+  MetricSeriesPageResponse,
 } from "./models";
-import { SeverityFilterCondition, FeedbackType, FeedbackQueryTimeMode } from "./generated/models";
-import { toServiceMetricFeedbackUnion, fromServiceMetricFeedbackUnion } from "./transforms";
-import { createClientPipeline } from "./createClientPipeline";
+import { FeedbackQueryTimeMode, FeedbackType, SeverityFilterCondition } from "./generated/models";
+import { fromServiceMetricFeedbackUnion, toServiceMetricFeedbackUnion } from "./transforms";
+import {
+  DEFAULT_COGNITIVE_SCOPE,
+  MetricsAdvisorLoggingAllowedHeaderNames,
+  MetricsAdvisorLoggingAllowedQueryParameters,
+} from "./constants";
+import { logger } from "./logger";
+import { tracingClient } from "./tracing";
 
 /**
  * Client options used to configure Metrics Advisor API requests.
  */
-export interface MetricsAdvisorClientOptions extends PipelineOptions {}
+export interface MetricsAdvisorClientOptions extends ExtendedCommonClientOptions {}
 
 /**
  * Options for listing incidents for detection configurations
@@ -181,11 +187,6 @@ export class MetricsAdvisorClient {
   public readonly endpointUrl: string;
 
   /**
-   * A reference to service client options.
-   */
-  private readonly pipeline: ServiceClientOptions;
-
-  /**
    * A reference to the auto-generated MetricsAdvisor HTTP client.
    */
   private readonly client: GeneratedClient;
@@ -212,8 +213,19 @@ export class MetricsAdvisorClient {
     options: MetricsAdvisorClientOptions = {}
   ) {
     this.endpointUrl = endpointUrl;
-    this.pipeline = createClientPipeline(credential, options);
-    this.client = new GeneratedClient(this.endpointUrl, this.pipeline);
+    const internalPipelineOptions: InternalPipelineOptions = {
+      ...options,
+      loggingOptions: {
+        logger: logger.info,
+        additionalAllowedHeaderNames: MetricsAdvisorLoggingAllowedHeaderNames,
+        additionalAllowedQueryParameters: MetricsAdvisorLoggingAllowedQueryParameters,
+      },
+    };
+    this.client = new GeneratedClient(this.endpointUrl, internalPipelineOptions);
+    const authPolicy = isTokenCredential(credential)
+      ? bearerTokenAuthenticationPolicy({ credential, scopes: DEFAULT_COGNITIVE_SCOPE })
+      : createMetricsAdvisorKeyCredentialPolicy(credential);
+    this.client.pipeline.addPolicy(authPolicy);
   }
 
   /**
@@ -1401,38 +1413,28 @@ export class MetricsAdvisorClient {
     incidentId: string,
     options: OperationOptions = {}
   ): Promise<GetIncidentRootCauseResponse> {
-    const { span, updatedOptions: finalOptions } = createSpan(
+    return tracingClient.withSpan(
       "MetricsAdvisorClient-getIncidentRootCauses",
-      options
-    );
-
-    try {
-      const requestOptions = operationOptionsToRequestOptionsBase(finalOptions);
-      const result = await this.client.getRootCauseOfIncidentByAnomalyDetectionConfiguration(
-        detectionConfigId,
-        incidentId,
-        requestOptions
-      );
-      const transformed = result.value?.map((r) => {
+      options,
+      async (finalOptions) => {
+        const result = await this.client.getRootCauseOfIncidentByAnomalyDetectionConfiguration(
+          detectionConfigId,
+          incidentId,
+          finalOptions
+        );
+        const transformed = result.value?.map((r) => {
+          return {
+            seriesKey: r.rootCause.dimension,
+            path: r.path,
+            score: r.score,
+            description: r.description,
+          };
+        });
         return {
-          seriesKey: r.rootCause.dimension,
-          path: r.path,
-          score: r.score,
-          description: r.description,
+          rootCauses: transformed,
         };
-      });
-      return {
-        rootCauses: transformed,
-      };
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message,
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+      }
+    );
   }
 
   /**
@@ -1446,30 +1448,20 @@ export class MetricsAdvisorClient {
     feedback: MetricFeedbackUnion,
     options: OperationOptions = {}
   ): Promise<MetricFeedbackUnion> {
-    const { span, updatedOptions: finalOptions } = createSpan(
+    return tracingClient.withSpan(
       "MetricsAdvisorClient-addFeedback",
-      options
-    );
-
-    try {
-      const requestOptions = operationOptionsToRequestOptionsBase(finalOptions);
-      const serviceFeedback = toServiceMetricFeedbackUnion(feedback);
-      const result = await this.client.createMetricFeedback(serviceFeedback, requestOptions);
-      if (!result.location) {
-        throw new Error("Expected a valid location to retrieve the created configuration");
+      options,
+      async (finalOptions) => {
+        const serviceFeedback = toServiceMetricFeedbackUnion(feedback);
+        const result = await this.client.createMetricFeedback(serviceFeedback, finalOptions);
+        if (!result.location) {
+          throw new Error("Expected a valid location to retrieve the created configuration");
+        }
+        const lastSlashIndex = result.location.lastIndexOf("/");
+        const feedbackId = result.location.substring(lastSlashIndex + 1);
+        return this.getFeedback(feedbackId);
       }
-      const lastSlashIndex = result.location.lastIndexOf("/");
-      const feedbackId = result.location.substring(lastSlashIndex + 1);
-      return this.getFeedback(feedbackId);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message,
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    );
   }
 
   /**
@@ -1481,24 +1473,14 @@ export class MetricsAdvisorClient {
     id: string,
     options: OperationOptions = {}
   ): Promise<MetricFeedbackUnion> {
-    const { span, updatedOptions: finalOptions } = createSpan(
+    return tracingClient.withSpan(
       "MetricsAdvisorClient-getFeedback",
-      options
+      options,
+      async (finalOptions) => {
+        const result = await this.client.getMetricFeedback(id, finalOptions);
+        return fromServiceMetricFeedbackUnion(result);
+      }
     );
-
-    try {
-      const requestOptions = operationOptionsToRequestOptionsBase(finalOptions);
-      const result = await this.client.getMetricFeedback(id, requestOptions);
-      return fromServiceMetricFeedbackUnion(result);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message,
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 
   private async *listSegmentsOfFeedback(

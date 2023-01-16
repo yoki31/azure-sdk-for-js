@@ -7,17 +7,22 @@ import {
   Checkpoint,
   OperationOptions,
 } from "@azure/event-hubs";
-import { ContainerClient, Metadata, RestError, BlobSetMetadataResponse } from "@azure/storage-blob";
+import { Metadata, RestError, BlobSetMetadataResponse } from "@azure/storage-blob";
 import { logger, logErrorStackTrace } from "./log";
+import { ContainerClientLike } from "./storageBlobInterfaces";
 import { throwTypeErrorIfParameterMissing } from "./util/error";
 
 /**
  * An implementation of CheckpointStore that uses Azure Blob Storage to persist checkpoint data.
  */
 export class BlobCheckpointStore implements CheckpointStore {
-  private _containerClient: ContainerClient;
+  private _containerClient: ContainerClientLike;
 
-  constructor(containerClient: ContainerClient) {
+  /**
+   * Constructs a new instance of {@link BlobCheckpointStore}
+   * @param containerClient - An instance of a storage blob ContainerClient.
+   */
+  constructor(containerClient: ContainerClientLike) {
     this._containerClient = containerClient;
   }
   /**
@@ -62,7 +67,7 @@ export class BlobCheckpointStore implements CheckpointStore {
         const blobPath = blob.name.split("/");
         const blobName = blobPath[blobPath.length - 1];
 
-        const ownershipMetadata = blob.metadata as OwnershipMetadata;
+        const ownershipMetadata = (blob.metadata as OwnershipMetadata) ?? {};
 
         if (ownershipMetadata.ownerid == null) {
           throw new Error(`Missing ownerid in metadata for blob ${blob.name}`);
@@ -81,7 +86,7 @@ export class BlobCheckpointStore implements CheckpointStore {
         partitionOwnershipArray.push(partitionOwnership);
       }
       return partitionOwnershipArray;
-    } catch (err) {
+    } catch (err: any) {
       logger.warning(`Error occurred while fetching the list of blobs`, err.message);
       logErrorStackTrace(err);
 
@@ -128,7 +133,7 @@ export class BlobCheckpointStore implements CheckpointStore {
           `[${ownership.ownerId}] Claimed ownership successfully for partition: ${ownership.partitionId}`,
           `LastModifiedTime: ${ownership.lastModifiedTimeInMs}, ETag: ${ownership.etag}`
         );
-      } catch (err) {
+      } catch (err: any) {
         const restError = err as RestError;
 
         if (restError.statusCode === 412) {
@@ -191,7 +196,7 @@ export class BlobCheckpointStore implements CheckpointStore {
       const blobPath = blob.name.split("/");
       const blobName = blobPath[blobPath.length - 1];
 
-      const checkpointMetadata = blob.metadata as CheckpointMetadata;
+      const checkpointMetadata = (blob.metadata as CheckpointMetadata) ?? {};
 
       const offset = parseIntOrThrow(blob.name, "offset", checkpointMetadata.offset);
       const sequenceNumber = parseIntOrThrow(
@@ -249,7 +254,7 @@ export class BlobCheckpointStore implements CheckpointStore {
         }`
       );
       return;
-    } catch (err) {
+    } catch (err: any) {
       logger.warning(
         `Error occurred while upating the checkpoint for partition: ${checkpoint.partitionId}.`,
         err.message
@@ -312,7 +317,7 @@ export class BlobCheckpointStore implements CheckpointStore {
           abortSignal,
           tracingOptions,
         });
-      } catch (err) {
+      } catch (err: any) {
         // Check if the error is `BlobNotFound` and fallback to `upload` if it is.
         if (err?.name !== "RestError") {
           throw err;

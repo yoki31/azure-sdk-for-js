@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { isTokenCredential, KeyCredential, TokenCredential } from "@azure/core-auth";
+import { KeyCredential, TokenCredential, isTokenCredential } from "@azure/core-auth";
 import { bearerTokenAuthenticationPolicy } from "@azure/core-rest-pipeline";
 import { createFormRecognizerAzureKeyCredentialPolicy } from "./azureKeyCredentialPolicy";
 import { DEFAULT_COGNITIVE_SCOPE } from "./constants";
@@ -31,6 +31,14 @@ export const uncapitalize = <S extends string = string>(s: string): Uncapitalize
  */
 export const capitalize = <S extends string = string>(s: S): Capitalize<S> =>
   (s.substring(0, 1).toUpperCase() + s.substring(1)) as Capitalize<S>;
+
+/**
+ * Tests if a string looks like it begins with an acronym, i.e. it starts with two capital letters.
+ * @internal
+ */
+export const isAcronymic = (s: string): boolean => {
+  return /^[A-Z][A-Z]/.test(s);
+};
 
 /**
  * Map an optional value through a function

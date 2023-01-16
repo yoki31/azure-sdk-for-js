@@ -13,47 +13,48 @@ export { DocumentAnalysisClient } from "./documentAnalysisClient";
 export { DocumentModelAdministrationClient } from "./documentModelAdministrationClient";
 export {
   // Generated types used verbatim
-  BoundingRegion,
-  ContentType,
+  AddressValue,
   CopyAuthorization,
-  DocTypeInfo,
-  DocumentEntity,
+  CurrencyValue,
+  DocumentTypeDetails,
+  DocumentBuildMode,
   DocumentFieldSchema,
   DocumentFieldType,
-  DocumentKeyValueElement,
-  DocumentKeyValuePair,
-  DocumentSelectionMark,
   DocumentSignatureType,
   DocumentSpan,
+  DocumentLanguage,
   DocumentStyle,
-  DocumentTable,
-  DocumentTableCell,
   DocumentTableCellKind,
-  DocumentWord,
   LengthUnit,
-  ModelInfo,
-  ModelSummary,
-  OperationInfo,
+  DocumentModelDetails,
+  DocumentModelSummary,
+  OperationSummary,
   OperationKind,
   OperationStatus,
-  GetInfoResponse,
-  CustomDocumentModelsInfo,
+  ResourceDetails,
+  CustomDocumentModelsDetails,
   AnalyzeResultOperationStatus,
   SelectionMarkState,
-  // This and its child DocumentField are part of the DocumentModel<Result> type, and can be removed if we hide it
-  Document as GeneratedDocument,
-  DocumentField as GeneratedDocumentField,
+  ParagraphRole,
+  GetOperationResponse,
+  OperationDetails,
+  ErrorModel,
+  InnerError,
+  OperationDetailsUnion,
+  DocumentModelBuildOperationDetails,
+  DocumentModelComposeOperationDetails,
+  DocumentModelCopyToOperationDetails,
 } from "./generated";
 export {
   AnalysisPoller,
   AnalyzeResult,
-  DocumentPage,
-  DocumentLine,
+  AnalyzeResultCommon,
   DocumentAnalysisPollOperationState,
   AnalyzedDocument,
   FormRecognizerRequestBody,
-} from "./lro/analyze";
-export { TrainingPoller, TrainingPollOperationState } from "./lro/training";
+} from "./lro/analysis";
+export { DocumentModelPoller, DocumentModelOperationState } from "./lro/administration";
 export * from "./models";
 export * from "./options";
-export * from "./prebuilt";
+export * from "./documentModel";
+export { Point2D } from "./transforms/polygon";

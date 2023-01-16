@@ -19,7 +19,16 @@ import { TokenCredential } from '@azure/core-auth';
 import { TransferProgressEvent } from '@azure/core-rest-pipeline';
 
 // @public
+export interface AdditionalPolicyConfig {
+    policy: PipelinePolicy;
+    position: "perCall" | "perRetry";
+}
+
+// @public
 export function authorizeRequestOnClaimChallenge(onChallengeOptions: AuthorizeRequestOnChallengeOptions): Promise<boolean>;
+
+// @public
+export const authorizeRequestOnTenantChallenge: (challengeOptions: AuthorizeRequestOnChallengeOptions) => Promise<boolean>;
 
 // @public
 export interface BaseMapper {
@@ -33,6 +42,7 @@ export interface BaseMapper {
     type: MapperType;
     xmlElementName?: string;
     xmlIsAttribute?: boolean;
+    xmlIsMsText?: boolean;
     xmlIsWrapped?: boolean;
     xmlName?: string;
     xmlNamespace?: string;
@@ -41,6 +51,7 @@ export interface BaseMapper {
 
 // @public
 export interface CommonClientOptions extends PipelineOptions {
+    additionalPolicies?: AdditionalPolicyConfig[];
     allowInsecureConnection?: boolean;
     httpClient?: HttpClient;
 }
@@ -302,11 +313,13 @@ export interface Serializer {
         [key: string]: any;
     };
     serialize(mapper: Mapper, object: any, objectName?: string, options?: SerializerOptions): any;
+    // @deprecated
     validateConstraints(mapper: Mapper, value: any, objectName: string): void;
 }
 
 // @public
 export interface SerializerOptions {
+    ignoreUnknownProperties?: boolean;
     xml: XmlOptions;
 }
 
@@ -320,9 +333,11 @@ export class ServiceClient {
 
 // @public
 export interface ServiceClientOptions extends CommonClientOptions {
+    // @deprecated
     baseUri?: string;
     credential?: TokenCredential;
     credentialScopes?: string | string[];
+    endpoint?: string;
     pipeline?: Pipeline;
     requestContentType?: string;
 }

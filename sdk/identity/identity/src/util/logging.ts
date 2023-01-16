@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { createClientLogger, AzureLogger } from "@azure/logger";
+import { AzureLogger, createClientLogger } from "@azure/logger";
 
 /**
  * The AzureLogger used for all clients within the identity package
@@ -69,6 +69,8 @@ export interface CredentialLoggerInstance {
   title: string;
   fullTitle: string;
   info(message: string): void;
+  warning(message: string): void;
+  verbose(message: string): void;
   /**
    * The logging functions for warning and error are intentionally left out, since we want the identity logging to be at the info level.
    * Otherwise, they would look like:
@@ -97,10 +99,19 @@ export function credentialLoggerInstance(
     log.info(`${fullTitle} =>`, message);
   }
 
+  function warning(message: string): void {
+    log.warning(`${fullTitle} =>`, message);
+  }
+
+  function verbose(message: string): void {
+    log.verbose(`${fullTitle} =>`, message);
+  }
   return {
     title,
     fullTitle,
     info,
+    warning,
+    verbose,
   };
 }
 

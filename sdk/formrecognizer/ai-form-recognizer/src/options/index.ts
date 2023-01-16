@@ -1,19 +1,25 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { AnalyzeDocumentsOptions } from "./AnalyzeDocumentsOptions";
-import { BuildModelOptions } from "./BuildModelOptions";
-import { CopyModelOptions } from "./CopyModelOptions";
-import { DeleteModelOptions } from "./DeleteModelOptions";
+import { AnalyzeDocumentOptions } from "./AnalyzeDocumentsOptions";
 import {
+  CreateDocumentModelOptions,
+  CommonModelCreationOptions,
+  DocumentModelBuildMode,
+  BeginBuildDocumentModelOptions,
+  BeginComposeDocumentModelOptions,
+} from "./BuildModelOptions";
+import { BeginCopyModelOptions } from "./BeginCopyModelOptions";
+import { DeleteDocumentModelOptions } from "./DeleteModelOptions";
+import {
+  DocumentAnalysisClientOptions,
+  DocumentModelAdministrationClientOptions,
   FormRecognizerApiVersion,
   FormRecognizerCommonClientOptions,
   StringIndexType,
-  DocumentAnalysisClientOptions,
-  DocumentModelAdministrationClientOptions,
 } from "./FormRecognizerClientOptions";
 import { GetCopyAuthorizationOptions } from "./GetCopyAuthorizationOptions";
-import { GetInfoOptions } from "./GetInfoOptions";
+import { GetResourceDetailsOptions } from "./GetResourceDetailsOptions";
 import { GetModelOptions } from "./GetModelOptions";
 import { GetOperationOptions } from "./GetOperationOptions";
 import { ListModelsOptions } from "./ListModelsOptions";
@@ -21,17 +27,21 @@ import { ListOperationsOptions } from "./ListOperationsOptions";
 import { PollerOptions } from "./PollerOptions";
 
 export {
-  AnalyzeDocumentsOptions,
-  BuildModelOptions,
-  CopyModelOptions,
+  AnalyzeDocumentOptions,
+  CreateDocumentModelOptions,
+  BeginBuildDocumentModelOptions,
+  BeginComposeDocumentModelOptions,
+  CommonModelCreationOptions,
+  BeginCopyModelOptions,
+  DocumentModelBuildMode,
   FormRecognizerCommonClientOptions,
   DocumentAnalysisClientOptions,
   DocumentModelAdministrationClientOptions,
   GetCopyAuthorizationOptions,
-  GetInfoOptions,
+  GetResourceDetailsOptions,
   GetModelOptions,
   GetOperationOptions,
-  DeleteModelOptions,
+  DeleteDocumentModelOptions,
   ListModelsOptions,
   ListOperationsOptions,
   PollerOptions,

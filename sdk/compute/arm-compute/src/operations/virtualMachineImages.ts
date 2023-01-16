@@ -21,7 +21,9 @@ import {
   VirtualMachineImagesListPublishersOptionalParams,
   VirtualMachineImagesListPublishersResponse,
   VirtualMachineImagesListSkusOptionalParams,
-  VirtualMachineImagesListSkusResponse
+  VirtualMachineImagesListSkusResponse,
+  VirtualMachineImagesListByEdgeZoneOptionalParams,
+  VirtualMachineImagesListByEdgeZoneResponse
 } from "../models";
 
 /** Class containing VirtualMachineImages operations. */
@@ -131,6 +133,23 @@ export class VirtualMachineImagesImpl implements VirtualMachineImages {
       listSkusOperationSpec
     );
   }
+
+  /**
+   * Gets a list of all virtual machine image versions for the specified edge zone
+   * @param location The name of a supported Azure region.
+   * @param edgeZone The name of the edge zone.
+   * @param options The options parameters.
+   */
+  listByEdgeZone(
+    location: string,
+    edgeZone: string,
+    options?: VirtualMachineImagesListByEdgeZoneOptionalParams
+  ): Promise<VirtualMachineImagesListByEdgeZoneResponse> {
+    return this.client.sendOperationRequest(
+      { location, edgeZone, options },
+      listByEdgeZoneOperationSpec
+    );
+  }
 }
 // Operation Specifications
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
@@ -142,17 +161,20 @@ const getOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.VirtualMachineImage
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location,
+    Parameters.location1,
     Parameters.publisherName,
-    Parameters.version,
     Parameters.offer,
-    Parameters.skus
+    Parameters.skus,
+    Parameters.version
   ],
   headerParameters: [Parameters.accept],
   serializer
@@ -174,18 +196,21 @@ const listOperationSpec: coreClient.OperationSpec = {
           }
         }
       }
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
   queryParameters: [
     Parameters.apiVersion,
-    Parameters.expand,
+    Parameters.expand1,
     Parameters.top,
     Parameters.orderby
   ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location,
+    Parameters.location1,
     Parameters.publisherName,
     Parameters.offer,
     Parameters.skus
@@ -210,13 +235,16 @@ const listOffersOperationSpec: coreClient.OperationSpec = {
           }
         }
       }
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location,
+    Parameters.location1,
     Parameters.publisherName
   ],
   headerParameters: [Parameters.accept],
@@ -239,13 +267,16 @@ const listPublishersOperationSpec: coreClient.OperationSpec = {
           }
         }
       }
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location
+    Parameters.location1
   ],
   headerParameters: [Parameters.accept],
   serializer
@@ -267,15 +298,40 @@ const listSkusOperationSpec: coreClient.OperationSpec = {
           }
         }
       }
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location,
+    Parameters.location1,
     Parameters.publisherName,
     Parameters.offer
+  ],
+  headerParameters: [Parameters.accept],
+  serializer
+};
+const listByEdgeZoneOperationSpec: coreClient.OperationSpec = {
+  path:
+    "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/edgeZones/{edgeZone}/vmimages",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.VmImagesInEdgeZoneListResult
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.location1,
+    Parameters.edgeZone
   ],
   headerParameters: [Parameters.accept],
   serializer

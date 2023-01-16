@@ -1,17 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-chai.use(chaiAsPromised);
 import { isPlaybackMode, Recorder } from "@azure-tools/test-recorder";
 
 import { KeyVaultBackupClient } from "../../src";
-import { authenticate } from "../utils/authentication";
-import { testPollerProperties } from "../utils/recorder";
-import { getSasToken } from "../utils/common";
+import { authenticate } from "./utils/authentication";
+import { testPollerProperties } from "./utils/recorder";
+import { getSasToken, getServiceVersion } from "./utils/common";
 import { delay } from "@azure/core-util";
-import { assert } from "chai";
+import { assert } from "@azure/test-utils";
 import { KeyClient } from "@azure/keyvault-keys";
 
 describe("KeyVaultBackupClient", () => {
@@ -23,7 +20,7 @@ describe("KeyVaultBackupClient", () => {
   let blobSasToken: string;
 
   beforeEach(async function () {
-    const authentication = await authenticate(this);
+    const authentication = await authenticate(this, getServiceVersion());
     client = authentication.backupClient;
     keyClient = authentication.keyClient;
     recorder = authentication.recorder;
@@ -63,12 +60,10 @@ describe("KeyVaultBackupClient", () => {
     });
 
     it("throws when polling errors", async function () {
-      const backupPoller = await client.beginBackup(
-        blobStorageUri,
-        "invalid_sas_token",
-        testPollerProperties
+      await assert.isRejected(
+        client.beginBackup(blobStorageUri, "invalid_sas_token", testPollerProperties),
+        /SAS token/
       );
-      await assert.isRejected(backupPoller.pollUntilDone(), /SAS token/);
     });
   });
 
@@ -166,12 +161,10 @@ describe("KeyVaultBackupClient", () => {
     });
 
     it("throws when polling errors", async function () {
-      const restorePoller = await client.beginRestore(
-        blobStorageUri,
-        "bad_token",
-        testPollerProperties
+      await assert.isRejected(
+        client.beginRestore(blobStorageUri, "bad_token", testPollerProperties),
+        /SAS token is malformed/
       );
-      await assert.isRejected(restorePoller.pollUntilDone(), /SAS token is malformed/);
     });
   });
 });

@@ -1,40 +1,41 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
 import {
-  ServiceClient,
-  OperationRequest,
-  createSerializer,
+  CompositeMapper,
   DictionaryMapper,
-  QueryCollectionFormat,
-  ParameterPath,
+  FullOperationResponse,
+  Mapper,
   MapperTypeNames,
   OperationArguments,
-  Mapper,
-  CompositeMapper,
-  OperationSpec,
-  serializationPolicy,
-  FullOperationResponse,
   OperationQueryParameter,
+  OperationRequest,
+  OperationSpec,
+  ParameterPath,
+  QueryCollectionFormat,
+  ServiceClient,
+  createSerializer,
+  serializationPolicy,
 } from "../src";
 import {
-  createHttpHeaders,
-  createEmptyPipeline,
   HttpClient,
-  createPipelineRequest,
+  PipelinePolicy,
   PipelineRequest,
   RestError,
+  SendRequest,
+  createEmptyPipeline,
+  createHttpHeaders,
+  createPipelineRequest,
 } from "@azure/core-rest-pipeline";
-
 import {
   getOperationArgumentValueFromParameter,
   getOperationRequestInfo,
 } from "../src/operationHelpers";
-import { deserializationPolicy } from "../src/deserializationPolicy";
 import { TokenCredential } from "@azure/core-auth";
-import { getCachedDefaultHttpClient } from "../src/httpClientCache";
+import { assert } from "chai";
 import { assertServiceClientResponse } from "./utils/serviceClient";
+import { deserializationPolicy } from "../src/deserializationPolicy";
+import { getCachedDefaultHttpClient } from "../src/httpClientCache";
 
 describe("ServiceClient", function () {
   describe("Auth scopes", () => {
@@ -101,12 +102,12 @@ describe("ServiceClient", function () {
 
         await client.sendOperationRequest(testOperationArgs, testOperationSpec);
         assert.fail();
-      } catch (error) {
+      } catch (error: any) {
         assert.include(error.message, `Invalid URL`);
       }
     });
 
-    it("should throw is no scope or baseUri are defined", async function () {
+    it("should throw is no scope or endpoint are defined", async function () {
       const credential: TokenCredential = {
         getToken: async (_scopes) => {
           return { token: "testToken", expiresOnTimestamp: 11111 };
@@ -126,10 +127,10 @@ describe("ServiceClient", function () {
 
         await client.sendOperationRequest(testOperationArgs, testOperationSpec);
         assert.fail();
-      } catch (error) {
+      } catch (error: any) {
         assert.equal(
           error.message,
-          `When using credentials, the ServiceClientOptions must contain either a baseUri or a credentialScopes. Unable to create a bearerTokenAuthenticationPolicy`
+          `When using credentials, the ServiceClientOptions must contain either a endpoint or a credentialScopes. Unable to create a bearerTokenAuthenticationPolicy`
         );
       }
     });
@@ -153,6 +154,33 @@ describe("ServiceClient", function () {
         },
         credential,
         baseUri,
+      });
+
+      await client.sendOperationRequest(testOperationArgs, testOperationSpec);
+
+      assert(request!);
+      assert.deepEqual(request!.headers.get("authorization"), "Bearer testToken");
+    });
+
+    it("should use endpoint to build scope", async function () {
+      const endpoint = "https://microsoft.com/baseuri";
+      const credential: TokenCredential = {
+        getToken: async (scopes) => {
+          assert.equal(scopes, `${endpoint}/.default`);
+          return { token: "testToken", expiresOnTimestamp: 11111 };
+        },
+      };
+
+      let request: OperationRequest;
+      const client = new ServiceClient({
+        httpClient: {
+          sendRequest: (req) => {
+            request = req;
+            return Promise.resolve({ request, status: 200, headers: createHttpHeaders() });
+          },
+        },
+        credential,
+        endpoint,
       });
 
       await client.sendOperationRequest(testOperationArgs, testOperationSpec);
@@ -1073,7 +1101,7 @@ describe("ServiceClient", function () {
     try {
       await client.sendOperationRequest({}, operationSpec);
       assert.fail();
-    } catch (ex) {
+    } catch (ex: any) {
       assert.strictEqual(ex.details.errorCode, "InvalidResourceNameHeader");
       assert.strictEqual(ex.details.message, "InvalidResourceNameBody");
     }
@@ -1153,7 +1181,7 @@ describe("ServiceClient", function () {
     try {
       await client.sendOperationRequest({}, operationSpec);
       assert.fail();
-    } catch (ex) {
+    } catch (ex: any) {
       assert.strictEqual(ex.code, "BlobNotFound");
       assert.strictEqual(ex.message, "The specified blob does not exist.");
     }
@@ -1337,7 +1365,7 @@ describe("ServiceClient", function () {
         operationSpec
       );
       assert.fail("Expected client to throw");
-    } catch (error) {
+    } catch (error: any) {
       assert.include(error.message, "cannot be null or undefined");
     }
   });
@@ -1421,7 +1449,7 @@ describe("ServiceClient", function () {
         operationSpec
       );
       assert.fail("Expected client to throw");
-    } catch (error) {
+    } catch (error: any) {
       assert.include(error.message, "cannot be null or undefined");
     }
   });
@@ -1483,6 +1511,36 @@ describe("ServiceClient", function () {
     });
     await client.sendOperationRequest<string>({ options: { top: 10 } as any }, operationSpec);
     assert.equal(request!.url, "https://example.com/path?$skip=10&$top=10");
+  });
+
+  it("should insert policies in the correct pipeline position", async function () {
+    const pipeline = createEmptyPipeline();
+    const sendRequest = (request: PipelineRequest, next: SendRequest) => next(request);
+    const retryPolicy: PipelinePolicy = {
+      name: "retry",
+      sendRequest,
+    };
+    pipeline.addPolicy(retryPolicy, { phase: "Retry" });
+    const policy1: PipelinePolicy = {
+      name: "policy1",
+      sendRequest,
+    };
+    const policy2: PipelinePolicy = {
+      name: "policy2",
+      sendRequest,
+    };
+
+    const client = new ServiceClient({
+      pipeline,
+      additionalPolicies: [
+        { policy: policy1, position: "perRetry" },
+        { policy: policy2, position: "perCall" },
+      ],
+    });
+
+    assert(client);
+    const policies = pipeline.getOrderedPolicies();
+    assert.deepStrictEqual(policies, [policy2, retryPolicy, policy1]);
   });
 });
 

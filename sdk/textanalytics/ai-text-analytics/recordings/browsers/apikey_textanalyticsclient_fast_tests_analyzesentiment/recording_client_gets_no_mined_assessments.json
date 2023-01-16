@@ -1,29 +1,79 @@
 {
- "recordings": [
-  {
-   "method": "POST",
-   "url": "https://endpoint/text/analytics/v3.2-preview.2/sentiment",
-   "query": {
-    "stringIndexType": "Utf16CodeUnit",
-    "opinionMining": "true"
-   },
-   "requestBody": "{\"documents\":[{\"id\":\"0\",\"text\":\"today is a hot day\",\"language\":\"en\"}]}",
-   "status": 200,
-   "response": "{\"documents\":[{\"id\":\"0\",\"sentiment\":\"neutral\",\"confidenceScores\":{\"positive\":0.1,\"neutral\":0.88,\"negative\":0.02},\"sentences\":[{\"sentiment\":\"neutral\",\"confidenceScores\":{\"positive\":0.1,\"neutral\":0.88,\"negative\":0.02},\"offset\":0,\"length\":18,\"text\":\"today is a hot day\",\"targets\":[],\"assessments\":[]}],\"warnings\":[]}],\"errors\":[],\"modelVersion\":\"2020-04-01\"}",
-   "responseHeaders": {
-    "apim-request-id": "3734937e-8c60-4501-ad12-0bc4c6cf37ce",
-    "content-type": "application/json; charset=utf-8",
-    "csp-billing-usage": "CognitiveServices.TextAnalytics.BatchScoring=1,CognitiveServices.TextAnalytics.TextRecords=1",
-    "date": "Sat, 23 Oct 2021 00:50:08 GMT",
-    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    "x-content-type-options": "nosniff",
-    "x-envoy-upstream-service-time": "106"
-   }
-  }
- ],
- "uniqueTestInfo": {
-  "uniqueName": {},
-  "newDate": {}
- },
- "hash": "4a32b51201e582791f5a784bb39eb256"
+  "Entries": [
+    {
+      "RequestUri": "https://endpoint/text/analytics/v3.1/sentiment?stringIndexType=Utf16CodeUnit\u0026opinionMining=true",
+      "RequestMethod": "POST",
+      "RequestHeaders": {
+        "Accept": "application/json, text/json",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US",
+        "Connection": "keep-alive",
+        "Content-Length": "70",
+        "Content-Type": "application/json",
+        "ocp-apim-subscription-key": "api_key",
+        "Referer": "http://localhost:9876/",
+        "sec-ch-ua": "",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/103.0.5058.0 Safari/537.36",
+        "x-ms-client-request-id": "c5411f6c-95a4-4677-8939-205f653386e2",
+        "x-ms-useragent": "azsdk-js-ai-textanalytics/5.1.1 azsdk-js-ai-text-analytics/5.1.1 core-rest-pipeline/1.9.1 OS/Linuxx86_64"
+      },
+      "RequestBody": {
+        "documents": [
+          {
+            "id": "0",
+            "text": "today is a hot day",
+            "language": "en"
+          }
+        ]
+      },
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "apim-request-id": "28787c2f-13f4-434d-b628-d081f1a67d2d",
+        "Content-Type": "application/json; charset=utf-8",
+        "csp-billing-usage": "CognitiveServices.TextAnalytics.BatchScoring=1,CognitiveServices.TextAnalytics.TextRecords=1",
+        "Date": "Fri, 22 Jul 2022 02:44:58 GMT",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Transfer-Encoding": "chunked",
+        "X-Content-Type-Options": "nosniff",
+        "x-envoy-upstream-service-time": "17"
+      },
+      "ResponseBody": {
+        "documents": [
+          {
+            "id": "0",
+            "sentiment": "positive",
+            "confidenceScores": {
+              "positive": 0.58,
+              "neutral": 0.34,
+              "negative": 0.08
+            },
+            "sentences": [
+              {
+                "sentiment": "positive",
+                "confidenceScores": {
+                  "positive": 0.58,
+                  "neutral": 0.34,
+                  "negative": 0.08
+                },
+                "offset": 0,
+                "length": 18,
+                "text": "today is a hot day",
+                "targets": [],
+                "assessments": []
+              }
+            ],
+            "warnings": []
+          }
+        ],
+        "errors": [],
+        "modelVersion": "2022-06-01"
+      }
+    }
+  ],
+  "Variables": {}
 }

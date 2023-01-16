@@ -7,17 +7,15 @@ import { isTokenCredential, TokenCredential } from "@azure/core-auth";
 import {
   InternalPipelineOptions,
   bearerTokenAuthenticationPolicy,
-  PipelineOptions,
 } from "@azure/core-rest-pipeline";
-import { OperationOptions } from "@azure/core-client";
+import { CommonClientOptions, OperationOptions } from "@azure/core-client";
 
-import { SpanStatusCode } from "@azure/core-tracing";
 import "@azure/core-paging";
 import { PageSettings, PagedAsyncIterableIterator } from "@azure/core-paging";
 
 import { logger } from "./logger";
 import { GeneratedClient } from "./generated";
-import { createSpan } from "./tracing";
+import { tracingClient } from "./tracing";
 import { RepositoryPageResponse } from "./models";
 import { extractNextLink } from "./utils/helpers";
 import { ChallengeHandler } from "./containerRegistryChallengeHandler";
@@ -34,7 +32,7 @@ const LATEST_API_VERSION = "2021-07-01";
 /**
  * Client options used to configure Container Registry Repository API requests.
  */
-export interface ContainerRegistryClientOptions extends PipelineOptions {
+export interface ContainerRegistryClientOptions extends CommonClientOptions {
   /**
    * Gets or sets the audience to use for authentication with Azure Active Directory.
    * The authentication scope will be set from this audience.
@@ -170,19 +168,13 @@ export class ContainerRegistryClient {
       throw new Error("invalid repositoryName");
     }
 
-    const { span, updatedOptions } = createSpan(
-      "ContainerRegistryClient-deleteRepository",
-      options
+    return tracingClient.withSpan(
+      "ContainerRegistryClient.deleteRepository",
+      options,
+      async (updatedOptions) => {
+        await this.client.containerRegistry.deleteRepository(repositoryName, updatedOptions);
+      }
     );
-
-    try {
-      await this.client.containerRegistry.deleteRepository(repositoryName, updatedOptions);
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 
   /**

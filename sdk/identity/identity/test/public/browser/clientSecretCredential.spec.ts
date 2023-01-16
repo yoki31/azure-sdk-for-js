@@ -1,29 +1,23 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { IdentityTestContextInterface, createResponse } from "../../httpRequestsCommon";
 import { ClientSecretCredential } from "../../../src";
+import { IdentityTestContext } from "../../httpRequests";
 import { assertClientCredentials } from "../../authTestUtils";
-import { prepareIdentityTests } from "../../httpRequests";
-import {
-  createResponse,
-  IdentityTestContext,
-  SendCredentialRequests,
-} from "../../httpRequestsCommon";
 
 describe("ClientSecretCredential", function () {
-  let testContext: IdentityTestContext;
-  let sendCredentialRequests: SendCredentialRequests;
+  let testContext: IdentityTestContextInterface;
 
   beforeEach(async function () {
-    testContext = await prepareIdentityTests({});
-    sendCredentialRequests = testContext.sendCredentialRequests;
+    testContext = new IdentityTestContext({});
   });
   afterEach(async function () {
     await testContext.restore();
   });
 
   it("sends an authorization request with the given credentials", async () => {
-    const authDetails = await sendCredentialRequests({
+    const authDetails = await testContext.sendCredentialRequests({
       scopes: ["scope"],
       credential: new ClientSecretCredential("tenant", "client", "secret"),
       secureResponses: [

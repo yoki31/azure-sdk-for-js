@@ -21,6 +21,11 @@ export type UserSourceInfoUnion =
   | UploadedUserSourceInfoUnion
   | BuildResultUserSourceInfo
   | CustomContainerUserSourceInfo;
+export type ProbeActionUnion =
+  | ProbeAction
+  | HttpGetAction
+  | ExecAction
+  | TCPSocketAction;
 export type UploadedUserSourceInfoUnion =
   | UploadedUserSourceInfo
   | JarUploadedUserSourceInfo
@@ -36,6 +41,8 @@ export interface ClusterResourceProperties {
   readonly provisioningState?: ProvisioningState;
   /** Network profile of the Service */
   networkProfile?: NetworkProfile;
+  /** Additional Service settings in vnet injection instance */
+  vnetAddons?: ServiceVNetAddons;
   /**
    * Version of the Service
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -57,33 +64,39 @@ export interface ClusterResourceProperties {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly fqdn?: string;
+  /** Purchasing 3rd party product of the Service resource. */
+  marketplaceResource?: MarketplaceResource;
 }
 
 /** Service network profile payload */
 export interface NetworkProfile {
-  /** Fully qualified resource Id of the subnet to host Azure Spring Cloud Service Runtime */
+  /** Fully qualified resource Id of the subnet to host Azure Spring Apps Service Runtime */
   serviceRuntimeSubnetId?: string;
-  /** Fully qualified resource Id of the subnet to host Azure Spring Cloud Apps */
+  /** Fully qualified resource Id of the subnet to host customer apps in Azure Spring Apps */
   appSubnetId?: string;
-  /** Azure Spring Cloud service reserved CIDR */
+  /** Azure Spring Apps service reserved CIDR */
   serviceCidr?: string;
-  /** Name of the resource group containing network resources of Azure Spring Cloud Service Runtime */
+  /** Name of the resource group containing network resources of Azure Spring Apps Service Runtime */
   serviceRuntimeNetworkResourceGroup?: string;
-  /** Name of the resource group containing network resources of Azure Spring Cloud Apps */
+  /** Name of the resource group containing network resources for customer apps in Azure Spring Apps */
   appNetworkResourceGroup?: string;
   /**
-   * Desired outbound IP resources for Azure Spring Cloud instance.
+   * Desired outbound IP resources for Azure Spring Apps resource.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly outboundIPs?: NetworkProfileOutboundIPs;
   /**
-   * Required inbound or outbound traffics for Azure Spring Cloud instance.
+   * Required inbound or outbound traffics for Azure Spring Apps resource.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly requiredTraffics?: RequiredTraffic[];
+  /** Ingress configuration payload for Azure Spring Apps resource. */
+  ingressConfig?: IngressConfig;
+  /** The egress traffic type of Azure Spring Apps VNet instances. */
+  outboundType?: string;
 }
 
-/** Desired outbound IP resources for Azure Spring Cloud instance. */
+/** Desired outbound IP resources for Azure Spring Apps resource. */
 export interface NetworkProfileOutboundIPs {
   /**
    * A list of public IP addresses.
@@ -92,7 +105,7 @@ export interface NetworkProfileOutboundIPs {
   readonly publicIPs?: string[];
 }
 
-/** Required inbound or outbound traffic for Azure Spring Cloud instance. */
+/** Required inbound or outbound traffic for Azure Spring Apps resource. */
 export interface RequiredTraffic {
   /**
    * The protocol of required traffic
@@ -121,7 +134,29 @@ export interface RequiredTraffic {
   readonly direction?: TrafficDirection;
 }
 
-/** Sku of Azure Spring Cloud */
+/** Ingress configuration payload for Azure Spring Apps resource. */
+export interface IngressConfig {
+  /** Ingress read time out in seconds. */
+  readTimeoutInSeconds?: number;
+}
+
+/** Additional Service settings in vnet injection instance */
+export interface ServiceVNetAddons {
+  /** Indicates whether the log stream in vnet injection instance could be accessed from internet. */
+  logStreamPublicEndpoint?: boolean;
+}
+
+/** Purchasing 3rd Party product for one Azure Spring Apps instance */
+export interface MarketplaceResource {
+  /** The plan id of the 3rd Party Artifact that is being procured. */
+  plan?: string;
+  /** The publisher id of the 3rd Party Artifact that is being bought. */
+  publisher?: string;
+  /** The 3rd Party artifact that is being procured. */
+  product?: string;
+}
+
+/** Sku of Azure Spring Apps */
 export interface Sku {
   /** Name of the Sku */
   name?: string;
@@ -561,12 +596,28 @@ export interface BuildProperties {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly triggeredBuildResult?: TriggeredBuildResult;
+  /** The customized build resource for this build */
+  resourceRequests?: BuildResourceRequests;
 }
 
 /** The build result triggered by a build */
 export interface TriggeredBuildResult {
   /** The unique build id of this build result */
   id?: string;
+}
+
+/** Resource request payload of Build Resource. */
+export interface BuildResourceRequests {
+  /**
+   * Optional Cpu allocated to the build resource. 1 core can be represented by 1 or 1000m.
+   * The default value is 1, this should not exceed build service agent pool cpu size.
+   */
+  cpu?: string;
+  /**
+   * Optional Memory allocated to the build resource. 1 GB can be represented by 1Gi or 1024Mi.
+   * The default value is 2Gi, this should not exceed build service agent pool memory size.
+   */
+  memory?: string;
 }
 
 /** Properties of a buildpack binding */
@@ -824,8 +875,11 @@ export interface AppResourceProperties {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly provisioningState?: AppResourceProvisioningState;
-  /** Fully qualified dns Name. */
-  fqdn?: string;
+  /**
+   * Fully qualified dns Name.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly fqdn?: string;
   /** Indicate if only https is allowed. */
   httpsOnly?: boolean;
   /** Temporary disk settings */
@@ -838,6 +892,10 @@ export interface AppResourceProperties {
   enableEndToEndTLS?: boolean;
   /** Collection of loaded certificates */
   loadedCertificates?: LoadedCertificate[];
+  /** Additional App settings in vnet injection instance */
+  vnetAddons?: AppVNetAddons;
+  /** App ingress settings payload. */
+  ingressSettings?: IngressSettings;
 }
 
 /** Temporary disk payload */
@@ -865,7 +923,7 @@ export interface PersistentDisk {
 export interface CustomPersistentDiskResource {
   /** Properties of the custom persistent disk resource payload. */
   customPersistentDiskProperties?: CustomPersistentDiskPropertiesUnion;
-  /** The resource id of Azure Spring Cloud Storage resource. */
+  /** The resource id of Azure Spring Apps Storage resource. */
   storageId: string;
 }
 
@@ -889,14 +947,65 @@ export interface LoadedCertificate {
   loadTrustStore?: boolean;
 }
 
+/** Additional App settings in vnet injection instance */
+export interface AppVNetAddons {
+  /** Indicates whether the App in vnet injection instance exposes endpoint which could be accessed from internet. */
+  publicEndpoint?: boolean;
+  /**
+   * URL of the App in vnet injection instance which could be accessed from internet
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly publicEndpointUrl?: string;
+}
+
+/** App ingress settings payload. */
+export interface IngressSettings {
+  /** Ingress read time out in seconds. */
+  readTimeoutInSeconds?: number;
+  /** Ingress send time out in seconds. */
+  sendTimeoutInSeconds?: number;
+  /** Type of the affinity, set this to Cookie to enable session affinity. */
+  sessionAffinity?: SessionAffinity;
+  /** Time in seconds until the cookie expires. */
+  sessionCookieMaxAge?: number;
+  /** How ingress should communicate with this app backend service. */
+  backendProtocol?: BackendProtocol;
+  /** Client-Certification Authentication. */
+  clientAuth?: IngressSettingsClientAuth;
+}
+
+/** Client-Certification Authentication. */
+export interface IngressSettingsClientAuth {
+  /** Collection of certificate resource id. */
+  certificates?: string[];
+}
+
 /** Managed identity properties retrieved from ARM request headers. */
 export interface ManagedIdentityProperties {
   /** Type of the managed identity */
   type?: ManagedIdentityType;
-  /** Principal Id */
+  /** Principal Id of system-assigned managed identity. */
   principalId?: string;
-  /** Tenant Id */
+  /** Tenant Id of system-assigned managed identity. */
   tenantId?: string;
+  /** Properties of user-assigned managed identities */
+  userAssignedIdentities?: {
+    [propertyName: string]: UserAssignedManagedIdentity;
+  };
+}
+
+/** The details of the user-assigned managed identity assigned to an App. */
+export interface UserAssignedManagedIdentity {
+  /**
+   * Principal Id of user-assigned managed identity.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly principalId?: string;
+  /**
+   * Client Id of user-assigned managed identity.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly clientId?: string;
 }
 
 /** Object that includes an array of App resources and a possible link for next set */
@@ -1015,6 +1124,11 @@ export interface CertificateProperties {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly dnsNames?: string[];
+  /**
+   * Provisioning state of the Certificate
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: CertificateResourceProvisioningState;
 }
 
 /** Collection compose of certificate resources list and a possible link for next page. */
@@ -1054,6 +1168,11 @@ export interface CustomDomainProperties {
   readonly appName?: string;
   /** The bound certificate name of domain. */
   certName?: string;
+  /**
+   * Provisioning state of the Domain
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: CustomDomainResourceProvisioningState;
 }
 
 /** Collection compose of a custom domain resources list and a possible link for next page. */
@@ -1127,6 +1246,14 @@ export interface DeploymentSettings {
   addonConfigs?: {
     [propertyName: string]: { [propertyName: string]: Record<string, unknown> };
   };
+  /** Periodic probe of App Instance liveness. App Instance will be restarted if the probe fails. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes */
+  livenessProbe?: Probe;
+  /** Periodic probe of App Instance service readiness. App Instance will be removed from service endpoints if the probe fails. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes */
+  readinessProbe?: Probe;
+  /** StartupProbe indicates that the App Instance has successfully initialized. If specified, no other probes are executed until this completes successfully. If this probe fails, the Pod will be restarted, just as if the livenessProbe failed. This can be used to provide different probe parameters at the beginning of a App Instance's lifecycle, when it might take a long time to load data or warm a cache, than during steady-state operation. This cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes */
+  startupProbe?: Probe;
+  /** Optional duration in seconds the App Instance needs to terminate gracefully. May be decreased in delete request. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). If this value is nil, the default grace period will be used instead. The grace period is the duration in seconds after the processes running in the App Instance are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. Defaults to 90 seconds. */
+  terminationGracePeriodSeconds?: number;
   /** Container liveness and readiness probe settings */
   containerProbeSettings?: ContainerProbeSettings;
 }
@@ -1137,6 +1264,30 @@ export interface ResourceRequests {
   cpu?: string;
   /** Required memory. 1 GB can be represented by 1Gi or 1024Mi. This should be {512Mi, 1Gi, 2Gi} for Basic tier, and {512Mi, 1Gi, 2Gi, ..., 8Gi} for Standard tier. */
   memory?: string;
+}
+
+/** Probe describes a health check to be performed against an App Instance to determine whether it is alive or ready to receive traffic. */
+export interface Probe {
+  /** The action of the probe. */
+  probeAction?: ProbeActionUnion;
+  /** Indicate whether the probe is disabled. */
+  disableProbe: boolean;
+  /** Number of seconds after the App Instance has started before probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes */
+  initialDelaySeconds?: number;
+  /** How often (in seconds) to perform the probe. Minimum value is 1. */
+  periodSeconds?: number;
+  /** Number of seconds after which the probe times out. Minimum value is 1. */
+  timeoutSeconds?: number;
+  /** Minimum consecutive failures for the probe to be considered failed after having succeeded. Minimum value is 1. */
+  failureThreshold?: number;
+  /** Minimum consecutive successes for the probe to be considered successful after having failed. Must be 1 for liveness and startup. Minimum value is 1. */
+  successThreshold?: number;
+}
+
+/** The action of the probe. */
+export interface ProbeAction {
+  /** Polymorphic discriminator, which specifies the different types this object can be */
+  type: "HTTPGetAction" | "ExecAction" | "TCPSocketAction";
 }
 
 /** Container liveness and readiness probe settings */
@@ -1190,6 +1341,26 @@ export interface DeploymentResourceCollection {
   nextLink?: string;
 }
 
+/** A list of deployments resource ids. */
+export interface DeploymentList {
+  /** A list of deployment resource ids. */
+  deployments?: string[];
+}
+
+/** Remote debugging payload. */
+export interface RemoteDebuggingPayload {
+  /** Application debugging port. */
+  port?: number;
+}
+
+/** Remote debugging config. */
+export interface RemoteDebugging {
+  /** Application debugging port */
+  port?: number;
+  /** Indicate if remote debugging is enabled */
+  enabled?: boolean;
+}
+
 /** Log file URL payload */
 export interface LogFileUrlResponse {
   /** URL of the log file */
@@ -1236,6 +1407,11 @@ export interface OperationDetail {
   isDataAction?: boolean;
   /** Display of the operation */
   display?: OperationDisplay;
+  /**
+   * Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly actionType?: ActionType;
   /** Origin of the operation */
   origin?: string;
   /** Properties of the operation */
@@ -1332,7 +1508,7 @@ export interface SupportedRuntimeVersion {
   version?: string;
 }
 
-/** Object that includes an array of Azure Spring Cloud SKU and a possible link for next set */
+/** Object that includes an array of Azure Spring Apps SKU and a possible link for next set */
 export interface ResourceSkuCollection {
   /** Collection of resource SKU */
   value?: ResourceSku[];
@@ -1343,7 +1519,7 @@ export interface ResourceSkuCollection {
   nextLink?: string;
 }
 
-/** Describes an available Azure Spring Cloud SKU. */
+/** Describes an available Azure Spring Apps SKU. */
 export interface ResourceSku {
   /** Gets the type of resource the SKU applies to. */
   resourceType?: string;
@@ -1581,10 +1757,20 @@ export interface GatewayRouteConfigProperties {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly provisioningState?: GatewayProvisioningState;
-  /** The resource Id of the Azure Spring Cloud app, required unless route defines `uri`. */
+  /** The resource Id of the Azure Spring Apps app, required unless route defines `uri`. */
   appResourceId?: string;
+  /** OpenAPI properties of Spring Cloud Gateway route config. */
+  openApi?: GatewayRouteConfigOpenApiProperties;
+  /** Protocol of routed Azure Spring Apps applications. */
+  protocol?: GatewayRouteConfigProtocol;
   /** Array of API routes, each route contains properties such as `title`, `uri`, `ssoEnabled`, `predicates`, `filters`. */
   routes?: GatewayApiRoute[];
+}
+
+/** OpenAPI properties of Spring Cloud Gateway route config. */
+export interface GatewayRouteConfigOpenApiProperties {
+  /** The URI of OpenAPI specification. */
+  uri?: string;
 }
 
 /** API route config of the Spring Cloud Gateway */
@@ -1739,6 +1925,8 @@ export interface CustomContainer {
   args?: string[];
   /** Credential of the image registry */
   imageRegistryCredential?: ImageRegistryCredential;
+  /** Language framework of the container image uploaded */
+  languageFramework?: string;
 }
 
 /** Credential of the image registry */
@@ -1750,36 +1938,36 @@ export interface ImageRegistryCredential {
 }
 
 /** The resource model definition for a ARM tracked top level resource. */
-export type TrackedResource = Resource & {
+export interface TrackedResource extends Resource {
   /** The GEO location of the resource. */
   location?: string;
   /** Tags of the service which is a list of key value pairs that describe the resource. */
   tags?: { [propertyName: string]: string };
-};
+}
 
 /** The resource model definition for a ARM proxy resource. It will have everything other than required location and tags. */
-export type ProxyResource = Resource & {};
+export interface ProxyResource extends Resource {}
 
 /** The properties of the Azure File volume. Azure File shares are mounted as volumes. */
-export type AzureFileVolume = CustomPersistentDiskProperties & {
+export interface AzureFileVolume extends CustomPersistentDiskProperties {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   type: "AzureFileVolume";
   /** The share name of the Azure File share. */
   shareName: string;
-};
+}
 
 /** storage resource of type Azure Storage Account. */
-export type StorageAccount = StorageProperties & {
+export interface StorageAccount extends StorageProperties {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   storageType: "StorageAccount";
   /** The account name of the Azure Storage Account. */
   accountName: string;
   /** The account key of the Azure Storage Account. */
   accountKey: string;
-};
+}
 
 /** Properties of certificate imported from key vault. */
-export type KeyVaultCertificateProperties = CertificateProperties & {
+export interface KeyVaultCertificateProperties extends CertificateProperties {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   type: "KeyVaultCertificate";
   /** The vault uri of user key vault. */
@@ -1790,208 +1978,238 @@ export type KeyVaultCertificateProperties = CertificateProperties & {
   certVersion?: string;
   /** Optional. If set to true, it will not import private key from key vault. */
   excludePrivateKey?: boolean;
-};
+}
 
 /** Properties of certificate imported from key vault. */
-export type ContentCertificateProperties = CertificateProperties & {
+export interface ContentCertificateProperties extends CertificateProperties {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   type: "ContentCertificate";
   /** The content of uploaded certificate. */
   content?: string;
-};
+}
 
 /** Source with uploaded location */
-export type UploadedUserSourceInfo = UserSourceInfo & {
+export interface UploadedUserSourceInfo extends UserSourceInfo {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   type: "UploadedUserSourceInfo" | "Jar" | "Source" | "NetCoreZip";
   /** Relative path of the storage which stores the source */
   relativePath?: string;
-};
+}
 
 /** Reference to a build result */
-export type BuildResultUserSourceInfo = UserSourceInfo & {
+export interface BuildResultUserSourceInfo extends UserSourceInfo {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   type: "BuildResult";
   /** Resource id of an existing succeeded build result under the same Spring instance. */
   buildResultId?: string;
-};
+}
 
 /** Custom container user source info */
-export type CustomContainerUserSourceInfo = UserSourceInfo & {
+export interface CustomContainerUserSourceInfo extends UserSourceInfo {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   type: "Container";
   /** Custom container payload */
   customContainer?: CustomContainer;
-};
+}
+
+/** HTTPGetAction describes an action based on HTTP Get requests. */
+export interface HttpGetAction extends ProbeAction {
+  /** Polymorphic discriminator, which specifies the different types this object can be */
+  type: "HTTPGetAction";
+  /** Path to access on the HTTP server. */
+  path?: string;
+  /**
+   * Scheme to use for connecting to the host. Defaults to HTTP.
+   *
+   * Possible enum values:
+   *  - `"HTTP"` means that the scheme used will be http://
+   *  - `"HTTPS"` means that the scheme used will be https://
+   */
+  scheme?: HttpSchemeType;
+}
+
+/** ExecAction describes a "run in container" action. */
+export interface ExecAction extends ProbeAction {
+  /** Polymorphic discriminator, which specifies the different types this object can be */
+  type: "ExecAction";
+  /** Command is the command line to execute inside the container, the working directory for the command is root ('/') in the container's filesystem. The command is not run inside a shell, so traditional shell instructions ('|', etc) won't work. To use a shell, you need to explicitly call out to that shell. Exit status of 0 is treated as live/healthy and non-zero is unhealthy. */
+  command?: string[];
+}
+
+/** TCPSocketAction describes an action based on opening a socket */
+export interface TCPSocketAction extends ProbeAction {
+  /** Polymorphic discriminator, which specifies the different types this object can be */
+  type: "TCPSocketAction";
+}
 
 /** Service resource */
-export type ServiceResource = TrackedResource & {
+export interface ServiceResource extends TrackedResource {
   /** Properties of the Service resource */
   properties?: ClusterResourceProperties;
   /** Sku of the Service resource */
   sku?: Sku;
-};
+}
 
 /** Config Server resource */
-export type ConfigServerResource = ProxyResource & {
+export interface ConfigServerResource extends ProxyResource {
   /** Properties of the Config Server resource */
   properties?: ConfigServerProperties;
-};
+}
 
 /** Application Configuration Service resource */
-export type ConfigurationServiceResource = ProxyResource & {
+export interface ConfigurationServiceResource extends ProxyResource {
   /** Application Configuration Service properties payload */
   properties?: ConfigurationServiceProperties;
-};
+}
 
 /** Service Registry resource */
-export type ServiceRegistryResource = ProxyResource & {
+export interface ServiceRegistryResource extends ProxyResource {
   /** Service Registry properties payload */
   properties?: ServiceRegistryProperties;
-};
+}
 
 /** Build service resource payload */
-export type BuildService = ProxyResource & {
+export interface BuildService extends ProxyResource {
   /** Properties of the build resource */
   properties?: BuildServiceProperties;
-};
+}
 
 /** Build resource payload */
-export type Build = ProxyResource & {
+export interface Build extends ProxyResource {
   /** Properties of the build resource */
   properties?: BuildProperties;
-};
+}
 
 /** Buildpack Binding Resource object */
-export type BuildpackBindingResource = ProxyResource & {
+export interface BuildpackBindingResource extends ProxyResource {
   /** Properties of a buildpack binding */
   properties?: BuildpackBindingProperties;
-};
+}
 
 /** Build result resource payload */
-export type BuildResult = ProxyResource & {
+export interface BuildResult extends ProxyResource {
   /** Properties of the build result resource */
   properties?: BuildResultProperties;
-};
+}
 
 /** KPack Builder resource */
-export type BuilderResource = ProxyResource & {
+export interface BuilderResource extends ProxyResource {
   /** Property of the Builder resource. */
   properties?: BuilderProperties;
-};
+}
 
 /** Supported buildpack resource payload */
-export type SupportedBuildpackResource = ProxyResource & {
+export interface SupportedBuildpackResource extends ProxyResource {
   /** Supported buildpack resource properties */
   properties?: SupportedBuildpackResourceProperties;
-};
+}
 
 /** Supported stack resource payload */
-export type SupportedStackResource = ProxyResource & {
+export interface SupportedStackResource extends ProxyResource {
   /** Supported stack resource properties */
   properties?: SupportedStackResourceProperties;
-};
+}
 
 /** The build service agent pool resource */
-export type BuildServiceAgentPoolResource = ProxyResource & {
+export interface BuildServiceAgentPoolResource extends ProxyResource {
   /** build service agent pool properties */
   properties?: BuildServiceAgentPoolProperties;
-};
+}
 
 /** Monitoring Setting resource */
-export type MonitoringSettingResource = ProxyResource & {
+export interface MonitoringSettingResource extends ProxyResource {
   /** Properties of the Monitoring Setting resource */
   properties?: MonitoringSettingProperties;
-};
+}
 
 /** App resource payload */
-export type AppResource = ProxyResource & {
+export interface AppResource extends ProxyResource {
   /** Properties of the App resource */
   properties?: AppResourceProperties;
   /** The Managed Identity type of the app resource */
   identity?: ManagedIdentityProperties;
   /** The GEO location of the application, always the same with its parent resource */
   location?: string;
-};
+}
 
 /** Binding resource payload */
-export type BindingResource = ProxyResource & {
+export interface BindingResource extends ProxyResource {
   /** Properties of the Binding resource */
   properties?: BindingResourceProperties;
-};
+}
 
 /** Storage resource payload. */
-export type StorageResource = ProxyResource & {
+export interface StorageResource extends ProxyResource {
   /** Properties of the storage resource payload. */
   properties?: StoragePropertiesUnion;
-};
+}
 
 /** Certificate resource payload. */
-export type CertificateResource = ProxyResource & {
+export interface CertificateResource extends ProxyResource {
   /** Properties of the certificate resource payload. */
   properties?: CertificatePropertiesUnion;
-};
+}
 
 /** Custom domain resource payload. */
-export type CustomDomainResource = ProxyResource & {
+export interface CustomDomainResource extends ProxyResource {
   /** Properties of the custom domain resource. */
   properties?: CustomDomainProperties;
-};
+}
 
 /** Deployment resource payload */
-export type DeploymentResource = ProxyResource & {
+export interface DeploymentResource extends ProxyResource {
   /** Properties of the Deployment resource */
   properties?: DeploymentResourceProperties;
   /** Sku of the Deployment resource */
   sku?: Sku;
-};
+}
 
 /** Spring Cloud Gateway resource */
-export type GatewayResource = ProxyResource & {
+export interface GatewayResource extends ProxyResource {
   /** Spring Cloud Gateway properties payload */
   properties?: GatewayProperties;
   /** Sku of the Spring Cloud Gateway resource */
   sku?: Sku;
-};
+}
 
 /** Spring Cloud Gateway route config resource */
-export type GatewayRouteConfigResource = ProxyResource & {
+export interface GatewayRouteConfigResource extends ProxyResource {
   /** API route config of the Spring Cloud Gateway */
   properties?: GatewayRouteConfigProperties;
-};
+}
 
 /** Custom domain of the Spring Cloud Gateway */
-export type GatewayCustomDomainResource = ProxyResource & {
+export interface GatewayCustomDomainResource extends ProxyResource {
   /** The properties of custom domain for Spring Cloud Gateway */
   properties?: GatewayCustomDomainProperties;
-};
+}
 
 /** API portal resource */
-export type ApiPortalResource = ProxyResource & {
+export interface ApiPortalResource extends ProxyResource {
   /** API portal properties payload */
   properties?: ApiPortalProperties;
   /** Sku of the API portal resource */
   sku?: Sku;
-};
+}
 
 /** Custom domain of the API portal */
-export type ApiPortalCustomDomainResource = ProxyResource & {
+export interface ApiPortalCustomDomainResource extends ProxyResource {
   /** The properties of custom domain for API portal */
   properties?: ApiPortalCustomDomainProperties;
-};
+}
 
 /** Uploaded Jar binary for a deployment */
-export type JarUploadedUserSourceInfo = UploadedUserSourceInfo & {
+export interface JarUploadedUserSourceInfo extends UploadedUserSourceInfo {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   type: "Jar";
   /** Runtime version of the Jar file */
   runtimeVersion?: string;
   /** JVM parameter */
   jvmOptions?: string;
-};
+}
 
 /** Uploaded Java source code binary for a deployment */
-export type SourceUploadedUserSourceInfo = UploadedUserSourceInfo & {
+export interface SourceUploadedUserSourceInfo extends UploadedUserSourceInfo {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   type: "Source";
   /**
@@ -2001,28 +2219,42 @@ export type SourceUploadedUserSourceInfo = UploadedUserSourceInfo & {
   artifactSelector?: string;
   /** Runtime version of the source file */
   runtimeVersion?: string;
-};
+}
 
 /** Uploaded Jar binary for a deployment */
-export type NetCoreZipUploadedUserSourceInfo = UploadedUserSourceInfo & {
+export interface NetCoreZipUploadedUserSourceInfo
+  extends UploadedUserSourceInfo {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   type: "NetCoreZip";
   /** The path to the .NET executable relative to zip root */
   netCoreMainEntryPath?: string;
   /** Runtime version of the .Net file */
   runtimeVersion?: string;
-};
+}
 
 /** Known values of {@link ProvisioningState} that the service accepts. */
 export enum KnownProvisioningState {
+  /** Creating */
   Creating = "Creating",
+  /** Updating */
   Updating = "Updating",
+  /** Starting */
+  Starting = "Starting",
+  /** Stopping */
+  Stopping = "Stopping",
+  /** Deleting */
   Deleting = "Deleting",
+  /** Deleted */
   Deleted = "Deleted",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Moving */
   Moving = "Moving",
+  /** Moved */
   Moved = "Moved",
+  /** MoveFailed */
   MoveFailed = "MoveFailed"
 }
 
@@ -2033,6 +2265,8 @@ export enum KnownProvisioningState {
  * ### Known values supported by the service
  * **Creating** \
  * **Updating** \
+ * **Starting** \
+ * **Stopping** \
  * **Deleting** \
  * **Deleted** \
  * **Succeeded** \
@@ -2045,7 +2279,9 @@ export type ProvisioningState = string;
 
 /** Known values of {@link TrafficDirection} that the service accepts. */
 export enum KnownTrafficDirection {
+  /** Inbound */
   Inbound = "Inbound",
+  /** Outbound */
   Outbound = "Outbound"
 }
 
@@ -2061,7 +2297,9 @@ export type TrafficDirection = string;
 
 /** Known values of {@link PowerState} that the service accepts. */
 export enum KnownPowerState {
+  /** Running */
   Running = "Running",
+  /** Stopped */
   Stopped = "Stopped"
 }
 
@@ -2077,9 +2315,13 @@ export type PowerState = string;
 
 /** Known values of {@link CreatedByType} that the service accepts. */
 export enum KnownCreatedByType {
+  /** User */
   User = "User",
+  /** Application */
   Application = "Application",
+  /** ManagedIdentity */
   ManagedIdentity = "ManagedIdentity",
+  /** Key */
   Key = "Key"
 }
 
@@ -2097,9 +2339,13 @@ export type CreatedByType = string;
 
 /** Known values of {@link LastModifiedByType} that the service accepts. */
 export enum KnownLastModifiedByType {
+  /** User */
   User = "User",
+  /** Application */
   Application = "Application",
+  /** ManagedIdentity */
   ManagedIdentity = "ManagedIdentity",
+  /** Key */
   Key = "Key"
 }
 
@@ -2117,7 +2363,9 @@ export type LastModifiedByType = string;
 
 /** Known values of {@link TestKeyType} that the service accepts. */
 export enum KnownTestKeyType {
+  /** Primary */
   Primary = "Primary",
+  /** Secondary */
   Secondary = "Secondary"
 }
 
@@ -2133,10 +2381,15 @@ export type TestKeyType = string;
 
 /** Known values of {@link ConfigServerState} that the service accepts. */
 export enum KnownConfigServerState {
+  /** NotAvailable */
   NotAvailable = "NotAvailable",
+  /** Deleted */
   Deleted = "Deleted",
+  /** Failed */
   Failed = "Failed",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Updating */
   Updating = "Updating"
 }
 
@@ -2155,10 +2408,15 @@ export type ConfigServerState = string;
 
 /** Known values of {@link ConfigurationServiceProvisioningState} that the service accepts. */
 export enum KnownConfigurationServiceProvisioningState {
+  /** Creating */
   Creating = "Creating",
+  /** Updating */
   Updating = "Updating",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Deleting */
   Deleting = "Deleting"
 }
 
@@ -2177,10 +2435,15 @@ export type ConfigurationServiceProvisioningState = string;
 
 /** Known values of {@link ServiceRegistryProvisioningState} that the service accepts. */
 export enum KnownServiceRegistryProvisioningState {
+  /** Creating */
   Creating = "Creating",
+  /** Updating */
   Updating = "Updating",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Deleting */
   Deleting = "Deleting"
 }
 
@@ -2199,10 +2462,15 @@ export type ServiceRegistryProvisioningState = string;
 
 /** Known values of {@link BuildServiceProvisioningState} that the service accepts. */
 export enum KnownBuildServiceProvisioningState {
+  /** Creating */
   Creating = "Creating",
+  /** Updating */
   Updating = "Updating",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Deleting */
   Deleting = "Deleting"
 }
 
@@ -2221,10 +2489,15 @@ export type BuildServiceProvisioningState = string;
 
 /** Known values of {@link BuildProvisioningState} that the service accepts. */
 export enum KnownBuildProvisioningState {
+  /** Creating */
   Creating = "Creating",
+  /** Updating */
   Updating = "Updating",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Deleting */
   Deleting = "Deleting"
 }
 
@@ -2243,11 +2516,17 @@ export type BuildProvisioningState = string;
 
 /** Known values of {@link BindingType} that the service accepts. */
 export enum KnownBindingType {
+  /** ApplicationInsights */
   ApplicationInsights = "ApplicationInsights",
+  /** ApacheSkyWalking */
   ApacheSkyWalking = "ApacheSkyWalking",
+  /** AppDynamics */
   AppDynamics = "AppDynamics",
+  /** Dynatrace */
   Dynatrace = "Dynatrace",
+  /** NewRelic */
   NewRelic = "NewRelic",
+  /** ElasticAPM */
   ElasticAPM = "ElasticAPM"
 }
 
@@ -2267,10 +2546,15 @@ export type BindingType = string;
 
 /** Known values of {@link BuildpackBindingProvisioningState} that the service accepts. */
 export enum KnownBuildpackBindingProvisioningState {
+  /** Creating */
   Creating = "Creating",
+  /** Updating */
   Updating = "Updating",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Deleting */
   Deleting = "Deleting"
 }
 
@@ -2289,10 +2573,15 @@ export type BuildpackBindingProvisioningState = string;
 
 /** Known values of {@link BuildResultProvisioningState} that the service accepts. */
 export enum KnownBuildResultProvisioningState {
+  /** Queuing */
   Queuing = "Queuing",
+  /** Building */
   Building = "Building",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Deleting */
   Deleting = "Deleting"
 }
 
@@ -2311,9 +2600,13 @@ export type BuildResultProvisioningState = string;
 
 /** Known values of {@link KPackBuildStageProvisioningState} that the service accepts. */
 export enum KnownKPackBuildStageProvisioningState {
+  /** NotStarted */
   NotStarted = "NotStarted",
+  /** Running */
   Running = "Running",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed"
 }
 
@@ -2331,10 +2624,15 @@ export type KPackBuildStageProvisioningState = string;
 
 /** Known values of {@link BuilderProvisioningState} that the service accepts. */
 export enum KnownBuilderProvisioningState {
+  /** Creating */
   Creating = "Creating",
+  /** Updating */
   Updating = "Updating",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Deleting */
   Deleting = "Deleting"
 }
 
@@ -2353,9 +2651,13 @@ export type BuilderProvisioningState = string;
 
 /** Known values of {@link MonitoringSettingState} that the service accepts. */
 export enum KnownMonitoringSettingState {
+  /** NotAvailable */
   NotAvailable = "NotAvailable",
+  /** Failed */
   Failed = "Failed",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Updating */
   Updating = "Updating"
 }
 
@@ -2373,10 +2675,15 @@ export type MonitoringSettingState = string;
 
 /** Known values of {@link AppResourceProvisioningState} that the service accepts. */
 export enum KnownAppResourceProvisioningState {
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Creating */
   Creating = "Creating",
+  /** Updating */
   Updating = "Updating",
+  /** Deleting */
   Deleting = "Deleting"
 }
 
@@ -2393,11 +2700,66 @@ export enum KnownAppResourceProvisioningState {
  */
 export type AppResourceProvisioningState = string;
 
+/** Known values of {@link Type} that the service accepts. */
+export enum KnownType {
+  /** AzureFileVolume */
+  AzureFileVolume = "AzureFileVolume"
+}
+
+/**
+ * Defines values for Type. \
+ * {@link KnownType} can be used interchangeably with Type,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **AzureFileVolume**
+ */
+export type Type = string;
+
+/** Known values of {@link SessionAffinity} that the service accepts. */
+export enum KnownSessionAffinity {
+  /** Cookie */
+  Cookie = "Cookie",
+  /** None */
+  None = "None"
+}
+
+/**
+ * Defines values for SessionAffinity. \
+ * {@link KnownSessionAffinity} can be used interchangeably with SessionAffinity,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Cookie** \
+ * **None**
+ */
+export type SessionAffinity = string;
+
+/** Known values of {@link BackendProtocol} that the service accepts. */
+export enum KnownBackendProtocol {
+  /** Grpc */
+  Grpc = "GRPC",
+  /** Default */
+  Default = "Default"
+}
+
+/**
+ * Defines values for BackendProtocol. \
+ * {@link KnownBackendProtocol} can be used interchangeably with BackendProtocol,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **GRPC** \
+ * **Default**
+ */
+export type BackendProtocol = string;
+
 /** Known values of {@link ManagedIdentityType} that the service accepts. */
 export enum KnownManagedIdentityType {
+  /** None */
   None = "None",
+  /** SystemAssigned */
   SystemAssigned = "SystemAssigned",
+  /** UserAssigned */
   UserAssigned = "UserAssigned",
+  /** SystemAssignedUserAssigned */
   SystemAssignedUserAssigned = "SystemAssigned,UserAssigned"
 }
 
@@ -2413,11 +2775,105 @@ export enum KnownManagedIdentityType {
  */
 export type ManagedIdentityType = string;
 
+/** Known values of {@link StorageType} that the service accepts. */
+export enum KnownStorageType {
+  /** StorageAccount */
+  StorageAccount = "StorageAccount"
+}
+
+/**
+ * Defines values for StorageType. \
+ * {@link KnownStorageType} can be used interchangeably with StorageType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **StorageAccount**
+ */
+export type StorageType = string;
+
+/** Known values of {@link CertificateResourceProvisioningState} that the service accepts. */
+export enum KnownCertificateResourceProvisioningState {
+  /** Creating */
+  Creating = "Creating",
+  /** Updating */
+  Updating = "Updating",
+  /** Succeeded */
+  Succeeded = "Succeeded",
+  /** Failed */
+  Failed = "Failed",
+  /** Deleting */
+  Deleting = "Deleting"
+}
+
+/**
+ * Defines values for CertificateResourceProvisioningState. \
+ * {@link KnownCertificateResourceProvisioningState} can be used interchangeably with CertificateResourceProvisioningState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Creating** \
+ * **Updating** \
+ * **Succeeded** \
+ * **Failed** \
+ * **Deleting**
+ */
+export type CertificateResourceProvisioningState = string;
+
+/** Known values of {@link CustomDomainResourceProvisioningState} that the service accepts. */
+export enum KnownCustomDomainResourceProvisioningState {
+  /** Creating */
+  Creating = "Creating",
+  /** Updating */
+  Updating = "Updating",
+  /** Succeeded */
+  Succeeded = "Succeeded",
+  /** Failed */
+  Failed = "Failed",
+  /** Deleting */
+  Deleting = "Deleting"
+}
+
+/**
+ * Defines values for CustomDomainResourceProvisioningState. \
+ * {@link KnownCustomDomainResourceProvisioningState} can be used interchangeably with CustomDomainResourceProvisioningState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Creating** \
+ * **Updating** \
+ * **Succeeded** \
+ * **Failed** \
+ * **Deleting**
+ */
+export type CustomDomainResourceProvisioningState = string;
+
+/** Known values of {@link ProbeActionType} that the service accepts. */
+export enum KnownProbeActionType {
+  /** HttpGetAction */
+  HttpGetAction = "HTTPGetAction",
+  /** TCPSocketAction */
+  TCPSocketAction = "TCPSocketAction",
+  /** ExecAction */
+  ExecAction = "ExecAction"
+}
+
+/**
+ * Defines values for ProbeActionType. \
+ * {@link KnownProbeActionType} can be used interchangeably with ProbeActionType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **HTTPGetAction** \
+ * **TCPSocketAction** \
+ * **ExecAction**
+ */
+export type ProbeActionType = string;
+
 /** Known values of {@link DeploymentResourceProvisioningState} that the service accepts. */
 export enum KnownDeploymentResourceProvisioningState {
+  /** Creating */
   Creating = "Creating",
+  /** Updating */
   Updating = "Updating",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed"
 }
 
@@ -2435,7 +2891,9 @@ export type DeploymentResourceProvisioningState = string;
 
 /** Known values of {@link DeploymentResourceStatus} that the service accepts. */
 export enum KnownDeploymentResourceStatus {
+  /** Stopped */
   Stopped = "Stopped",
+  /** Running */
   Running = "Running"
 }
 
@@ -2449,11 +2907,30 @@ export enum KnownDeploymentResourceStatus {
  */
 export type DeploymentResourceStatus = string;
 
+/** Known values of {@link ActionType} that the service accepts. */
+export enum KnownActionType {
+  /** Internal */
+  Internal = "Internal"
+}
+
+/**
+ * Defines values for ActionType. \
+ * {@link KnownActionType} can be used interchangeably with ActionType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Internal**
+ */
+export type ActionType = string;
+
 /** Known values of {@link SupportedRuntimeValue} that the service accepts. */
 export enum KnownSupportedRuntimeValue {
+  /** Java8 */
   Java8 = "Java_8",
+  /** Java11 */
   Java11 = "Java_11",
+  /** Java17 */
   Java17 = "Java_17",
+  /** NetCore31 */
   NetCore31 = "NetCore_31"
 }
 
@@ -2471,7 +2948,9 @@ export type SupportedRuntimeValue = string;
 
 /** Known values of {@link SupportedRuntimePlatform} that the service accepts. */
 export enum KnownSupportedRuntimePlatform {
+  /** Java */
   Java = "Java",
+  /** NETCore */
   NETCore = ".NET Core"
 }
 
@@ -2487,8 +2966,11 @@ export type SupportedRuntimePlatform = string;
 
 /** Known values of {@link SkuScaleType} that the service accepts. */
 export enum KnownSkuScaleType {
+  /** None */
   None = "None",
+  /** Manual */
   Manual = "Manual",
+  /** Automatic */
   Automatic = "Automatic"
 }
 
@@ -2505,7 +2987,9 @@ export type SkuScaleType = string;
 
 /** Known values of {@link ResourceSkuRestrictionsType} that the service accepts. */
 export enum KnownResourceSkuRestrictionsType {
+  /** Location */
   Location = "Location",
+  /** Zone */
   Zone = "Zone"
 }
 
@@ -2521,7 +3005,9 @@ export type ResourceSkuRestrictionsType = string;
 
 /** Known values of {@link ResourceSkuRestrictionsReasonCode} that the service accepts. */
 export enum KnownResourceSkuRestrictionsReasonCode {
+  /** QuotaId */
   QuotaId = "QuotaId",
+  /** NotAvailableForSubscription */
   NotAvailableForSubscription = "NotAvailableForSubscription"
 }
 
@@ -2537,10 +3023,15 @@ export type ResourceSkuRestrictionsReasonCode = string;
 
 /** Known values of {@link GatewayProvisioningState} that the service accepts. */
 export enum KnownGatewayProvisioningState {
+  /** Creating */
   Creating = "Creating",
+  /** Updating */
   Updating = "Updating",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Deleting */
   Deleting = "Deleting"
 }
 
@@ -2557,12 +3048,35 @@ export enum KnownGatewayProvisioningState {
  */
 export type GatewayProvisioningState = string;
 
+/** Known values of {@link GatewayRouteConfigProtocol} that the service accepts. */
+export enum KnownGatewayRouteConfigProtocol {
+  /** Http */
+  Http = "HTTP",
+  /** Https */
+  Https = "HTTPS"
+}
+
+/**
+ * Defines values for GatewayRouteConfigProtocol. \
+ * {@link KnownGatewayRouteConfigProtocol} can be used interchangeably with GatewayRouteConfigProtocol,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **HTTP** \
+ * **HTTPS**
+ */
+export type GatewayRouteConfigProtocol = string;
+
 /** Known values of {@link ApiPortalProvisioningState} that the service accepts. */
 export enum KnownApiPortalProvisioningState {
+  /** Creating */
   Creating = "Creating",
+  /** Updating */
   Updating = "Updating",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Deleting */
   Deleting = "Deleting"
 }
 
@@ -2578,6 +3092,24 @@ export enum KnownApiPortalProvisioningState {
  * **Deleting**
  */
 export type ApiPortalProvisioningState = string;
+
+/** Known values of {@link HttpSchemeType} that the service accepts. */
+export enum KnownHttpSchemeType {
+  /** Http */
+  Http = "HTTP",
+  /** Https */
+  Https = "HTTPS"
+}
+
+/**
+ * Defines values for HttpSchemeType. \
+ * {@link KnownHttpSchemeType} can be used interchangeably with HttpSchemeType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **HTTP** \
+ * **HTTPS**
+ */
+export type HttpSchemeType = string;
 
 /** Optional parameters. */
 export interface ServicesGetOptionalParams
@@ -3026,6 +3558,13 @@ export interface BuildServiceBuilderListOptionalParams
 export type BuildServiceBuilderListResponse = BuilderResourceCollection;
 
 /** Optional parameters. */
+export interface BuildServiceBuilderListDeploymentsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listDeployments operation. */
+export type BuildServiceBuilderListDeploymentsResponse = DeploymentList;
+
+/** Optional parameters. */
 export interface BuildServiceBuilderListNextOptionalParams
   extends coreClient.OperationOptions {}
 
@@ -3453,6 +3992,39 @@ export interface DeploymentsRestartOptionalParams
   /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
   resumeFrom?: string;
 }
+
+/** Optional parameters. */
+export interface DeploymentsEnableRemoteDebuggingOptionalParams
+  extends coreClient.OperationOptions {
+  /** Parameters for enable remote debugging */
+  remoteDebuggingPayload?: RemoteDebuggingPayload;
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Contains response data for the enableRemoteDebugging operation. */
+export type DeploymentsEnableRemoteDebuggingResponse = RemoteDebugging;
+
+/** Optional parameters. */
+export interface DeploymentsDisableRemoteDebuggingOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Contains response data for the disableRemoteDebugging operation. */
+export type DeploymentsDisableRemoteDebuggingResponse = RemoteDebugging;
+
+/** Optional parameters. */
+export interface DeploymentsGetRemoteDebuggingConfigOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getRemoteDebuggingConfig operation. */
+export type DeploymentsGetRemoteDebuggingConfigResponse = RemoteDebugging;
 
 /** Optional parameters. */
 export interface DeploymentsGetLogFileUrlOptionalParams

@@ -16,7 +16,6 @@ import {
   isSpanContextValid,
 } from "@azure/core-tracing";
 import { HttpOperationResponse } from "../httpOperationResponse";
-import { URLBuilder } from "../url";
 import { WebResourceLike } from "../webResource";
 import { logger } from "../log";
 
@@ -78,7 +77,7 @@ export class TracingPolicy extends BaseRequestPolicy {
       const response = await this._nextPolicy.sendRequest(request);
       this.tryProcessResponse(span, response);
       return response;
-    } catch (err) {
+    } catch (err: any) {
       this.tryProcessError(span, err);
       throw err;
     }
@@ -86,11 +85,9 @@ export class TracingPolicy extends BaseRequestPolicy {
 
   tryCreateSpan(request: WebResourceLike): Span | undefined {
     try {
-      const path = URLBuilder.parse(request.url).getPath() || "/";
-
       // Passing spanOptions as part of tracingOptions to maintain compatibility @azure/core-tracing@preview.13 and earlier.
       // We can pass this as a separate parameter once we upgrade to the latest core-tracing.
-      const { span } = createSpan(path, {
+      const { span } = createSpan(`HTTP ${request.method}`, {
         tracingOptions: {
           spanOptions: {
             ...(request as any).spanOptions,
@@ -134,7 +131,7 @@ export class TracingPolicy extends BaseRequestPolicy {
         }
       }
       return span;
-    } catch (error) {
+    } catch (error: any) {
       logger.warning(`Skipping creating a tracing span due to an error: ${error.message}`);
       return undefined;
     }
@@ -151,7 +148,7 @@ export class TracingPolicy extends BaseRequestPolicy {
         span.setAttribute("http.status_code", err.statusCode);
       }
       span.end();
-    } catch (error) {
+    } catch (error: any) {
       logger.warning(`Skipping tracing span processing due to an error: ${error.message}`);
     }
   }
@@ -167,7 +164,7 @@ export class TracingPolicy extends BaseRequestPolicy {
         code: SpanStatusCode.OK,
       });
       span.end();
-    } catch (error) {
+    } catch (error: any) {
       logger.warning(`Skipping tracing span processing due to an error: ${error.message}`);
     }
   }

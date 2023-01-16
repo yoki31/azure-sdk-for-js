@@ -1,19 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import chai from "chai";
 import { Context } from "mocha";
-import { assert } from "chai";
+import { assert } from "@azure/test-utils";
 import { env, isPlaybackMode, Recorder, isRecordMode } from "@azure-tools/test-recorder";
-import { isNode } from "@azure/core-http";
+import { isNode } from "@azure/core-util";
 
 import { CertificateClient } from "../../src";
-import { assertThrowsAbortError } from "../utils/utils.common";
-import { testPollerProperties } from "../utils/recorderUtils";
-import { authenticate } from "../utils/testAuthentication";
-import TestClient from "../utils/testClient";
-
-const { expect } = chai;
+import { assertThrowsAbortError } from "./utils/common";
+import { testPollerProperties } from "./utils/recorderUtils";
+import { authenticate } from "./utils/testAuthentication";
+import { getServiceVersion } from "./utils/common";
+import TestClient from "./utils/testClient";
 
 describe("Certificates client - list certificates in various ways", () => {
   const prefix = `list${env.CERTIFICATE_NAME || "CertificateName"}`;
@@ -28,7 +26,7 @@ describe("Certificates client - list certificates in various ways", () => {
   };
 
   beforeEach(async function (this: Context) {
-    const authentication = await authenticate(this);
+    const authentication = await authenticate(this, getServiceVersion());
     suffix = authentication.suffix;
     client = authentication.client;
     testClient = authentication.testClient;
@@ -54,14 +52,14 @@ describe("Certificates client - list certificates in various ways", () => {
     })) {
       try {
         await testClient.flushCertificate(certificate.name!);
-      } catch (e) {
+      } catch (e: any) {
         // Nothing to do here
       }
     }
     for await (const certificate of client.listDeletedCertificates({ includePending: true })) {
       try {
         await testClient.purgeCertificate(certificate.name!);
-      } catch (e) {
+      } catch (e: any) {
         // Nothing to do here
       }
     }
@@ -183,9 +181,11 @@ describe("Certificates client - list certificates in various ways", () => {
     }
   });
 
-  // On playback mode, the tests happen too fast for the timeout to work - in browsers only
+  // On playback mode, the tests happen too fast for the timeout to work
   it("list deleted certificates with requestOptions timeout", async function () {
-    recorder.skip("browser", "Timeout tests don't work on playback mode.");
+    if (isPlaybackMode()) {
+      this.skip();
+    }
     const iter = client.listDeletedCertificates({ requestOptions: { timeout: 1 } });
     await assertThrowsAbortError(async () => {
       await iter.next();
@@ -234,12 +234,15 @@ describe("Certificates client - list certificates in various ways", () => {
     results.sort(comp);
     versions.sort(comp);
 
-    expect(results).to.deep.equal(versions);
+    assert.deepEqual(results, versions);
   });
 
-  // On playback mode, the tests happen too fast for the timeout to work - in browsers only
+  // On playback mode, the tests happen too fast for the timeout to work
   it("can get the versions of a certificate with requestOptions timeout", async function () {
-    recorder.skip("browser", "Timeout tests don't work on playback mode.");
+    if (isPlaybackMode()) {
+      this.skip();
+    }
+
     const iter = client.listPropertiesOfCertificateVersions("doesn't matter", {
       requestOptions: { timeout: 1 },
     });

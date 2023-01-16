@@ -2390,6 +2390,63 @@ export const AnalyzedTokenInfo: coreClient.CompositeMapper = {
   }
 };
 
+export const SearchAlias: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SearchAlias",
+    modelProperties: {
+      name: {
+        serializedName: "name",
+        required: true,
+        type: {
+          name: "String"
+        }
+      },
+      indexes: {
+        serializedName: "indexes",
+        required: true,
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String"
+            }
+          }
+        }
+      },
+      etag: {
+        serializedName: "@odata\\.etag",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const ListAliasesResult: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ListAliasesResult",
+    modelProperties: {
+      aliases: {
+        serializedName: "value",
+        required: true,
+        readOnly: true,
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "SearchAlias"
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
 export const ServiceStatistics: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
@@ -2418,6 +2475,13 @@ export const ServiceCounters: coreClient.CompositeMapper = {
     name: "Composite",
     className: "ServiceCounters",
     modelProperties: {
+      aliasCounter: {
+        serializedName: "aliasesCount",
+        type: {
+          name: "Composite",
+          className: "ResourceCounter"
+        }
+      },
       documentCounter: {
         serializedName: "documentCount",
         type: {
@@ -2752,7 +2816,7 @@ export const CustomEntityAlias: coreClient.CompositeMapper = {
 };
 
 export const SearchIndexerDataNoneIdentity: coreClient.CompositeMapper = {
-  serializedName: "#Microsoft.Azure.Search.SearchIndexerDataNoneIdentity",
+  serializedName: "#Microsoft.Azure.Search.DataNoneIdentity",
   type: {
     name: "Composite",
     className: "SearchIndexerDataNoneIdentity",
@@ -2766,8 +2830,7 @@ export const SearchIndexerDataNoneIdentity: coreClient.CompositeMapper = {
 };
 
 export const SearchIndexerDataUserAssignedIdentity: coreClient.CompositeMapper = {
-  serializedName:
-    "#Microsoft.Azure.Search.SearchIndexerDataUserAssignedIdentity",
+  serializedName: "#Microsoft.Azure.Search.DataUserAssignedIdentity",
   type: {
     name: "Composite",
     className: "SearchIndexerDataUserAssignedIdentity",
@@ -3494,6 +3557,61 @@ export const WebApiSkill: coreClient.CompositeMapper = {
         nullable: true,
         type: {
           name: "Number"
+        }
+      },
+      degreeOfParallelism: {
+        serializedName: "degreeOfParallelism",
+        nullable: true,
+        type: {
+          name: "Number"
+        }
+      }
+    }
+  }
+};
+
+export const AzureMachineLearningSkill: coreClient.CompositeMapper = {
+  serializedName: "#Microsoft.Skills.Custom.AmlSkill",
+  type: {
+    name: "Composite",
+    className: "AzureMachineLearningSkill",
+    uberParent: "SearchIndexerSkill",
+    polymorphicDiscriminator: SearchIndexerSkill.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...SearchIndexerSkill.type.modelProperties,
+      scoringUri: {
+        serializedName: "uri",
+        nullable: true,
+        type: {
+          name: "String"
+        }
+      },
+      authenticationKey: {
+        serializedName: "key",
+        nullable: true,
+        type: {
+          name: "String"
+        }
+      },
+      resourceId: {
+        serializedName: "resourceId",
+        nullable: true,
+        type: {
+          name: "String"
+        }
+      },
+      timeout: {
+        serializedName: "timeout",
+        nullable: true,
+        type: {
+          name: "TimeSpan"
+        }
+      },
+      region: {
+        serializedName: "region",
+        nullable: true,
+        type: {
+          name: "String"
         }
       },
       degreeOfParallelism: {
@@ -5426,8 +5544,8 @@ export let discriminators = {
   CharFilter: CharFilter,
   LexicalNormalizer: LexicalNormalizer,
   Similarity: Similarity,
-  "SearchIndexerDataIdentity.#Microsoft.Azure.Search.SearchIndexerDataNoneIdentity": SearchIndexerDataNoneIdentity,
-  "SearchIndexerDataIdentity.#Microsoft.Azure.Search.SearchIndexerDataUserAssignedIdentity": SearchIndexerDataUserAssignedIdentity,
+  "SearchIndexerDataIdentity.#Microsoft.Azure.Search.DataNoneIdentity": SearchIndexerDataNoneIdentity,
+  "SearchIndexerDataIdentity.#Microsoft.Azure.Search.DataUserAssignedIdentity": SearchIndexerDataUserAssignedIdentity,
   "DataChangeDetectionPolicy.#Microsoft.Azure.Search.HighWaterMarkChangeDetectionPolicy": HighWaterMarkChangeDetectionPolicy,
   "DataChangeDetectionPolicy.#Microsoft.Azure.Search.SqlIntegratedChangeTrackingPolicy": SqlIntegratedChangeTrackingPolicy,
   "DataDeletionDetectionPolicy.#Microsoft.Azure.Search.SoftDeleteColumnDeletionDetectionPolicy": SoftDeleteColumnDeletionDetectionPolicy,
@@ -5449,6 +5567,7 @@ export let discriminators = {
   "SearchIndexerSkill.#Microsoft.Skills.Text.TranslationSkill": TextTranslationSkill,
   "SearchIndexerSkill.#Microsoft.Skills.Util.DocumentExtractionSkill": DocumentExtractionSkill,
   "SearchIndexerSkill.#Microsoft.Skills.Custom.WebApiSkill": WebApiSkill,
+  "SearchIndexerSkill.#Microsoft.Skills.Custom.AmlSkill": AzureMachineLearningSkill,
   "CognitiveServicesAccount.#Microsoft.Azure.Search.DefaultCognitiveServices": DefaultCognitiveServicesAccount,
   "CognitiveServicesAccount.#Microsoft.Azure.Search.CognitiveServicesByKey": CognitiveServicesAccountKey,
   "ScoringFunction.distance": DistanceScoringFunction,

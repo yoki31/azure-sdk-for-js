@@ -7,16 +7,21 @@
  */
 
 import * as coreClient from "@azure/core-client";
+import * as coreRestPipeline from "@azure/core-rest-pipeline";
 import * as coreAuth from "@azure/core-auth";
 import {
-  SubscriptionImpl,
+  SubscriptionsImpl,
+  TenantsImpl,
+  SubscriptionOperationsImpl,
   OperationsImpl,
   AliasImpl,
   SubscriptionPolicyImpl,
   BillingAccountImpl
 } from "./operations";
 import {
-  Subscription,
+  Subscriptions,
+  Tenants,
+  SubscriptionOperations,
   Operations,
   Alias,
   SubscriptionPolicy,
@@ -26,7 +31,6 @@ import { SubscriptionClientOptionalParams } from "./models";
 
 export class SubscriptionClient extends coreClient.ServiceClient {
   $host: string;
-  apiVersion: string;
 
   /**
    * Initializes a new instance of the SubscriptionClient class.
@@ -50,36 +54,69 @@ export class SubscriptionClient extends coreClient.ServiceClient {
       credential: credentials
     };
 
-    const packageDetails = `azsdk-js-arm-subscriptions/4.0.0`;
+    const packageDetails = `azsdk-js-arm-subscriptions/5.1.1`;
     const userAgentPrefix =
       options.userAgentOptions && options.userAgentOptions.userAgentPrefix
         ? `${options.userAgentOptions.userAgentPrefix} ${packageDetails}`
         : `${packageDetails}`;
 
-    if (!options.credentialScopes) {
-      options.credentialScopes = ["https://management.azure.com/.default"];
-    }
     const optionsWithDefaults = {
       ...defaults,
       ...options,
       userAgentOptions: {
         userAgentPrefix
       },
-      baseUri: options.endpoint || "https://management.azure.com"
+      endpoint:
+        options.endpoint ?? options.baseUri ?? "https://management.azure.com"
     };
     super(optionsWithDefaults);
 
+    let bearerTokenAuthenticationPolicyFound: boolean = false;
+    if (options?.pipeline && options.pipeline.getOrderedPolicies().length > 0) {
+      const pipelinePolicies: coreRestPipeline.PipelinePolicy[] = options.pipeline.getOrderedPolicies();
+      bearerTokenAuthenticationPolicyFound = pipelinePolicies.some(
+        (pipelinePolicy) =>
+          pipelinePolicy.name ===
+          coreRestPipeline.bearerTokenAuthenticationPolicyName
+      );
+    }
+    if (
+      !options ||
+      !options.pipeline ||
+      options.pipeline.getOrderedPolicies().length == 0 ||
+      !bearerTokenAuthenticationPolicyFound
+    ) {
+      this.pipeline.removePolicy({
+        name: coreRestPipeline.bearerTokenAuthenticationPolicyName
+      });
+      this.pipeline.addPolicy(
+        coreRestPipeline.bearerTokenAuthenticationPolicy({
+          credential: credentials,
+          scopes:
+            optionsWithDefaults.credentialScopes ??
+            `${optionsWithDefaults.endpoint}/.default`,
+          challengeCallbacks: {
+            authorizeRequestOnChallenge:
+              coreClient.authorizeRequestOnClaimChallenge
+          }
+        })
+      );
+    }
+
     // Assigning values to Constant parameters
     this.$host = options.$host || "https://management.azure.com";
-    this.apiVersion = options.apiVersion || "2021-10-01";
-    this.subscription = new SubscriptionImpl(this);
+    this.subscriptions = new SubscriptionsImpl(this);
+    this.tenants = new TenantsImpl(this);
+    this.subscriptionOperations = new SubscriptionOperationsImpl(this);
     this.operations = new OperationsImpl(this);
     this.alias = new AliasImpl(this);
     this.subscriptionPolicy = new SubscriptionPolicyImpl(this);
     this.billingAccount = new BillingAccountImpl(this);
   }
 
-  subscription: Subscription;
+  subscriptions: Subscriptions;
+  tenants: Tenants;
+  subscriptionOperations: SubscriptionOperations;
   operations: Operations;
   alias: Alias;
   subscriptionPolicy: SubscriptionPolicy;

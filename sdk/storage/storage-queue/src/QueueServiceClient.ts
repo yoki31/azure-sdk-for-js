@@ -186,7 +186,9 @@ export class QueueServiceClient extends StorageClient {
           extractedCreds.accountName!,
           extractedCreds.accountKey
         );
-        options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+        if (!options.proxyOptions) {
+          options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+        }
         const pipeline = newPipeline(sharedKeyCredential, options);
         return new QueueServiceClient(extractedCreds.url, pipeline);
       } else {
@@ -341,7 +343,7 @@ export class QueueServiceClient extends StorageClient {
         include: options.include === undefined ? undefined : [options.include],
         tracingOptions: updatedOptions.tracingOptions,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -533,7 +535,7 @@ export class QueueServiceClient extends StorageClient {
         abortSignal: options.abortSignal,
         tracingOptions: updatedOptions.tracingOptions,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -563,7 +565,7 @@ export class QueueServiceClient extends StorageClient {
         abortSignal: options.abortSignal,
         tracingOptions: updatedOptions.tracingOptions,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -592,7 +594,7 @@ export class QueueServiceClient extends StorageClient {
         abortSignal: options.abortSignal,
         tracingOptions: updatedOptions.tracingOptions,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -618,7 +620,7 @@ export class QueueServiceClient extends StorageClient {
     const { span, updatedOptions } = createSpan("QueueServiceClient-createQueue", options);
     try {
       return await this.getQueueClient(queueName).create(updatedOptions);
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -644,7 +646,7 @@ export class QueueServiceClient extends StorageClient {
     const { span, updatedOptions } = createSpan("QueueServiceClient-deleteQueue", options);
     try {
       return await this.getQueueClient(queueName).delete(updatedOptions);
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,

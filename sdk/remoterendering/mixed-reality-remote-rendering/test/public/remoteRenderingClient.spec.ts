@@ -7,26 +7,26 @@ import { Recorder } from "@azure-tools/test-recorder";
 import { RestError } from "@azure/core-rest-pipeline";
 
 import {
-  RemoteRenderingClient,
+  AssetConversion,
   AssetConversionInputSettings,
   AssetConversionOutputSettings,
-  AssetConversionSettings,
   AssetConversionPollerLike,
-  AssetConversion,
+  AssetConversionSettings,
   KnownAssetConversionStatus,
+  RemoteRenderingClient,
+  RenderingSession,
   RenderingSessionPollerLike,
   RenderingSessionSettings,
-  RenderingSession,
 } from "../../src";
 import {
   AccessToken,
   AzureKeyCredential,
-  TokenCredential,
   GetTokenOptions,
+  TokenCredential,
 } from "@azure/core-auth";
-import { createClient, createRecorder, getEnv } from "../utils/recordedClient";
+import { createClient, createRecorder, recorderStartOptions } from "../utils/recordedClient";
 
-import { isPlaybackMode } from "@azure-tools/test-recorder";
+import { assertEnvironmentVariable, isPlaybackMode } from "@azure-tools/test-recorder";
 
 /// No need to wait when polling in playback mode.
 const pollerSettings = isPlaybackMode() ? { intervalInMs: 1 } : {};
@@ -110,9 +110,10 @@ describe("RemoteRendering functional tests", () => {
   let client: RemoteRenderingClient;
   let recorder: Recorder;
 
-  beforeEach(function (this: Context) {
+  beforeEach(async function (this: Context) {
     recorder = createRecorder(this);
-    client = createClient();
+    await recorder.start(recorderStartOptions);
+    client = createClient(recorder);
   });
 
   afterEach(async function () {
@@ -123,24 +124,27 @@ describe("RemoteRendering functional tests", () => {
   it("can convert successfully", async () => {
     const storageContainerUrl: string =
       "https://" +
-      getEnv("REMOTERENDERING_ARR_STORAGE_ACCOUNT_NAME") +
+      assertEnvironmentVariable("REMOTERENDERING_ARR_STORAGE_ACCOUNT_NAME") +
       ".blob.core.windows.net/" +
-      getEnv("REMOTERENDERING_ARR_BLOB_CONTAINER_NAME");
+      assertEnvironmentVariable("REMOTERENDERING_ARR_BLOB_CONTAINER_NAME");
 
     const inputSettings: AssetConversionInputSettings = {
       storageContainerUrl,
-      storageContainerReadListSas: getEnv("REMOTERENDERING_ARR_SAS_TOKEN"),
+      storageContainerReadListSas: assertEnvironmentVariable("REMOTERENDERING_ARR_SAS_TOKEN"),
       relativeInputAssetPath: "testBox.fbx",
       blobPrefix: "Input",
     };
     const outputSettings: AssetConversionOutputSettings = {
       storageContainerUrl,
-      storageContainerWriteSas: getEnv("REMOTERENDERING_ARR_SAS_TOKEN"),
+      storageContainerWriteSas: assertEnvironmentVariable("REMOTERENDERING_ARR_SAS_TOKEN"),
       blobPrefix: "Output",
     };
     const conversionSettings: AssetConversionSettings = { inputSettings, outputSettings };
 
-    const conversionId: string = recorder.getUniqueName("conversionId");
+    const conversionId: string = recorder.variable(
+      "conversionId",
+      `conversionId-${Math.floor(Math.random() * 10000)}`
+    );
 
     const conversionPoller: AssetConversionPollerLike = await client.beginConversion(
       conversionId,
@@ -181,9 +185,9 @@ describe("RemoteRendering functional tests", () => {
   it("throws correct exception on no access", async () => {
     const storageContainerUrl =
       "https://" +
-      getEnv("REMOTERENDERING_ARR_STORAGE_ACCOUNT_NAME") +
+      assertEnvironmentVariable("REMOTERENDERING_ARR_STORAGE_ACCOUNT_NAME") +
       ".blob.core.windows.net/" +
-      getEnv("REMOTERENDERING_ARR_BLOB_CONTAINER_NAME");
+      assertEnvironmentVariable("REMOTERENDERING_ARR_BLOB_CONTAINER_NAME");
 
     // Do not provide SAS tokens
     const inputSettings: AssetConversionInputSettings = {
@@ -197,12 +201,15 @@ describe("RemoteRendering functional tests", () => {
     };
     const conversionSettings: AssetConversionSettings = { inputSettings, outputSettings };
 
-    const conversionId = recorder.getUniqueName("conversionId");
+    const conversionId = recorder.variable(
+      "conversionId",
+      `conversionId-${Math.floor(Math.random() * 10000)}`
+    );
 
     let didThrowExpected: boolean = false;
     try {
       await client.beginConversion(conversionId, conversionSettings, pollerSettings);
-    } catch (e) {
+    } catch (e: any) {
       assert(e instanceof RestError);
       if (e instanceof RestError) {
         assert.isTrue(e.message.toLowerCase().includes("storage"));
@@ -216,24 +223,27 @@ describe("RemoteRendering functional tests", () => {
   it("will fail in the correct way on missing asset", async () => {
     const storageContainerUrl =
       "https://" +
-      getEnv("REMOTERENDERING_ARR_STORAGE_ACCOUNT_NAME") +
+      assertEnvironmentVariable("REMOTERENDERING_ARR_STORAGE_ACCOUNT_NAME") +
       ".blob.core.windows.net/" +
-      getEnv("REMOTERENDERING_ARR_BLOB_CONTAINER_NAME");
+      assertEnvironmentVariable("REMOTERENDERING_ARR_BLOB_CONTAINER_NAME");
 
     const inputSettings: AssetConversionInputSettings = {
       storageContainerUrl,
-      storageContainerReadListSas: getEnv("REMOTERENDERING_ARR_SAS_TOKEN"),
+      storageContainerReadListSas: assertEnvironmentVariable("REMOTERENDERING_ARR_SAS_TOKEN"),
       relativeInputAssetPath: "boxWhichDoesNotExist.fbx",
       blobPrefix: "Input",
     };
     const outputSettings: AssetConversionOutputSettings = {
       storageContainerUrl,
-      storageContainerWriteSas: getEnv("REMOTERENDERING_ARR_SAS_TOKEN"),
+      storageContainerWriteSas: assertEnvironmentVariable("REMOTERENDERING_ARR_SAS_TOKEN"),
       blobPrefix: "Output",
     };
     const conversionSettings: AssetConversionSettings = { inputSettings, outputSettings };
 
-    const conversionId = recorder.getUniqueName("conversionId");
+    const conversionId: string = recorder.variable(
+      "conversionId",
+      `conversionId-${Math.floor(Math.random() * 10000)}`
+    );
 
     const conversionPoller: AssetConversionPollerLike = await client.beginConversion(
       conversionId,
@@ -247,12 +257,13 @@ describe("RemoteRendering functional tests", () => {
     const newPoller = await client.beginConversion({ resumeFrom: conversionPoller.toString() });
     assert.equal(newPoller.getOperationState().latestResponse.conversionId, conversionId);
 
-    const conversion: AssetConversion = await conversionPoller.pollUntilDone();
-    assert.equal(conversion.status, "Failed");
-    if (conversion.status === "Failed") {
+    try {
+      await conversionPoller.pollUntilDone();
+      assert.isTrue(false, "Previous call should have thrown an exception.");
+    } catch (e: any) {
       // Invalid input provided. Check logs in output container for details.
-      assert.isTrue(conversion.error.message.toLowerCase().includes("invalid input"));
-      assert.isTrue(conversion.error.message.toLowerCase().includes("logs"));
+      assert.isTrue(e.message.toLowerCase().includes("invalid input"));
+      assert.isTrue(e.message.toLowerCase().includes("logs"));
     }
   });
 
@@ -261,7 +272,11 @@ describe("RemoteRendering functional tests", () => {
       maxLeaseTimeInMinutes: 4,
       size: "Standard",
     };
-    const sessionId: string = recorder.getUniqueName("sessionId");
+
+    const sessionId: string = recorder.variable(
+      "sessionId",
+      `sessionId-${Math.floor(Math.random() * 10000)}`
+    );
 
     const sessionPoller: RenderingSessionPollerLike = await client.beginSession(
       sessionId,
@@ -315,12 +330,15 @@ describe("RemoteRendering functional tests", () => {
       maxLeaseTimeInMinutes: -4,
       size: "Standard",
     };
-    const sessionId: string = recorder.getUniqueName("sessionId");
+    const sessionId: string = recorder.variable(
+      "sessionId",
+      `sessionId-${Math.floor(Math.random() * 10000)}`
+    );
 
     let didThrowExpected: boolean = false;
     try {
       await client.beginSession(sessionId, sessionSettings, pollerSettings);
-    } catch (e) {
+    } catch (e: any) {
       assert(e instanceof RestError);
       if (e instanceof RestError) {
         // The maxLeaseTimeMinutes value cannot be negative

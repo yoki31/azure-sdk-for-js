@@ -32,6 +32,7 @@ import {
   CertificateResource as CertificateResourceMapper,
   CustomDomainResource as CustomDomainResourceMapper,
   DeploymentResource as DeploymentResourceMapper,
+  RemoteDebuggingPayload as RemoteDebuggingPayloadMapper,
   DiagnosticParameters as DiagnosticParametersMapper,
   GatewayResource as GatewayResourceMapper,
   GatewayRouteConfigResource as GatewayRouteConfigResourceMapper,
@@ -67,7 +68,7 @@ export const $host: OperationURLParameter = {
 export const apiVersion: OperationQueryParameter = {
   parameterPath: "apiVersion",
   mapper: {
-    defaultValue: "2022-01-01-preview",
+    defaultValue: "2022-09-01-preview",
     isConstant: true,
     serializedName: "api-version",
     type: {
@@ -444,6 +445,11 @@ export const version: OperationQueryParameter = {
     }
   },
   collectionFormat: "Multi"
+};
+
+export const remoteDebuggingPayload: OperationParameter = {
+  parameterPath: ["options", "remoteDebuggingPayload"],
+  mapper: RemoteDebuggingPayloadMapper
 };
 
 export const diagnosticParameters: OperationParameter = {

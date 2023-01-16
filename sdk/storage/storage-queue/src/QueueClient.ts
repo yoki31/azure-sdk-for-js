@@ -566,7 +566,11 @@ export class QueueClient extends StorageClient {
             extractedCreds.accountKey
           );
           url = appendToURLPath(extractedCreds.url, queueName);
-          options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+
+          if (!options.proxyOptions) {
+            options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+          }
+
           pipeline = newPipeline(sharedKeyCredential, options);
         } else {
           throw new Error("Account connection string is only supported in Node.js environment");
@@ -628,7 +632,7 @@ export class QueueClient extends StorageClient {
         ...updatedOptions,
         abortSignal: options.abortSignal,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -666,7 +670,7 @@ export class QueueClient extends StorageClient {
         succeeded: true,
         ...response,
       };
-    } catch (e) {
+    } catch (e: any) {
       if (e.details?.errorCode === "QueueAlreadyExists") {
         span.setStatus({
           code: SpanStatusCode.ERROR,
@@ -705,7 +709,7 @@ export class QueueClient extends StorageClient {
         succeeded: true,
         ...res,
       };
-    } catch (e) {
+    } catch (e: any) {
       if (e.details?.errorCode === "QueueNotFound") {
         span.setStatus({
           code: SpanStatusCode.ERROR,
@@ -750,7 +754,7 @@ export class QueueClient extends StorageClient {
         abortSignal: options.abortSignal,
         tracingOptions: updatedOptions.tracingOptions,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -778,7 +782,7 @@ export class QueueClient extends StorageClient {
         tracingOptions: updatedOptions.tracingOptions,
       });
       return true;
-    } catch (e) {
+    } catch (e: any) {
       if (e.statusCode === 404) {
         span.setStatus({
           code: SpanStatusCode.ERROR,
@@ -818,7 +822,7 @@ export class QueueClient extends StorageClient {
         abortSignal: options.abortSignal,
         tracingOptions: updatedOptions.tracingOptions,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -851,7 +855,7 @@ export class QueueClient extends StorageClient {
         metadata,
         tracingOptions: updatedOptions.tracingOptions,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -916,7 +920,7 @@ export class QueueClient extends StorageClient {
       }
 
       return res;
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -962,7 +966,7 @@ export class QueueClient extends StorageClient {
         queueAcl: acl,
         tracingOptions: updatedOptions.tracingOptions,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -989,7 +993,7 @@ export class QueueClient extends StorageClient {
         abortSignal: options.abortSignal,
         tracingOptions: updatedOptions.tracingOptions,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -1047,7 +1051,7 @@ export class QueueClient extends StorageClient {
         insertedOn: item.insertedOn,
         expiresOn: item.expiresOn,
       };
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -1105,7 +1109,7 @@ export class QueueClient extends StorageClient {
       }
 
       return res;
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -1152,7 +1156,7 @@ export class QueueClient extends StorageClient {
       }
 
       return res;
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -1183,7 +1187,7 @@ export class QueueClient extends StorageClient {
         abortSignal: options.abortSignal,
         tracingOptions: updatedOptions.tracingOptions,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -1230,7 +1234,7 @@ export class QueueClient extends StorageClient {
         tracingOptions: updatedOptions.tracingOptions,
         queueMessage,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -1272,7 +1276,7 @@ export class QueueClient extends StorageClient {
       }
 
       return queueName;
-    } catch (error) {
+    } catch (error: any) {
       throw new Error("Unable to extract queueName with provided information.");
     }
   }

@@ -6,7 +6,7 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { GremlinResources } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
@@ -17,9 +17,10 @@ import { LroImpl } from "../lroImpl";
 import {
   GremlinDatabaseGetResults,
   GremlinResourcesListGremlinDatabasesOptionalParams,
+  GremlinResourcesListGremlinDatabasesResponse,
   GremlinGraphGetResults,
   GremlinResourcesListGremlinGraphsOptionalParams,
-  GremlinResourcesListGremlinDatabasesResponse,
+  GremlinResourcesListGremlinGraphsResponse,
   GremlinResourcesGetGremlinDatabaseOptionalParams,
   GremlinResourcesGetGremlinDatabaseResponse,
   GremlinDatabaseCreateUpdateParameters,
@@ -35,7 +36,6 @@ import {
   GremlinResourcesMigrateGremlinDatabaseToAutoscaleResponse,
   GremlinResourcesMigrateGremlinDatabaseToManualThroughputOptionalParams,
   GremlinResourcesMigrateGremlinDatabaseToManualThroughputResponse,
-  GremlinResourcesListGremlinGraphsResponse,
   GremlinResourcesGetGremlinGraphOptionalParams,
   GremlinResourcesGetGremlinGraphResponse,
   GremlinGraphCreateUpdateParameters,
@@ -49,7 +49,10 @@ import {
   GremlinResourcesMigrateGremlinGraphToAutoscaleOptionalParams,
   GremlinResourcesMigrateGremlinGraphToAutoscaleResponse,
   GremlinResourcesMigrateGremlinGraphToManualThroughputOptionalParams,
-  GremlinResourcesMigrateGremlinGraphToManualThroughputResponse
+  GremlinResourcesMigrateGremlinGraphToManualThroughputResponse,
+  ContinuousBackupRestoreLocation,
+  GremlinResourcesRetrieveContinuousBackupInformationOptionalParams,
+  GremlinResourcesRetrieveContinuousBackupInformationResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -88,11 +91,15 @@ export class GremlinResourcesImpl implements GremlinResources {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listGremlinDatabasesPagingPage(
           resourceGroupName,
           accountName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -101,9 +108,11 @@ export class GremlinResourcesImpl implements GremlinResources {
   private async *listGremlinDatabasesPagingPage(
     resourceGroupName: string,
     accountName: string,
-    options?: GremlinResourcesListGremlinDatabasesOptionalParams
+    options?: GremlinResourcesListGremlinDatabasesOptionalParams,
+    _settings?: PageSettings
   ): AsyncIterableIterator<GremlinDatabaseGetResults[]> {
-    let result = await this._listGremlinDatabases(
+    let result: GremlinResourcesListGremlinDatabasesResponse;
+    result = await this._listGremlinDatabases(
       resourceGroupName,
       accountName,
       options
@@ -151,12 +160,16 @@ export class GremlinResourcesImpl implements GremlinResources {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listGremlinGraphsPagingPage(
           resourceGroupName,
           accountName,
           databaseName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -166,9 +179,11 @@ export class GremlinResourcesImpl implements GremlinResources {
     resourceGroupName: string,
     accountName: string,
     databaseName: string,
-    options?: GremlinResourcesListGremlinGraphsOptionalParams
+    options?: GremlinResourcesListGremlinGraphsOptionalParams,
+    _settings?: PageSettings
   ): AsyncIterableIterator<GremlinGraphGetResults[]> {
-    let result = await this._listGremlinGraphs(
+    let result: GremlinResourcesListGremlinGraphsResponse;
+    result = await this._listGremlinGraphs(
       resourceGroupName,
       accountName,
       databaseName,
@@ -301,10 +316,12 @@ export class GremlinResourcesImpl implements GremlinResources {
       },
       createUpdateGremlinDatabaseOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -390,10 +407,12 @@ export class GremlinResourcesImpl implements GremlinResources {
       { resourceGroupName, accountName, databaseName, options },
       deleteGremlinDatabaseOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -511,10 +530,12 @@ export class GremlinResourcesImpl implements GremlinResources {
       },
       updateGremlinDatabaseThroughputOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -607,10 +628,12 @@ export class GremlinResourcesImpl implements GremlinResources {
       { resourceGroupName, accountName, databaseName, options },
       migrateGremlinDatabaseToAutoscaleOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -699,10 +722,12 @@ export class GremlinResourcesImpl implements GremlinResources {
       { resourceGroupName, accountName, databaseName, options },
       migrateGremlinDatabaseToManualThroughputOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -840,10 +865,12 @@ export class GremlinResourcesImpl implements GremlinResources {
       },
       createUpdateGremlinGraphOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -933,10 +960,12 @@ export class GremlinResourcesImpl implements GremlinResources {
       { resourceGroupName, accountName, databaseName, graphName, options },
       deleteGremlinGraphOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1060,10 +1089,12 @@ export class GremlinResourcesImpl implements GremlinResources {
       },
       updateGremlinGraphThroughputOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1161,10 +1192,12 @@ export class GremlinResourcesImpl implements GremlinResources {
       { resourceGroupName, accountName, databaseName, graphName, options },
       migrateGremlinGraphToAutoscaleOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1258,10 +1291,12 @@ export class GremlinResourcesImpl implements GremlinResources {
       { resourceGroupName, accountName, databaseName, graphName, options },
       migrateGremlinGraphToManualThroughputOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1284,6 +1319,118 @@ export class GremlinResourcesImpl implements GremlinResources {
       accountName,
       databaseName,
       graphName,
+      options
+    );
+    return poller.pollUntilDone();
+  }
+
+  /**
+   * Retrieves continuous backup information for a gremlin graph.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
+   * @param accountName Cosmos DB database account name.
+   * @param databaseName Cosmos DB database name.
+   * @param graphName Cosmos DB graph name.
+   * @param location The name of the continuous backup restore location.
+   * @param options The options parameters.
+   */
+  async beginRetrieveContinuousBackupInformation(
+    resourceGroupName: string,
+    accountName: string,
+    databaseName: string,
+    graphName: string,
+    location: ContinuousBackupRestoreLocation,
+    options?: GremlinResourcesRetrieveContinuousBackupInformationOptionalParams
+  ): Promise<
+    PollerLike<
+      PollOperationState<
+        GremlinResourcesRetrieveContinuousBackupInformationResponse
+      >,
+      GremlinResourcesRetrieveContinuousBackupInformationResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec
+    ): Promise<GremlinResourcesRetrieveContinuousBackupInformationResponse> => {
+      return this.client.sendOperationRequest(args, spec);
+    };
+    const sendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec
+    ) => {
+      let currentRawResponse:
+        | coreClient.FullOperationResponse
+        | undefined = undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback
+        }
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON()
+        }
+      };
+    };
+
+    const lro = new LroImpl(
+      sendOperation,
+      {
+        resourceGroupName,
+        accountName,
+        databaseName,
+        graphName,
+        location,
+        options
+      },
+      retrieveContinuousBackupInformationOperationSpec
+    );
+    const poller = new LroEngine(lro, {
+      resumeFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      lroResourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Retrieves continuous backup information for a gremlin graph.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
+   * @param accountName Cosmos DB database account name.
+   * @param databaseName Cosmos DB database name.
+   * @param graphName Cosmos DB graph name.
+   * @param location The name of the continuous backup restore location.
+   * @param options The options parameters.
+   */
+  async beginRetrieveContinuousBackupInformationAndWait(
+    resourceGroupName: string,
+    accountName: string,
+    databaseName: string,
+    graphName: string,
+    location: ContinuousBackupRestoreLocation,
+    options?: GremlinResourcesRetrieveContinuousBackupInformationOptionalParams
+  ): Promise<GremlinResourcesRetrieveContinuousBackupInformationResponse> {
+    const poller = await this.beginRetrieveContinuousBackupInformation(
+      resourceGroupName,
+      accountName,
+      databaseName,
+      graphName,
+      location,
       options
     );
     return poller.pollUntilDone();
@@ -1527,8 +1674,8 @@ const getGremlinGraphOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.accountName,
-    Parameters.databaseName,
-    Parameters.graphName
+    Parameters.graphName,
+    Parameters.databaseName
   ],
   headerParameters: [Parameters.accept],
   serializer
@@ -1558,8 +1705,8 @@ const createUpdateGremlinGraphOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.accountName,
-    Parameters.databaseName,
-    Parameters.graphName
+    Parameters.graphName,
+    Parameters.databaseName
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
@@ -1576,8 +1723,8 @@ const deleteGremlinGraphOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.accountName,
-    Parameters.databaseName,
-    Parameters.graphName
+    Parameters.graphName,
+    Parameters.databaseName
   ],
   serializer
 };
@@ -1596,8 +1743,8 @@ const getGremlinGraphThroughputOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.accountName,
-    Parameters.databaseName,
-    Parameters.graphName
+    Parameters.graphName,
+    Parameters.databaseName
   ],
   headerParameters: [Parameters.accept],
   serializer
@@ -1627,8 +1774,8 @@ const updateGremlinGraphThroughputOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.accountName,
-    Parameters.databaseName,
-    Parameters.graphName
+    Parameters.graphName,
+    Parameters.databaseName
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
@@ -1661,8 +1808,8 @@ const migrateGremlinGraphToAutoscaleOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.accountName,
-    Parameters.databaseName,
-    Parameters.graphName
+    Parameters.graphName,
+    Parameters.databaseName
   ],
   headerParameters: [Parameters.accept],
   serializer
@@ -1694,9 +1841,44 @@ const migrateGremlinGraphToManualThroughputOperationSpec: coreClient.OperationSp
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.accountName,
-    Parameters.databaseName,
-    Parameters.graphName
+    Parameters.graphName,
+    Parameters.databaseName
   ],
   headerParameters: [Parameters.accept],
+  serializer
+};
+const retrieveContinuousBackupInformationOperationSpec: coreClient.OperationSpec = {
+  path:
+    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/gremlinDatabases/{databaseName}/graphs/{graphName}/retrieveContinuousBackupInformation",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: Mappers.BackupInformation
+    },
+    201: {
+      bodyMapper: Mappers.BackupInformation
+    },
+    202: {
+      bodyMapper: Mappers.BackupInformation
+    },
+    204: {
+      bodyMapper: Mappers.BackupInformation
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
+  requestBody: Parameters.location,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.accountName,
+    Parameters.graphName,
+    Parameters.databaseName
+  ],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
   serializer
 };

@@ -151,6 +151,15 @@ export interface InternalPipelineOptions extends PipelineOptions {
 }
 
 // @public
+export function isRestError(e: unknown): e is RestError;
+
+// @public
+export interface KeyObject {
+    passphrase?: string | undefined;
+    pem: string | Buffer;
+}
+
+// @public
 export function logPolicy(options?: LogPolicyOptions): PipelinePolicy;
 
 // @public
@@ -186,11 +195,12 @@ export interface PipelineOptions {
     proxyOptions?: ProxySettings;
     redirectOptions?: RedirectPolicyOptions;
     retryOptions?: PipelineRetryOptions;
+    tlsOptions?: TlsSettings;
     userAgentOptions?: UserAgentPolicyOptions;
 }
 
 // @public
-export type PipelinePhase = "Deserialize" | "Serialize" | "Retry";
+export type PipelinePhase = "Deserialize" | "Serialize" | "Retry" | "Sign";
 
 // @public
 export interface PipelinePolicy {
@@ -205,6 +215,7 @@ export interface PipelineRequest {
     allowInsecureConnection?: boolean;
     body?: RequestBodyType;
     disableKeepAlive?: boolean;
+    enableBrowserStreams?: boolean;
     formData?: FormDataMap;
     headers: HttpHeaders;
     method: HttpMethods;
@@ -214,6 +225,7 @@ export interface PipelineRequest {
     requestId: string;
     streamResponseStatusCodes?: Set<number>;
     timeout: number;
+    tlsSettings?: TlsSettings;
     tracingOptions?: OperationTracingOptions;
     url: string;
     withCredentials: boolean;
@@ -225,6 +237,7 @@ export interface PipelineRequestOptions {
     allowInsecureConnection?: boolean;
     body?: RequestBodyType;
     disableKeepAlive?: boolean;
+    enableBrowserStreams?: boolean;
     formData?: FormDataMap;
     headers?: HttpHeaders;
     method?: HttpMethods;
@@ -243,6 +256,7 @@ export interface PipelineRequestOptions {
 export interface PipelineResponse {
     blobBody?: Promise<Blob>;
     bodyAsText?: string | null;
+    browserStreamBody?: ReadableStream<Uint8Array>;
     headers: HttpHeaders;
     readableStreamBody?: NodeJS.ReadableStream;
     request: PipelineRequest;
@@ -273,6 +287,12 @@ export interface ProxySettings {
 }
 
 // @public
+export interface PxfObject {
+    buf: string | Buffer;
+    passphrase?: string | undefined;
+}
+
+// @public
 export type RawHttpHeaders = {
     [headerName: string]: string;
 };
@@ -292,7 +312,7 @@ export interface RedirectPolicyOptions {
 }
 
 // @public
-export type RequestBodyType = NodeJS.ReadableStream | Blob | ArrayBuffer | ArrayBufferView | FormData | string | null;
+export type RequestBodyType = NodeJS.ReadableStream | (() => NodeJS.ReadableStream) | ReadableStream<Uint8Array> | (() => ReadableStream<Uint8Array>) | Blob | ArrayBuffer | ArrayBufferView | FormData | string | null;
 
 // @public
 export class RestError extends Error {
@@ -376,6 +396,21 @@ export const throttlingRetryPolicyName = "throttlingRetryPolicy";
 // @public
 export interface ThrottlingRetryPolicyOptions {
     maxRetries?: number;
+}
+
+// @public
+export function tlsPolicy(tlsSettings?: TlsSettings): PipelinePolicy;
+
+// @public
+export const tlsPolicyName = "tlsPolicy";
+
+// @public
+export interface TlsSettings {
+    ca?: string | Buffer | Array<string | Buffer> | undefined;
+    cert?: string | Buffer | Array<string | Buffer> | undefined;
+    key?: string | Buffer | Array<Buffer | KeyObject> | undefined;
+    passphrase?: string | undefined;
+    pfx?: string | Buffer | Array<string | Buffer | PxfObject> | undefined;
 }
 
 // @public

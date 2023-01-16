@@ -6,7 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { VirtualMachines } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
@@ -18,13 +19,16 @@ import {
   VirtualMachine,
   VirtualMachinesListByLocationNextOptionalParams,
   VirtualMachinesListByLocationOptionalParams,
+  VirtualMachinesListByLocationResponse,
   VirtualMachinesListNextOptionalParams,
   VirtualMachinesListOptionalParams,
+  VirtualMachinesListResponse,
   VirtualMachinesListAllNextOptionalParams,
   VirtualMachinesListAllOptionalParams,
+  VirtualMachinesListAllResponse,
   VirtualMachineSize,
   VirtualMachinesListAvailableSizesOptionalParams,
-  VirtualMachinesListByLocationResponse,
+  VirtualMachinesListAvailableSizesResponse,
   VirtualMachineCaptureParameters,
   VirtualMachinesCaptureOptionalParams,
   VirtualMachinesCaptureResponse,
@@ -41,9 +45,6 @@ import {
   VirtualMachinesConvertToManagedDisksOptionalParams,
   VirtualMachinesDeallocateOptionalParams,
   VirtualMachinesGeneralizeOptionalParams,
-  VirtualMachinesListResponse,
-  VirtualMachinesListAllResponse,
-  VirtualMachinesListAvailableSizesResponse,
   VirtualMachinesPowerOffOptionalParams,
   VirtualMachinesReapplyOptionalParams,
   VirtualMachinesRestartOptionalParams,
@@ -97,19 +98,29 @@ export class VirtualMachinesImpl implements VirtualMachines {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByLocationPagingPage(location, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByLocationPagingPage(location, options, settings);
       }
     };
   }
 
   private async *listByLocationPagingPage(
     location: string,
-    options?: VirtualMachinesListByLocationOptionalParams
+    options?: VirtualMachinesListByLocationOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<VirtualMachine[]> {
-    let result = await this._listByLocation(location, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VirtualMachinesListByLocationResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByLocation(location, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByLocationNext(
         location,
@@ -117,7 +128,9 @@ export class VirtualMachinesImpl implements VirtualMachines {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -148,19 +161,29 @@ export class VirtualMachinesImpl implements VirtualMachines {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(resourceGroupName, options, settings);
       }
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
-    options?: VirtualMachinesListOptionalParams
+    options?: VirtualMachinesListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<VirtualMachine[]> {
-    let result = await this._list(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VirtualMachinesListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
@@ -168,7 +191,9 @@ export class VirtualMachinesImpl implements VirtualMachines {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -197,22 +222,34 @@ export class VirtualMachinesImpl implements VirtualMachines {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAllPagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAllPagingPage(options, settings);
       }
     };
   }
 
   private async *listAllPagingPage(
-    options?: VirtualMachinesListAllOptionalParams
+    options?: VirtualMachinesListAllOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<VirtualMachine[]> {
-    let result = await this._listAll(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VirtualMachinesListAllResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAll(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAllNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -247,11 +284,15 @@ export class VirtualMachinesImpl implements VirtualMachines {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listAvailableSizesPagingPage(
           resourceGroupName,
           vmName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -260,13 +301,11 @@ export class VirtualMachinesImpl implements VirtualMachines {
   private async *listAvailableSizesPagingPage(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesListAvailableSizesOptionalParams
+    options?: VirtualMachinesListAvailableSizesOptionalParams,
+    _settings?: PageSettings
   ): AsyncIterableIterator<VirtualMachineSize[]> {
-    let result = await this._listAvailableSizes(
-      resourceGroupName,
-      vmName,
-      options
-    );
+    let result: VirtualMachinesListAvailableSizesResponse;
+    result = await this._listAvailableSizes(resourceGroupName, vmName, options);
     yield result.value || [];
   }
 
@@ -362,11 +401,13 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, parameters, options },
       captureOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs,
       lroResourceLocationConfig: "location"
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -455,10 +496,12 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, parameters, options },
       createOrUpdateOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -546,10 +589,12 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, parameters, options },
       updateOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -629,10 +674,12 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, options },
       deleteOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -740,10 +787,12 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, options },
       convertToManagedDisksOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -822,10 +871,12 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, options },
       deallocateOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -970,10 +1021,12 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, options },
       powerOffOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1047,10 +1100,12 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, options },
       reapplyOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1123,10 +1178,12 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, options },
       restartOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1199,10 +1256,12 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, options },
       startOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1275,10 +1334,12 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, options },
       redeployOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1297,7 +1358,12 @@ export class VirtualMachinesImpl implements VirtualMachines {
   }
 
   /**
-   * Reimages the virtual machine which has an ephemeral OS disk back to its initial state.
+   * Reimages (upgrade the operating system) a virtual machine which don't have a ephemeral OS disk, for
+   * virtual machines who have a ephemeral OS disk the virtual machine is reset to initial state. NOTE:
+   * The retaining of old OS disk depends on the value of deleteOption of OS disk. If deleteOption is
+   * detach, the old OS disk will be preserved after reimage. If deleteOption is delete, the old OS disk
+   * will be deleted after reimage. The deleteOption of the OS disk should be updated accordingly before
+   * performing the reimage.
    * @param resourceGroupName The name of the resource group.
    * @param vmName The name of the virtual machine.
    * @param options The options parameters.
@@ -1351,14 +1417,21 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, options },
       reimageOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
-   * Reimages the virtual machine which has an ephemeral OS disk back to its initial state.
+   * Reimages (upgrade the operating system) a virtual machine which don't have a ephemeral OS disk, for
+   * virtual machines who have a ephemeral OS disk the virtual machine is reset to initial state. NOTE:
+   * The retaining of old OS disk depends on the value of deleteOption of OS disk. If deleteOption is
+   * detach, the old OS disk will be preserved after reimage. If deleteOption is delete, the old OS disk
+   * will be deleted after reimage. The deleteOption of the OS disk should be updated accordingly before
+   * performing the reimage.
    * @param resourceGroupName The name of the resource group.
    * @param vmName The name of the virtual machine.
    * @param options The options parameters.
@@ -1444,10 +1517,12 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, options },
       performMaintenanceOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1546,11 +1621,13 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, options },
       assessPatchesOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs,
       lroResourceLocationConfig: "location"
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1634,11 +1711,13 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, installPatchesInput, options },
       installPatchesOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs,
       lroResourceLocationConfig: "location"
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1725,11 +1804,13 @@ export class VirtualMachinesImpl implements VirtualMachines {
       { resourceGroupName, vmName, parameters, options },
       runCommandOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs,
       lroResourceLocationConfig: "location"
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1813,13 +1894,16 @@ const listByLocationOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.VirtualMachineListResult
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.location1
+    Parameters.location,
+    Parameters.subscriptionId
   ],
   headerParameters: [Parameters.accept],
   serializer
@@ -1840,14 +1924,17 @@ const captureOperationSpec: coreClient.OperationSpec = {
     },
     204: {
       bodyMapper: Mappers.VirtualMachineCaptureResult
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
-  requestBody: Parameters.parameters10,
+  requestBody: Parameters.parameters6,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
@@ -1870,14 +1957,17 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     },
     204: {
       bodyMapper: Mappers.VirtualMachine
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
-  requestBody: Parameters.parameters11,
+  requestBody: Parameters.parameters7,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
@@ -1900,14 +1990,17 @@ const updateOperationSpec: coreClient.OperationSpec = {
     },
     204: {
       bodyMapper: Mappers.VirtualMachine
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
-  requestBody: Parameters.parameters12,
+  requestBody: Parameters.parameters8,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
@@ -1918,14 +2011,23 @@ const deleteOperationSpec: coreClient.OperationSpec = {
   path:
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}",
   httpMethod: "DELETE",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {} },
+  responses: {
+    200: {},
+    201: {},
+    202: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
   queryParameters: [Parameters.apiVersion, Parameters.forceDeletion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
+  headerParameters: [Parameters.accept],
   serializer
 };
 const getOperationSpec: coreClient.OperationSpec = {
@@ -1935,13 +2037,16 @@ const getOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.VirtualMachine
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.expand1],
+  queryParameters: [Parameters.apiVersion, Parameters.expand2],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
   headerParameters: [Parameters.accept],
@@ -1954,13 +2059,16 @@ const instanceViewOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.VirtualMachineInstanceView
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
   headerParameters: [Parameters.accept],
@@ -1970,42 +2078,66 @@ const convertToManagedDisksOperationSpec: coreClient.OperationSpec = {
   path:
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/convertToManagedDisks",
   httpMethod: "POST",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {} },
+  responses: {
+    200: {},
+    201: {},
+    202: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
+  headerParameters: [Parameters.accept],
   serializer
 };
 const deallocateOperationSpec: coreClient.OperationSpec = {
   path:
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/deallocate",
   httpMethod: "POST",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {} },
+  responses: {
+    200: {},
+    201: {},
+    202: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
   queryParameters: [Parameters.apiVersion, Parameters.hibernate],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
+  headerParameters: [Parameters.accept],
   serializer
 };
 const generalizeOperationSpec: coreClient.OperationSpec = {
   path:
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/generalize",
   httpMethod: "POST",
-  responses: { 200: {} },
+  responses: {
+    200: {},
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
+  headerParameters: [Parameters.accept],
   serializer
 };
 const listOperationSpec: coreClient.OperationSpec = {
@@ -2015,13 +2147,16 @@ const listOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.VirtualMachineListResult
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [Parameters.apiVersion, Parameters.filter],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
-    Parameters.subscriptionId
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName
   ],
   headerParameters: [Parameters.accept],
   serializer
@@ -2033,9 +2168,16 @@ const listAllOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.VirtualMachineListResult
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.statusOnly],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.filter,
+    Parameters.statusOnly
+  ],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
   serializer
@@ -2047,13 +2189,16 @@ const listAvailableSizesOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.VirtualMachineSizeListResult
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
   headerParameters: [Parameters.accept],
@@ -2063,14 +2208,23 @@ const powerOffOperationSpec: coreClient.OperationSpec = {
   path:
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/powerOff",
   httpMethod: "POST",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {} },
+  responses: {
+    200: {},
+    201: {},
+    202: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
   queryParameters: [Parameters.apiVersion, Parameters.skipShutdown],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
+  headerParameters: [Parameters.accept],
   serializer
 };
 const reapplyOperationSpec: coreClient.OperationSpec = {
@@ -2089,8 +2243,8 @@ const reapplyOperationSpec: coreClient.OperationSpec = {
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
   headerParameters: [Parameters.accept],
@@ -2100,58 +2254,93 @@ const restartOperationSpec: coreClient.OperationSpec = {
   path:
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/restart",
   httpMethod: "POST",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {} },
+  responses: {
+    200: {},
+    201: {},
+    202: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
+  headerParameters: [Parameters.accept],
   serializer
 };
 const startOperationSpec: coreClient.OperationSpec = {
   path:
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/start",
   httpMethod: "POST",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {} },
+  responses: {
+    200: {},
+    201: {},
+    202: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
+  headerParameters: [Parameters.accept],
   serializer
 };
 const redeployOperationSpec: coreClient.OperationSpec = {
   path:
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/redeploy",
   httpMethod: "POST",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {} },
+  responses: {
+    200: {},
+    201: {},
+    202: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
+  headerParameters: [Parameters.accept],
   serializer
 };
 const reimageOperationSpec: coreClient.OperationSpec = {
   path:
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/reimage",
   httpMethod: "POST",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {} },
-  requestBody: Parameters.parameters13,
+  responses: {
+    200: {},
+    201: {},
+    202: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
+  requestBody: Parameters.parameters9,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
-  headerParameters: [Parameters.contentType],
+  headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
   serializer
 };
@@ -2173,8 +2362,8 @@ const retrieveBootDiagnosticsDataOperationSpec: coreClient.OperationSpec = {
   ],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
   headerParameters: [Parameters.accept],
@@ -2184,28 +2373,43 @@ const performMaintenanceOperationSpec: coreClient.OperationSpec = {
   path:
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/performMaintenance",
   httpMethod: "POST",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {} },
+  responses: {
+    200: {},
+    201: {},
+    202: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
+  headerParameters: [Parameters.accept],
   serializer
 };
 const simulateEvictionOperationSpec: coreClient.OperationSpec = {
   path:
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/simulateEviction",
   httpMethod: "POST",
-  responses: { 204: {} },
+  responses: {
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
+  headerParameters: [Parameters.accept],
   serializer
 };
 const assessPatchesOperationSpec: coreClient.OperationSpec = {
@@ -2232,8 +2436,8 @@ const assessPatchesOperationSpec: coreClient.OperationSpec = {
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
   headerParameters: [Parameters.accept],
@@ -2264,8 +2468,8 @@ const installPatchesOperationSpec: coreClient.OperationSpec = {
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
@@ -2290,12 +2494,12 @@ const runCommandOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.RunCommandResult
     }
   },
-  requestBody: Parameters.parameters14,
+  requestBody: Parameters.parameters5,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName
   ],
   headerParameters: [Parameters.contentType, Parameters.accept1],
@@ -2308,14 +2512,16 @@ const listByLocationNextOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.VirtualMachineListResult
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
+    Parameters.location,
     Parameters.subscriptionId,
-    Parameters.nextLink,
-    Parameters.location1
+    Parameters.nextLink
   ],
   headerParameters: [Parameters.accept],
   serializer
@@ -2326,14 +2532,16 @@ const listNextOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.VirtualMachineListResult
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
+    Parameters.resourceGroupName
   ],
   headerParameters: [Parameters.accept],
   serializer
@@ -2344,9 +2552,11 @@ const listAllNextOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.VirtualMachineListResult
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.statusOnly],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,

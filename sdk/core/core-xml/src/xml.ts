@@ -1,34 +1,64 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { j2xParser, parse, validate } from "fast-xml-parser";
+import { XMLBuilder, XMLParser, XMLValidator } from "fast-xml-parser";
 import { XML_ATTRKEY, XML_CHARKEY, XmlOptions } from "./xml.common";
 
-function getCommonOptions(options: XmlOptions) {
+function getCommonOptions(options: XmlOptions): {
+  attributesGroupName: string;
+  textNodeName: string;
+  ignoreAttributes: boolean;
+  suppressBooleanAttributes: boolean;
+} {
   return {
-    attrNodeName: XML_ATTRKEY,
+    attributesGroupName: XML_ATTRKEY,
     textNodeName: options.xmlCharKey ?? XML_CHARKEY,
     ignoreAttributes: false,
+    suppressBooleanAttributes: false,
   };
 }
 
-function getSerializerOptions(options: XmlOptions = {}) {
+function getSerializerOptions(options: XmlOptions = {}): {
+  attributesGroupName: string;
+  textNodeName: string;
+  ignoreAttributes: boolean;
+  suppressBooleanAttributes: boolean;
+  attributeNamePrefix: string;
+  format: boolean;
+  suppressEmptyNode: boolean;
+  indentBy: string;
+  rootNodeName: string;
+  cdataPropName: string;
+} {
   return {
     ...getCommonOptions(options),
     attributeNamePrefix: "@_",
     format: true,
-    supressEmptyNode: true,
+    suppressEmptyNode: true,
     indentBy: "",
     rootNodeName: options.rootName ?? "root",
+    cdataPropName: options.cdataPropName ?? "__cdata",
   };
 }
 
-function getParserOptions(options: XmlOptions = {}) {
+function getParserOptions(options: XmlOptions = {}): {
+  attributesGroupName: string;
+  textNodeName: string;
+  ignoreAttributes: boolean;
+  suppressBooleanAttributes: boolean;
+  parseAttributeValue: boolean;
+  parseTagValue: boolean;
+  attributeNamePrefix: string;
+  stopNodes?: string[];
+  processEntities: boolean;
+} {
   return {
     ...getCommonOptions(options),
     parseAttributeValue: false,
-    parseNodeValue: false,
+    parseTagValue: false,
     attributeNamePrefix: "",
+    stopNodes: options.stopNodes,
+    processEntities: true,
   };
 }
 /**
@@ -39,11 +69,11 @@ function getParserOptions(options: XmlOptions = {}) {
  */
 export function stringifyXML(obj: unknown, opts: XmlOptions = {}): string {
   const parserOptions = getSerializerOptions(opts);
-  const j2x = new j2xParser(parserOptions);
+  const j2x = new XMLBuilder(parserOptions);
 
   const node = { [parserOptions.rootNodeName]: obj };
 
-  const xmlData: string = j2x.parse(node);
+  const xmlData: string = j2x.build(node);
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>${xmlData}`.replace(/\n/g, "");
 }
 
@@ -58,13 +88,20 @@ export async function parseXML(str: string, opts: XmlOptions = {}): Promise<any>
     throw new Error("Document is empty");
   }
 
-  const validation = validate(str);
+  const validation = XMLValidator.validate(str);
 
   if (validation !== true) {
     throw validation;
   }
 
-  const parsedXml = parse(unescapeHTML(str), getParserOptions(opts));
+  const parser = new XMLParser(getParserOptions(opts));
+  const parsedXml = parser.parse(str);
+
+  // Remove the <?xml version="..." ?> node.
+  // This is a change in behavior on fxp v4. Issue #424
+  if (parsedXml["?xml"]) {
+    delete parsedXml["?xml"];
+  }
 
   if (!opts.includeRoot) {
     for (const key of Object.keys(parsedXml)) {
@@ -74,12 +111,4 @@ export async function parseXML(str: string, opts: XmlOptions = {}): Promise<any>
   }
 
   return parsedXml;
-}
-
-function unescapeHTML(str: string) {
-  return str
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"');
 }

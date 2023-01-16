@@ -51,7 +51,7 @@ export const $host: OperationURLParameter = {
 export const apiVersion: OperationQueryParameter = {
   parameterPath: "apiVersion",
   mapper: {
-    defaultValue: "2021-10-01",
+    defaultValue: "2022-11-01",
     isConstant: true,
     serializedName: "api-version",
     type: {
@@ -63,6 +63,9 @@ export const apiVersion: OperationQueryParameter = {
 export const subscriptionId: OperationURLParameter = {
   parameterPath: "subscriptionId",
   mapper: {
+    constraints: {
+      MinLength: 1
+    },
     serializedName: "subscriptionId",
     required: true,
     type: {
@@ -74,6 +77,9 @@ export const subscriptionId: OperationURLParameter = {
 export const location: OperationURLParameter = {
   parameterPath: "location",
   mapper: {
+    constraints: {
+      MinLength: 1
+    },
     serializedName: "location",
     required: true,
     type: {
@@ -96,6 +102,7 @@ export const resourceGroupName: OperationURLParameter = {
   parameterPath: "resourceGroupName",
   mapper: {
     constraints: {
+      MaxLength: 90,
       MinLength: 1
     },
     serializedName: "resourceGroupName",
@@ -139,6 +146,16 @@ export const serverFqdn: OperationQueryParameter = {
   parameterPath: ["options", "serverFqdn"],
   mapper: {
     serializedName: "server-fqdn",
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const format: OperationQueryParameter = {
+  parameterPath: ["options", "format"],
+  mapper: {
+    serializedName: "format",
     type: {
       name: "String"
     }
@@ -224,6 +241,11 @@ export const parameters4: OperationParameter = {
 export const agentPoolName: OperationURLParameter = {
   parameterPath: "agentPoolName",
   mapper: {
+    constraints: {
+      Pattern: new RegExp("^[a-z][a-z0-9]{0,11}$"),
+      MaxLength: 12,
+      MinLength: 1
+    },
     serializedName: "agentPoolName",
     required: true,
     type: {
@@ -235,6 +257,17 @@ export const agentPoolName: OperationURLParameter = {
 export const parameters5: OperationParameter = {
   parameterPath: "parameters",
   mapper: AgentPoolMapper
+};
+
+export const agentPoolName1: OperationURLParameter = {
+  parameterPath: "agentPoolName",
+  mapper: {
+    serializedName: "agentPoolName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
 };
 
 export const privateEndpointConnectionName: OperationURLParameter = {

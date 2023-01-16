@@ -3,8 +3,8 @@
 
 import { assert } from "chai";
 import {
-  BatchRequest as GeneratedBatchRequest,
   BatchQueryRequest,
+  BatchRequest as GeneratedBatchRequest,
 } from "../../../src/generated/logquery/src";
 import {
   MetricsListOptionalParams as GeneratedMetricsListOptionalParams,
@@ -12,9 +12,9 @@ import {
 } from "../../../src/generated/metrics/src";
 import { MetricDefinitionsListOptionalParams as GeneratedMetricDefinitionsListOptionalParams } from "../../../src/generated/metricsdefinitions/src";
 import {
+  convertRequestForMetrics,
   convertRequestForQueryBatch,
   convertRequestOptionsForMetricsDefinitions,
-  convertRequestForMetrics,
   convertResponseForMetrics,
   convertResponseForMetricsDefinitions,
 } from "../../../src/internal/modelConverters";
@@ -354,8 +354,8 @@ describe("Model unit tests", () => {
 
     it("convertTimespanToInterval", () => {
       const res1 = convertTimespanToInterval({
-        startTime: new Date("2007-11-13T08:00:00"),
-        endTime: new Date("2007-11-16T08:00:00"),
+        startTime: new Date("2007-11-13T08:00:00Z"),
+        endTime: new Date("2007-11-16T08:00:00Z"),
       });
       assert.equal(res1, "2007-11-13T08:00:00.000Z/2007-11-16T08:00:00.000Z");
 

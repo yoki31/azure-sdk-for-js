@@ -3,20 +3,31 @@
 
 /// <reference lib="esnext.asynciterable" />
 
-import { Context } from "mocha";
-
-import { env, Recorder, record, RecorderEnvironmentSetup } from "@azure-tools/test-recorder";
-import ConfidentialLedger, { ConfidentialLedgerRestClient } from "../../../src";
-import { ClientSecretCredential } from "@azure/identity";
-
 import "./env";
 
+import ConfidentialLedger, { ConfidentialLedgerClient, getLedgerIdentity } from "../../../src";
+import {
+  Recorder,
+  RecorderEnvironmentSetup,
+  env,
+  isLiveMode,
+  record,
+} from "@azure-tools/test-recorder";
+import { createXhrHttpClient, isNode } from "@azure/test-utils";
+
+import { Context } from "mocha";
+import { ClientSecretCredential } from "@azure/identity";
+
 const replaceableVariables: { [k: string]: string } = {
-  ENDPOINT: "https://endpoint",
+  LEDGER_URI: "https://emily-java-sdk-tests.confidential-ledger.azure.com/",
   AZURE_CLIENT_ID: "azure_client_id",
   AZURE_CLIENT_SECRET: "azure_client_secret",
   AZURE_TENANT_ID: "88888888-8888-8888-8888-888888888888",
   LEDGER_IDENTITY: "FAKE_CERT",
+  IDENTITY_SERVICE_URL: "https://identity.confidential-ledger.core.azure.com/",
+  USER_ID: "00000000-0000-0000-0000-000000000000",
+  // we need this dummy variable since the test environment doesn't have access to local .env files
+  LEDGER_NAME: "emily-java-sdk-tests",
 };
 
 export const environmentSetup: RecorderEnvironmentSetup = {
@@ -37,13 +48,23 @@ export const environmentSetup: RecorderEnvironmentSetup = {
   queryParametersToSkip: [],
 };
 
-export function createClient(): ConfidentialLedgerRestClient {
-  const credential = new ClientSecretCredential(
-    env["AZURE_TENANT_ID"],
-    env["AZURE_CLIENT_ID"],
-    env["AZURE_CLIENT_SECRET"]
+export async function createClient(): Promise<ConfidentialLedgerClient> {
+  const httpClient = isNode || isLiveMode() ? undefined : createXhrHttpClient();
+
+  const clientCredential = new ClientSecretCredential(
+    env.AZURE_TENANT_ID,
+    env.AZURE_CLIENT_ID,
+    env.AZURE_CLIENT_SECRET
   );
-  return ConfidentialLedger(env.ENDPOINT, env.LEDGER_IDENTITY, credential);
+
+  const { ledgerIdentityCertificate } = await getLedgerIdentity(
+    env.LEDGER_NAME,
+    env.IDENTITY_SERVICE_URL ? env.IDENTITY_SERVICE_URL : null
+  );
+
+  return ConfidentialLedger(env.LEDGER_URI, ledgerIdentityCertificate, clientCredential, {
+    httpClient,
+  });
 }
 
 /**

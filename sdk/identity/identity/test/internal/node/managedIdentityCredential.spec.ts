@@ -1,32 +1,32 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
-import { join } from "path";
-import { tmpdir } from "os";
-import { mkdtempSync, rmdirSync, unlinkSync, writeFileSync } from "fs";
-import { RestError } from "@azure/core-rest-pipeline";
-import { ManagedIdentityCredential } from "../../../src";
+import { AzureAuthorityHosts, DefaultAuthorityHost, DefaultTenantId } from "../../../src/constants";
+import { AzureLogger, setLogLevel } from "@azure/logger";
+import { IdentityTestContextInterface, createResponse } from "../../httpRequestsCommon";
 import {
-  imdsHost,
   imdsApiVersion,
   imdsEndpointPath,
+  imdsHost,
 } from "../../../src/credentials/managedIdentityCredential/constants";
 import {
   imdsMsi,
   imdsMsiRetryConfig,
 } from "../../../src/credentials/managedIdentityCredential/imdsMsi";
-import {
-  createResponse,
-  IdentityTestContext,
-  SendCredentialRequests,
-} from "../../httpRequestsCommon";
-import { prepareIdentityTests } from "../../httpRequests";
-import { AzureAuthorityHosts, DefaultAuthorityHost, DefaultTenantId } from "../../../src/constants";
+import { mkdtempSync, rmdirSync, unlinkSync, writeFileSync } from "fs";
+import { Context } from "mocha";
+import { GetTokenOptions } from "@azure/core-auth";
+import { IdentityTestContext } from "../../httpRequests";
+import { ManagedIdentityCredential } from "../../../src";
+import { RestError } from "@azure/core-rest-pipeline";
+import Sinon from "sinon";
+import { assert } from "chai";
+import { join } from "path";
+import { logger } from "../../../src/credentials/managedIdentityCredential/cloudShellMsi";
+import { tmpdir } from "os";
 
 describe("ManagedIdentityCredential", function () {
-  let testContext: IdentityTestContext;
-  let sendCredentialRequests: SendCredentialRequests;
+  let testContext: IdentityTestContextInterface;
   let envCopy: string = "";
 
   beforeEach(async function () {
@@ -43,8 +43,7 @@ describe("ManagedIdentityCredential", function () {
     delete process.env.AZURE_AUTHORITY_HOST;
     delete process.env.AZURE_POD_IDENTITY_AUTHORITY_HOST;
     delete process.env.AZURE_FEDERATED_TOKEN_FILE;
-    testContext = await prepareIdentityTests({});
-    sendCredentialRequests = testContext.sendCredentialRequests;
+    testContext = new IdentityTestContext({});
   });
 
   afterEach(async function () {
@@ -57,14 +56,16 @@ describe("ManagedIdentityCredential", function () {
   });
 
   it("sends an authorization request with a modified resource name", async function () {
-    const authDetails = await sendCredentialRequests({
+    const authDetails = await testContext.sendCredentialRequests({
       scopes: ["https://service/.default"],
-      credential: new ManagedIdentityCredential("client"),
+      credential: new ManagedIdentityCredential("client", {
+        authorityHost: "https://login.microsoftonline.com",
+      }),
       insecureResponses: [
         createResponse(200), // IMDS Endpoint ping
         createResponse(200, {
           access_token: "token",
-          expires_on: "06/20/2019 02:57:58 +00:00",
+          expires_on: "1506484173",
         }),
       ],
     });
@@ -91,14 +92,89 @@ describe("ManagedIdentityCredential", function () {
   });
 
   it("sends an authorization request with an unmodified resource name", async () => {
-    const authDetails = await sendCredentialRequests({
+    const authDetails = await testContext.sendCredentialRequests({
       scopes: ["someResource"],
       credential: new ManagedIdentityCredential(),
       insecureResponses: [
         createResponse(200), // IMDS Endpoint ping
         createResponse(200, {
-          token: "token",
-          expires_on: "06/20/2019 02:57:58 +00:00",
+          access_token: "token",
+          expires_on: "1506484173",
+        }),
+      ],
+    });
+
+    // The first request is the IMDS ping.
+    // The second one tries to authenticate against IMDS once we know the endpoint is available.
+    const authRequest = authDetails.requests[1];
+
+    const query = new URLSearchParams(authRequest.url.split("?")[1]);
+
+    assert.equal(query.get("client_id"), undefined);
+    assert.equal(decodeURIComponent(query.get("resource")!), "someResource");
+  });
+
+  it("sends an authorization request with allowLoggingAccountIdentifiers set to true", async function () {
+    setLogLevel("info");
+    const spy = testContext.sandbox.spy(process.stderr, "write");
+
+    const accessTokenData = {
+      appid: "HIDDEN",
+      tid: "HIDDEN",
+      oid: "HIDDEN",
+    };
+    const base64AccessTokenData = Buffer.from(JSON.stringify(accessTokenData), "utf8").toString(
+      "base64"
+    );
+
+    const authDetails = await testContext.sendCredentialRequests({
+      scopes: ["https://service/.default"],
+      credential: new ManagedIdentityCredential("client", {
+        loggingOptions: { allowLoggingAccountIdentifiers: true },
+      }),
+      insecureResponses: [
+        createResponse(200), // IMDS Endpoint ping
+        createResponse(200, {
+          access_token: `token.${base64AccessTokenData}`,
+          expires_on: "1506484173",
+        }),
+      ],
+    });
+
+    // The first request is the IMDS ping.
+    // This ping request has to skip a header and the query parameters for it to work on POD identity.
+    const imdsPingRequest = authDetails.requests[0];
+    assert.ok(!imdsPingRequest.headers!.metadata);
+    assert.equal(imdsPingRequest.url, new URL(imdsEndpointPath, imdsHost).toString());
+
+    // The first request is the IMDS ping.
+    // The second one tries to authenticate against IMDS once we know the endpoint is available.
+    const authRequest = authDetails.requests[1];
+    const query = new URLSearchParams(authRequest.url.split("?")[1]);
+
+    assert.equal(authRequest.method, "GET");
+    assert.equal(query.get("client_id"), "client");
+    assert.equal(decodeURIComponent(query.get("resource")!), "https://service");
+    assert.ok(authRequest.url.startsWith(imdsHost), "URL does not start with expected host");
+    assert.ok(
+      authRequest.url.indexOf(`api-version=${imdsApiVersion}`) > -1,
+      "URL does not have expected version"
+    );
+    const expectedMessage = `azure:identity:info ManagedIdentityCredential => getToken() => SUCCESS. Scopes: https://service/.default.`;
+    assert.equal((spy.getCall(spy.callCount - 2).args[0] as any as string).trim(), expectedMessage);
+    AzureLogger.destroy();
+  });
+
+  it("sends an authorization request with tenantId on getToken", async () => {
+    const authDetails = await testContext.sendCredentialRequests({
+      scopes: ["someResource"],
+      getTokenOptions: { tenantId: "TENANT-ID" } as GetTokenOptions,
+      credential: new ManagedIdentityCredential(),
+      insecureResponses: [
+        createResponse(200), // IMDS Endpoint ping
+        createResponse(200, {
+          access_token: "token",
+          expires_on: "1506484173",
         }),
       ],
     });
@@ -116,7 +192,7 @@ describe("ManagedIdentityCredential", function () {
   it("returns error when no MSI is available", async function () {
     process.env.AZURE_CLIENT_ID = "errclient";
 
-    const { error } = await sendCredentialRequests({
+    const { error } = await testContext.sendCredentialRequests({
       scopes: ["scopes"],
       credential: new ManagedIdentityCredential(process.env.AZURE_CLIENT_ID),
       insecureResponses: [
@@ -135,7 +211,7 @@ describe("ManagedIdentityCredential", function () {
     process.env.AZURE_CLIENT_ID = "errclient";
     const errorMessage = "ManagedIdentityCredential authentication failed.";
 
-    const { error } = await sendCredentialRequests({
+    const { error } = await testContext.sendCredentialRequests({
       scopes: ["scopes"],
       credential: new ManagedIdentityCredential(process.env.AZURE_CLIENT_ID),
       insecureResponses: [
@@ -154,7 +230,7 @@ describe("ManagedIdentityCredential", function () {
       statusCode: 408,
     });
 
-    const { error } = await sendCredentialRequests({
+    const { error } = await testContext.sendCredentialRequests({
       scopes: ["scopes"],
       credential: new ManagedIdentityCredential(process.env.AZURE_CLIENT_ID),
       insecureResponses: [
@@ -173,7 +249,7 @@ describe("ManagedIdentityCredential", function () {
       statusCode: 408,
     });
 
-    const { error } = await sendCredentialRequests({
+    const { error } = await testContext.sendCredentialRequests({
       scopes: ["scopes"],
       credential: new ManagedIdentityCredential(process.env.AZURE_CLIENT_ID),
       insecureResponses: [
@@ -185,24 +261,27 @@ describe("ManagedIdentityCredential", function () {
   });
 
   it("IMDS MSI retries and succeeds on 404", async function () {
-    const { result } = await sendCredentialRequests({
+    const { result, error } = await testContext.sendCredentialRequests({
       scopes: ["scopes"],
-      credential: new ManagedIdentityCredential("errclient"),
+      credential: new ManagedIdentityCredential("errclient", {
+        authorityHost: "https://login.microsoftonline.com",
+      }),
       insecureResponses: [
         createResponse(200),
         createResponse(404),
         createResponse(404),
         createResponse(200, {
           access_token: "token",
+          expires_on: "1506484173",
         }),
       ],
     });
-
+    assert.isUndefined(error);
     assert.equal(result?.token, "token");
   });
 
   it("IMDS MSI retries up to a limit on 404", async function () {
-    const { error } = await sendCredentialRequests({
+    const { error } = await testContext.sendCredentialRequests({
       scopes: ["scopes"],
       credential: new ManagedIdentityCredential("errclient"),
       insecureResponses: [
@@ -222,42 +301,165 @@ describe("ManagedIdentityCredential", function () {
   });
 
   it("IMDS MSI retries also retries on 503s", async function () {
-    const { result } = await sendCredentialRequests({
+    const { result, error } = await testContext.sendCredentialRequests({
       scopes: ["scopes"],
       credential: new ManagedIdentityCredential("errclient"),
       insecureResponses: [
+        // Any response on the ping request is fine, since it means that the endpoint is indeed there.
+        createResponse(503),
+        // After the ping, we try to get a token from the IMDS endpoint.
         createResponse(503, {}, { "Retry-After": "2" }),
         createResponse(503, {}, { "Retry-After": "2" }),
         createResponse(503, {}, { "Retry-After": "2" }),
-        // The ThrottlingRetryPolicy of core-http will retry up to 3 times, an extra retry would make this fail (meaning a 503 response would be considered the result)
-        // createResponse(503, {}, { "Retry-After": "2" }),
-        createResponse(200),
-        createResponse(503, {}, { "Retry-After": "2" }),
-        createResponse(503, {}, { "Retry-After": "2" }),
-        createResponse(503, {}, { "Retry-After": "2" }),
-        createResponse(200, { access_token: "token" }),
+        createResponse(200, { access_token: "token", expires_on: 1506484173 }),
       ],
     });
 
+    assert.isUndefined(error);
     assert.equal(result?.token, "token");
+  });
+
+  it("IMDS MSI retries also retries on 500s", async function () {
+    const { result, error } = await testContext.sendCredentialRequests({
+      scopes: ["scopes"],
+      credential: new ManagedIdentityCredential("errclient"),
+      insecureResponses: [
+        // Any response on the ping request is fine, since it means that the endpoint is indeed there.
+        createResponse(500, {}),
+        // After the ping, we try to get a token from the IMDS endpoint.
+        createResponse(500, {}),
+        createResponse(500, {}),
+        createResponse(500, {}),
+        createResponse(200, { access_token: "token", expires_on: "1506484173" }),
+      ],
+    });
+
+    assert.isUndefined(error);
+    assert.equal(result?.token, "token");
+  });
+
+  it("IMDS MSI stops after 3 retries if the ping always gets 503s", async function () {
+    const { error } = await testContext.sendCredentialRequests({
+      scopes: ["scopes"],
+      credential: new ManagedIdentityCredential("errclient"),
+      insecureResponses: [
+        // Any response on the ping request is fine, since it means that the endpoint is indeed there.
+        createResponse(503, {}, { "Retry-After": "2" }),
+        // After the ping, we try to get a token from the IMDS endpoint.
+        createResponse(503, {}, { "Retry-After": "2" }),
+        createResponse(503, {}, { "Retry-After": "2" }),
+        createResponse(503, {}, { "Retry-After": "2" }),
+        createResponse(503, {}, { "Retry-After": "2" }),
+      ],
+    });
+
+    assert.ok(error?.message);
+    assert.equal(
+      error?.message.split("\n")[0],
+      "ManagedIdentityCredential authentication failed. Status code: 503"
+    );
+  });
+
+  it("IMDS MSI stops after 3 retries if the ping always gets 500s", async function () {
+    const { error } = await testContext.sendCredentialRequests({
+      scopes: ["scopes"],
+      credential: new ManagedIdentityCredential("errclient"),
+      insecureResponses: [
+        // Any response on the ping request is fine, since it means that the endpoint is indeed there.
+        createResponse(500, {}),
+        // After the ping, we try to get a token from the IMDS endpoint.
+        createResponse(500, {}),
+        createResponse(500, {}),
+        createResponse(500, {}),
+        createResponse(500, {}),
+      ],
+    });
+
+    assert.ok(error?.message);
+    assert.equal(
+      error?.message.split("\n")[0],
+      "ManagedIdentityCredential authentication failed. Status code: 500"
+    );
+  });
+
+  it("IMDS MSI accepts a custom set of retries, even when client Id is passed through the first parameter", async function () {
+    const { error } = await testContext.sendCredentialRequests({
+      scopes: ["scopes"],
+      credential: new ManagedIdentityCredential("errclient", {
+        retryOptions: {
+          maxRetries: 4,
+        },
+      }),
+      insecureResponses: [
+        // Any response on the ping request is fine, since it means that the endpoint is indeed there.
+        createResponse(503, {}, { "Retry-After": "2" }),
+        // After the ping, we try to get a token from the IMDS endpoint.
+        createResponse(503, {}, { "Retry-After": "2" }),
+        createResponse(503, {}, { "Retry-After": "2" }),
+        createResponse(503, {}, { "Retry-After": "2" }),
+        createResponse(503, {}, { "Retry-After": "2" }),
+        // This is the extra one
+        createResponse(503, {}, { "Retry-After": "2" }),
+      ],
+    });
+
+    assert.ok(error?.message);
+    assert.equal(
+      error?.message.split("\n")[0],
+      "ManagedIdentityCredential authentication failed. Status code: 503"
+    );
+  });
+
+  it("IMDS MSI accepts a custom set of retries, even when client Id is not passed through the first parameter", async function () {
+    const { error } = await testContext.sendCredentialRequests({
+      scopes: ["scopes"],
+      credential: new ManagedIdentityCredential({
+        retryOptions: {
+          maxRetries: 4,
+        },
+      }),
+      insecureResponses: [
+        // Any response on the ping request is fine, since it means that the endpoint is indeed there.
+        createResponse(503, {}, { "Retry-After": "2" }),
+        // After the ping, we try to get a token from the IMDS endpoint.
+        createResponse(503, {}, { "Retry-After": "2" }),
+        createResponse(503, {}, { "Retry-After": "2" }),
+        createResponse(503, {}, { "Retry-After": "2" }),
+        createResponse(503, {}, { "Retry-After": "2" }),
+        // This is the extra one
+        createResponse(503, {}, { "Retry-After": "2" }),
+      ],
+    });
+
+    assert.ok(error?.message);
+    assert.equal(
+      error?.message.split("\n")[0],
+      "ManagedIdentityCredential authentication failed. Status code: 503"
+    );
   });
 
   it("IMDS MSI skips verification if the AZURE_POD_IDENTITY_AUTHORITY_HOST environment variable is available", async function () {
     process.env.AZURE_POD_IDENTITY_AUTHORITY_HOST = "token URL";
 
-    assert.ok(await imdsMsi.isAvailable("https://endpoint/.default"));
+    assert.ok(
+      await imdsMsi.isAvailable({
+        scopes: "https://endpoint/.default",
+      })
+    );
   });
 
   it("IMDS MSI works even if the AZURE_POD_IDENTITY_AUTHORITY_HOST ends with a slash", async function () {
     process.env.AZURE_POD_IDENTITY_AUTHORITY_HOST = "http://10.0.0.1/";
 
-    const authDetails = await sendCredentialRequests({
+    const authDetails = await testContext.sendCredentialRequests({
       scopes: ["https://service/.default"],
-      credential: new ManagedIdentityCredential("client"),
+      credential: new ManagedIdentityCredential({
+        resourceId: "resource-id",
+      }),
       insecureResponses: [
         createResponse(200, {
           access_token: "token",
-          expires_on: "06/20/2019 02:57:58 +00:00",
+          expires_on: "1506484173",
         }),
       ],
     });
@@ -266,20 +468,20 @@ describe("ManagedIdentityCredential", function () {
     const imdsPingRequest = authDetails.requests[0];
     assert.equal(
       imdsPingRequest.url,
-      "http://10.0.0.1/metadata/identity/oauth2/token?resource=https%3A%2F%2Fservice&api-version=2018-02-01&client_id=client"
+      "http://10.0.0.1/metadata/identity/oauth2/token?resource=https%3A%2F%2Fservice&api-version=2018-02-01&msi_res_id=resource-id"
     );
   });
 
   it("IMDS MSI works even if the AZURE_POD_IDENTITY_AUTHORITY_HOST doesn't end with a slash", async function () {
     process.env.AZURE_POD_IDENTITY_AUTHORITY_HOST = "http://10.0.0.1";
 
-    const authDetails = await sendCredentialRequests({
+    const authDetails = await testContext.sendCredentialRequests({
       scopes: ["https://service/.default"],
       credential: new ManagedIdentityCredential("client"),
       insecureResponses: [
         createResponse(200, {
           access_token: "token",
-          expires_on: "06/20/2019 02:57:58 +00:00",
+          expires_on: "1506484173",
         }),
       ],
     });
@@ -295,8 +497,8 @@ describe("ManagedIdentityCredential", function () {
 
   it("doesn't try IMDS endpoint again once it can't be detected", async function () {
     const credential = new ManagedIdentityCredential("errclient");
-    const DEFAULT_CLIENT_MAX_RETRY_COUNT = 10;
-    const authDetails = await sendCredentialRequests({
+    const DEFAULT_CLIENT_MAX_RETRY_COUNT = 3;
+    const authDetails = await testContext.sendCredentialRequests({
       scopes: ["scopes"],
       credential,
       insecureResponses: [
@@ -313,14 +515,15 @@ describe("ManagedIdentityCredential", function () {
 
     await testContext.restore();
 
-    const authDetails2 = await sendCredentialRequests({
+    const authDetails2 = await testContext.sendCredentialRequests({
       scopes: ["scopes"],
       credential,
       insecureResponses: [
         // This time, no ping should be triggered
-        createResponse(200, { access_token: "token" }),
+        createResponse(200, { access_token: "token", expires_on: "1506484173" }),
       ],
     });
+    assert.isUndefined(authDetails2.error);
     assert.equal(authDetails2.requests.length, 1);
     assert.equal(authDetails2.result?.token, "token");
   });
@@ -330,7 +533,7 @@ describe("ManagedIdentityCredential", function () {
     process.env.MSI_ENDPOINT = "https://endpoint";
     process.env.MSI_SECRET = "secret";
 
-    const authDetails = await sendCredentialRequests({
+    const authDetails = await testContext.sendCredentialRequests({
       scopes: ["https://service/.default"],
       credential: new ManagedIdentityCredential("client"),
       secureResponses: [
@@ -363,19 +566,166 @@ describe("ManagedIdentityCredential", function () {
     }
   });
 
-  it("sends an authorization request correctly in an Cloud Shell environment", async () => {
-    // Trigger Cloud Shell behavior by setting environment variables
-    process.env.MSI_ENDPOINT = "https://endpoint";
+  it("sends an authorization request correctly in an App Service 2019 environment by client id", async () => {
+    // Trigger App Service behavior by setting environment variables
+    process.env.IDENTITY_ENDPOINT = "https://endpoint";
+    process.env.IDENTITY_HEADER = "HEADER";
 
-    const authDetails = await sendCredentialRequests({
+    const authDetails = await testContext.sendCredentialRequests({
       scopes: ["https://service/.default"],
       credential: new ManagedIdentityCredential("client"),
-      secureResponses: [createResponse(200, { access_token: "token" })],
+      secureResponses: [
+        createResponse(200, {
+          access_token: "token",
+          expires_on: "1624157878",
+        }),
+      ],
     });
 
     const authRequest = authDetails.requests[0];
+    const query = new URLSearchParams(authRequest.url.split("?")[1]);
+
+    assert.equal(authRequest.method, "GET");
+    assert.equal(query.get("client_id"), "client");
+    assert.equal(decodeURIComponent(query.get("resource")!), "https://service");
+    assert.ok(
+      authRequest.url.startsWith(process.env.IDENTITY_ENDPOINT),
+      "URL does not start with expected host and path"
+    );
+    assert.equal(authRequest.headers["X-IDENTITY-HEADER"], process.env.IDENTITY_HEADER);
+    assert.ok(
+      authRequest.url.indexOf(`api-version=2019-08-01`) > -1,
+      "URL does not have expected version"
+    );
+    if (authDetails.result?.token) {
+      assert.equal(authDetails.result.expiresOnTimestamp, 1624157878000);
+    } else {
+      assert.fail("No token was returned!");
+    }
+  });
+
+  it("sends an authorization request correctly in an App Service 2019 environment by resource id", async () => {
+    // Trigger App Service behavior by setting environment variables
+    process.env.IDENTITY_ENDPOINT = "https://endpoint";
+    process.env.IDENTITY_HEADER = "HEADER";
+
+    const authDetails = await testContext.sendCredentialRequests({
+      scopes: ["https://service/.default"],
+      credential: new ManagedIdentityCredential({ resourceId: "RESOURCE-ID" }),
+      secureResponses: [
+        createResponse(200, {
+          access_token: "token",
+          expires_on: "1624157878",
+        }),
+      ],
+    });
+
+    const authRequest = authDetails.requests[0];
+    const query = new URLSearchParams(authRequest.url.split("?")[1]);
+
+    assert.equal(authRequest.method, "GET");
+    assert.equal(decodeURIComponent(query.get("resource")!), "https://service");
+    assert.equal(decodeURIComponent(query.get("mi_res_id")!), "RESOURCE-ID");
+    assert.ok(
+      authRequest.url.startsWith(process.env.IDENTITY_ENDPOINT),
+      "URL does not start with expected host and path"
+    );
+    assert.equal(authRequest.headers["X-IDENTITY-HEADER"], process.env.IDENTITY_HEADER);
+    assert.ok(
+      authRequest.url.indexOf(`api-version=2019-08-01`) > -1,
+      "URL does not have expected version"
+    );
+    if (authDetails.result?.token) {
+      assert.equal(authDetails.result.expiresOnTimestamp, 1624157878000);
+    } else {
+      assert.fail("No token was returned!");
+    }
+  });
+
+  it("sends an authorization request correctly in an Cloud Shell environment", async () => {
+    // Trigger Cloud Shell behavior by setting environment variables
+    process.env.MSI_ENDPOINT = "https://endpoint";
+    const authDetails = await testContext.sendCredentialRequests({
+      scopes: ["https://service/.default"],
+      credential: new ManagedIdentityCredential(),
+      secureResponses: [
+        createResponse(200, {
+          access_token: "token",
+          expires_in: "4310",
+          expires_on: "1663366555",
+        }),
+      ],
+    });
+    const authRequest = authDetails.requests[0];
     assert.equal(authRequest.method, "POST");
     assert.equal(authDetails.result!.token, "token");
+  });
+
+  it("sends an authorization request correctly in an Cloud Shell environment (with clientId)", async () => {
+    // Trigger Cloud Shell behavior by setting environment variables
+    process.env.MSI_ENDPOINT = "https://endpoint";
+    const authDetails = await testContext.sendCredentialRequests({
+      scopes: ["https://service/.default"],
+      credential: new ManagedIdentityCredential({ clientId: "CLIENT-ID" }),
+      secureResponses: [
+        createResponse(200, {
+          access_token: "token",
+          expires_in: "4310",
+          expires_on: "1663366555",
+        }),
+      ],
+    });
+    const authRequest = authDetails.requests[0];
+    const body = new URLSearchParams(authRequest.body);
+    assert.strictEqual(decodeURIComponent(body.get("client_id")!), "CLIENT-ID");
+    assert.equal(authRequest.method, "POST");
+    assert.equal(authDetails.result!.token, "token");
+  });
+
+  it("sends an authorization request correctly in an Cloud Shell environment (with resourceId)", async () => {
+    // Trigger Cloud Shell behavior by setting environment variables
+    process.env.MSI_ENDPOINT = "https://endpoint";
+    const authDetails = await testContext.sendCredentialRequests({
+      scopes: ["https://service/.default"],
+      credential: new ManagedIdentityCredential({ resourceId: "RESOURCE-ID" }),
+      secureResponses: [
+        createResponse(200, {
+          access_token: "token",
+          expires_in: "4310",
+          expires_on: "1663366555",
+        }),
+      ],
+    });
+    const authRequest = authDetails.requests[0];
+    const body = new URLSearchParams(authRequest.body);
+    assert.strictEqual(decodeURIComponent(body.get("msi_res_id")!), "RESOURCE-ID");
+    assert.equal(authRequest.method, "POST");
+    assert.equal(authDetails.result!.token, "token");
+  });
+
+  it("authorization request fails with client id passed in an Cloud Shell environment", async function (this: Context) {
+    // Trigger Cloud Shell behavior by setting environment variables
+    process.env.MSI_ENDPOINT = "https://endpoint";
+    const msiGetTokenSpy = Sinon.spy(ManagedIdentityCredential.prototype, "getToken");
+    const loggerSpy = Sinon.spy(logger, "warning");
+    setLogLevel("warning");
+    const authDetails = await testContext.sendCredentialRequests({
+      scopes: ["https://service/.default"],
+      credential: new ManagedIdentityCredential("client"),
+      secureResponses: [
+        createResponse(200, {
+          access_token: "token",
+          expires_in: "4310",
+          expires_on: "1663366555",
+        }),
+      ],
+    });
+    assert.equal(authDetails.result!.token, "token");
+    assert.equal(msiGetTokenSpy.called, true);
+    assert.equal(loggerSpy.calledOnce, true);
+    assert.deepEqual(loggerSpy.args[0], [
+      "ManagedIdentityCredential - CloudShellMSI: user-assigned identities not supported. The argument clientId might be ignored by the service.",
+    ]);
   });
 
   it("sends an authorization request correctly in an Azure Arc environment", async function (this: Mocha.Context) {
@@ -392,7 +742,7 @@ describe("ManagedIdentityCredential", function () {
     writeFileSync(tempFile, key, { encoding: "utf8" });
 
     try {
-      const authDetails = await sendCredentialRequests({
+      const authDetails = await testContext.sendCredentialRequests({
         scopes: ["https://service/.default"],
         credential: new ManagedIdentityCredential(),
         insecureResponses: [
@@ -447,6 +797,150 @@ describe("ManagedIdentityCredential", function () {
     }
   });
 
+  it("sends an authorization request correctly in an Azure Arc environment (with resourceId)", async function (this: Mocha.Context) {
+    // Trigger Azure Arc behavior by setting environment variables
+
+    process.env.IMDS_ENDPOINT = "http://endpoint";
+    process.env.IDENTITY_ENDPOINT = "http://endpoint";
+
+    // eslint-disable-next-line @typescript-eslint/no-invalid-this
+    const testTitle = this.test?.title || `test-Date.time()`;
+    const tempDir = mkdtempSync(join(tmpdir(), testTitle));
+    const tempFile = join(tempDir, testTitle);
+    const key = "challenge key";
+    writeFileSync(tempFile, key, { encoding: "utf8" });
+
+    try {
+      const authDetails = await testContext.sendCredentialRequests({
+        scopes: ["https://service/.default"],
+        credential: new ManagedIdentityCredential({ resourceId: "RESOURCE-ID" }),
+        insecureResponses: [
+          createResponse(
+            401,
+            {},
+            {
+              "www-authenticate": `we don't pay much attention about this format=${tempFile}`,
+            }
+          ),
+          createResponse(200, {
+            access_token: "token",
+            expires_in: 1,
+          }),
+        ],
+      });
+
+      // File request
+      const validationRequest = authDetails.requests[0];
+      console.log(validationRequest.url.split("?")[1]);
+      let query = new URLSearchParams(validationRequest.url.split("?")[1]);
+
+      assert.equal(validationRequest.method, "GET");
+      assert.equal(decodeURIComponent(query.get("resource")!), "https://service");
+
+      assert.ok(
+        validationRequest.url.startsWith(process.env.IDENTITY_ENDPOINT),
+        "URL does not start with expected host and path"
+      );
+
+      // Authorization request, which comes after getting the file path, for now at least.
+      const authRequest = authDetails.requests[1];
+      console.log(authRequest.url.split("?")[1]);
+      query = new URLSearchParams(authRequest.url.split("?")[1]);
+
+      assert.equal(authRequest.method, "GET");
+      assert.equal(decodeURIComponent(query.get("resource")!), "https://service");
+      assert.equal(decodeURIComponent(query.get("msi_res_id")!), "RESOURCE-ID");
+
+      assert.ok(
+        authRequest.url.startsWith(process.env.IDENTITY_ENDPOINT),
+        "URL does not start with expected host and path"
+      );
+
+      assert.equal(authRequest.headers.Authorization, `Basic ${key}`);
+      if (authDetails.result!.token) {
+        // We use Date.now underneath.
+        assert.ok(authDetails.result!.expiresOnTimestamp);
+      } else {
+        assert.fail("No token was returned!");
+      }
+    } finally {
+      unlinkSync(tempFile);
+      rmdirSync(tempDir);
+    }
+  });
+
+  it("sends an authorization request correctly in an Azure Arc environment (with clientId)", async function (this: Mocha.Context) {
+    // Trigger Azure Arc behavior by setting environment variables
+
+    process.env.IMDS_ENDPOINT = "http://endpoint";
+    process.env.IDENTITY_ENDPOINT = "http://endpoint";
+
+    // eslint-disable-next-line @typescript-eslint/no-invalid-this
+    const testTitle = this.test?.title || `test-Date.time()`;
+    const tempDir = mkdtempSync(join(tmpdir(), testTitle));
+    const tempFile = join(tempDir, testTitle);
+    const key = "challenge key";
+    writeFileSync(tempFile, key, { encoding: "utf8" });
+
+    try {
+      const authDetails = await testContext.sendCredentialRequests({
+        scopes: ["https://service/.default"],
+        credential: new ManagedIdentityCredential({ clientId: "CLIENT-ID" }),
+        insecureResponses: [
+          createResponse(
+            401,
+            {},
+            {
+              "www-authenticate": `we don't pay much attention about this format=${tempFile}`,
+            }
+          ),
+          createResponse(200, {
+            access_token: "token",
+            expires_in: 1,
+          }),
+        ],
+      });
+
+      // File request
+      const validationRequest = authDetails.requests[0];
+      console.log(validationRequest.url.split("?")[1]);
+      let query = new URLSearchParams(validationRequest.url.split("?")[1]);
+
+      assert.equal(validationRequest.method, "GET");
+      assert.equal(decodeURIComponent(query.get("resource")!), "https://service");
+
+      assert.ok(
+        validationRequest.url.startsWith(process.env.IDENTITY_ENDPOINT),
+        "URL does not start with expected host and path"
+      );
+
+      // Authorization request, which comes after getting the file path, for now at least.
+      const authRequest = authDetails.requests[1];
+      console.log(authRequest.url.split("?")[1]);
+      query = new URLSearchParams(authRequest.url.split("?")[1]);
+
+      assert.equal(authRequest.method, "GET");
+      assert.equal(decodeURIComponent(query.get("resource")!), "https://service");
+      assert.equal(decodeURIComponent(query.get("client_id")!), "CLIENT-ID");
+
+      assert.ok(
+        authRequest.url.startsWith(process.env.IDENTITY_ENDPOINT),
+        "URL does not start with expected host and path"
+      );
+
+      assert.equal(authRequest.headers.Authorization, `Basic ${key}`);
+      if (authDetails.result!.token) {
+        // We use Date.now underneath.
+        assert.ok(authDetails.result!.expiresOnTimestamp);
+      } else {
+        assert.fail("No token was returned!");
+      }
+    } finally {
+      unlinkSync(tempFile);
+      rmdirSync(tempDir);
+    }
+  });
+
   it("sends an authorization request correctly in an Azure Fabric environment", async () => {
     // Trigger App Service behavior by setting environment variables
     process.env.IDENTITY_ENDPOINT = "https://endpoint";
@@ -455,7 +949,7 @@ describe("ManagedIdentityCredential", function () {
     // We're not verifying the certificate yet, but we still check for it:
     process.env.IDENTITY_SERVER_THUMBPRINT = "certificate-thumbprint";
 
-    const authDetails = await sendCredentialRequests({
+    const authDetails = await testContext.sendCredentialRequests({
       scopes: ["https://service/.default"],
       credential: new ManagedIdentityCredential("client"),
       secureResponses: [
@@ -483,7 +977,76 @@ describe("ManagedIdentityCredential", function () {
 
     if (authDetails.result!.token) {
       // We use Date.now underneath.
-      assert.equal(authDetails.result!.expiresOnTimestamp, 1);
+      assert.equal(authDetails.result!.expiresOnTimestamp, 1000);
+    } else {
+      assert.fail("No token was returned!");
+    }
+  });
+
+  it("sends an authorization request correctly in an Azure Fabric environment (resourceId)", async () => {
+    // Trigger App Service behavior by setting environment variables
+    process.env.IDENTITY_ENDPOINT = "https://endpoint";
+    process.env.IDENTITY_HEADER = "secret";
+
+    // We're not verifying the certificate yet, but we still check for it:
+    process.env.IDENTITY_SERVER_THUMBPRINT = "certificate-thumbprint";
+
+    const authDetails = await testContext.sendCredentialRequests({
+      scopes: ["https://service/.default"],
+      credential: new ManagedIdentityCredential({ resourceId: "RESOURCE-ID" }),
+      secureResponses: [
+        createResponse(200, {
+          access_token: "token",
+          expires_on: 1,
+        }),
+      ],
+    });
+
+    // Authorization request, which comes after validating again, for now at least.
+    const authRequest = authDetails.requests[0];
+
+    const query = new URLSearchParams(authRequest.url.split("?")[1]);
+
+    assert.equal(authRequest.method, "GET");
+    assert.equal(query.get("msi_res_id"), "RESOURCE-ID");
+    assert.equal(decodeURIComponent(query.get("resource")!), "https://service");
+    assert.ok(
+      authRequest.url.startsWith(process.env.IDENTITY_ENDPOINT),
+      "URL does not start with expected host and path"
+    );
+
+    assert.equal(authRequest.headers.secret, process.env.IDENTITY_HEADER);
+
+    if (authDetails.result!.token) {
+      // We use Date.now underneath.
+      assert.equal(authDetails.result!.expiresOnTimestamp, 1000);
+    } else {
+      assert.fail("No token was returned!");
+    }
+  });
+
+  it("calls to AppTokenProvider for MI token caching support", async () => {
+    const credential: any = new ManagedIdentityCredential("client");
+    const confidentialSpy = Sinon.spy(credential.confidentialApp, "SetAppTokenProvider");
+
+    // Trigger App Service behavior by setting environment variables
+    process.env.MSI_ENDPOINT = "https://endpoint";
+    process.env.MSI_SECRET = "secret";
+
+    const authDetails = await testContext.sendCredentialRequests({
+      scopes: ["https://service/.default"],
+      credential,
+      secureResponses: [
+        createResponse(200, {
+          access_token: "token",
+          expires_on: "06/20/2019 02:57:58 +00:00",
+        }),
+      ],
+    });
+    assert.equal(confidentialSpy.callCount, 1);
+
+    if (authDetails.result?.token) {
+      assert.equal(authDetails.result.expiresOnTimestamp, 1560999478000);
     } else {
       assert.fail("No token was returned!");
     }
@@ -510,7 +1073,7 @@ describe("ManagedIdentityCredential", function () {
 
       const parameterClientId = "client";
 
-      const authDetails = await sendCredentialRequests({
+      const authDetails = await testContext.sendCredentialRequests({
         scopes: ["https://service/.default"],
         credential: new ManagedIdentityCredential(parameterClientId),
         secureResponses: [
@@ -540,7 +1103,6 @@ describe("ManagedIdentityCredential", function () {
       assert.strictEqual(authDetails.result!.token, "token");
       assert.strictEqual(authDetails.result!.expiresOnTimestamp, 1000);
     });
-
     it("reads from the token file again only after 5 minutes have passed", async function (this: Mocha.Context) {
       // Keep in mind that in this test we're also testing:
       // - Client ID on environment variable.
@@ -561,7 +1123,7 @@ describe("ManagedIdentityCredential", function () {
 
       const credential = new ManagedIdentityCredential();
 
-      let authDetails = await sendCredentialRequests({
+      let authDetails = await testContext.sendCredentialRequests({
         scopes: ["https://service/.default", "https://service2/.default"],
         credential,
         secureResponses: [
@@ -597,7 +1159,7 @@ describe("ManagedIdentityCredential", function () {
 
       // A new credential means we read the file again
       testContext.sandbox.restore();
-      authDetails = await sendCredentialRequests({
+      authDetails = await testContext.sendCredentialRequests({
         scopes: ["https://service/.default", "https://service2/.default"],
         credential: new ManagedIdentityCredential("client"),
         secureResponses: [
@@ -616,7 +1178,7 @@ describe("ManagedIdentityCredential", function () {
       // Less than 5 minutes means we don't read the file again.
       testContext.sandbox.restore();
       testContext.sandbox.useFakeTimers();
-      authDetails = await sendCredentialRequests({
+      authDetails = await testContext.sendCredentialRequests({
         scopes: ["https://service/.default", "https://service2/.default"],
         credential,
         secureResponses: [
@@ -626,6 +1188,7 @@ describe("ManagedIdentityCredential", function () {
           }),
         ],
       });
+
       authRequest = authDetails.requests[0];
       body = new URLSearchParams(authRequest.body);
       assert.strictEqual(decodeURIComponent(body.get("client_assertion")!), expectedAssertion);
@@ -634,7 +1197,7 @@ describe("ManagedIdentityCredential", function () {
       testContext.sandbox.restore();
       testContext.sandbox.useFakeTimers();
       testContext.sandbox.clock.tick(1000 * 60 * 5);
-      authDetails = await sendCredentialRequests({
+      authDetails = await testContext.sendCredentialRequests({
         scopes: ["https://service/.default", "https://service2/.default"],
         credential,
         secureResponses: [
@@ -663,7 +1226,7 @@ describe("ManagedIdentityCredential", function () {
 
       const parameterClientId = "client";
 
-      const authDetails = await sendCredentialRequests({
+      const authDetails = await testContext.sendCredentialRequests({
         scopes: ["https://service/.default"],
         credential: new ManagedIdentityCredential(parameterClientId),
         secureResponses: [

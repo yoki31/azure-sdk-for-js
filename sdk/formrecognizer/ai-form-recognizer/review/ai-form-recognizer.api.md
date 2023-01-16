@@ -16,6 +16,18 @@ import { PollOperationState } from '@azure/core-lro';
 import { TokenCredential } from '@azure/core-auth';
 
 // @public
+export interface AddressValue {
+    city?: string;
+    countryRegion?: string;
+    houseNumber?: string;
+    poBox?: string;
+    postalCode?: string;
+    road?: string;
+    state?: string;
+    streetAddress?: string;
+}
+
+// @public
 export type AnalysisPoller<Result = AnalyzeResult<AnalyzedDocument>> = PollerLike<DocumentAnalysisPollOperationState<Result>, Result>;
 
 // @public
@@ -30,166 +42,56 @@ export interface AnalyzedDocument {
 }
 
 // @public
-export interface AnalyzeDocumentsOptions<Result = AnalyzeResult<AnalyzedDocument>> extends OperationOptions, PollerOptions<DocumentAnalysisPollOperationState<Result>> {
+export interface AnalyzeDocumentOptions<Result = AnalyzeResult<AnalyzedDocument>> extends OperationOptions, PollerOptions<DocumentAnalysisPollOperationState<Result>> {
     locale?: string;
     pages?: string;
 }
 
 // @public
-export interface AnalyzeResult<Document = AnalyzedDocument> {
+export interface AnalyzeResult<Document = AnalyzedDocument> extends AnalyzeResultCommon {
+    documents?: Document[];
+    keyValuePairs?: DocumentKeyValuePair[];
+    languages?: DocumentLanguage[];
+    pages?: DocumentPage[];
+    paragraphs?: DocumentParagraph[];
+    styles?: DocumentStyle[];
+    tables?: DocumentTable[];
+}
+
+// @public
+export interface AnalyzeResultCommon {
     apiVersion: FormRecognizerApiVersion;
     content: string;
-    documents: Document[];
-    entities: DocumentEntity[];
-    keyValuePairs: DocumentKeyValuePair[];
     modelId: string;
-    pages: DocumentPage[];
-    styles: DocumentStyle[];
-    tables: DocumentTable[];
 }
 
 // @public
 export type AnalyzeResultOperationStatus = "notStarted" | "running" | "failed" | "succeeded";
 
-// @public
-export interface ArrayFieldSchema<Item extends Readonly<FieldSchema> = Readonly<FieldSchema>> {
-    readonly items: Item;
-    // (undocumented)
-    readonly type: "array";
-}
-
 export { AzureKeyCredential }
 
 // @public
-export interface BoundingRegion {
-    boundingBox: number[];
+export interface BeginBuildDocumentModelOptions extends CreateDocumentModelOptions {
+}
+
+// @public
+export interface BeginComposeDocumentModelOptions extends CreateDocumentModelOptions {
+}
+
+// @public
+export interface BeginCopyModelOptions extends OperationOptions, PollerOptions<DocumentModelOperationState> {
+}
+
+// @public
+export interface BoundingRegion extends HasBoundingPolygon {
     pageNumber: number;
 }
 
 // @public
-export interface BuildModelOptions extends OperationOptions, PollerOptions<TrainingPollOperationState> {
+export interface CommonModelCreationOptions {
     description?: string;
+    tags?: Record<string, string>;
 }
-
-// @public
-export type BusinessCard = ReifyPrebuiltSchema<typeof BusinessCardSchema>;
-
-// @public
-export const BusinessCardSchema: {
-    readonly modelId: "prebuilt-businessCard";
-    readonly description: "Prebuilt model to extract key information from English business cards, including personal contact info, company name, job title, and more.";
-    readonly createdDateTime: "2021-07-30T00:00:00Z";
-    readonly docTypes: {
-        readonly "prebuilt:businesscard": {
-            readonly description: "Business Card";
-            readonly fieldSchema: {
-                readonly ContactNames: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "object";
-                        readonly description: "Contact name";
-                        readonly example: "Chris Smith";
-                        readonly properties: {
-                            readonly FirstName: {
-                                readonly type: "string";
-                                readonly description: "First (given) name of contact";
-                                readonly example: "Chris";
-                            };
-                            readonly LastName: {
-                                readonly type: "string";
-                                readonly description: "Last (family) name of contact";
-                                readonly example: "Smith";
-                            };
-                        };
-                    };
-                };
-                readonly CompanyNames: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "string";
-                        readonly description: "Company name";
-                        readonly example: "CONTOSO";
-                    };
-                };
-                readonly JobTitles: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "string";
-                        readonly description: "Job title";
-                        readonly example: "Senior Researcher";
-                    };
-                };
-                readonly Departments: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "string";
-                        readonly description: "Department or organization";
-                        readonly example: "Cloud & Al Department";
-                    };
-                };
-                readonly Addresses: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "string";
-                        readonly description: "Address";
-                        readonly example: "4001 1st Ave NE Redmond, WA 98052";
-                    };
-                };
-                readonly WorkPhones: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "phoneNumber";
-                        readonly description: "Work phone number";
-                        readonly example: "+1 (987) 213-5674";
-                    };
-                };
-                readonly MobilePhones: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "phoneNumber";
-                        readonly description: "Mobile phone number";
-                        readonly example: "+1 (987) 123-4567";
-                    };
-                };
-                readonly Faxes: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "phoneNumber";
-                        readonly description: "Fax number";
-                        readonly example: "+1 (987) 312-6745";
-                    };
-                };
-                readonly OtherPhones: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "phoneNumber";
-                        readonly description: "Other phone number";
-                        readonly example: "+1 (987) 213-5673";
-                    };
-                };
-                readonly Emails: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "string";
-                        readonly description: "Contact email";
-                        readonly example: "chris.smith@contoso.com";
-                    };
-                };
-                readonly Websites: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "string";
-                        readonly description: "Website";
-                        readonly example: "https://www.contoso.com";
-                    };
-                };
-            };
-        };
-    };
-};
-
-// @public
-export type ContentType = "application/octet-stream" | "application/pdf" | "image/bmp" | "image/jpeg" | "image/png" | "image/tiff";
 
 // @public
 export interface CopyAuthorization {
@@ -202,34 +104,32 @@ export interface CopyAuthorization {
 }
 
 // @public
-export interface CopyModelOptions extends OperationOptions, PollerOptions<TrainingPollOperationState> {
+export interface CreateDocumentModelOptions extends OperationOptions, CommonModelCreationOptions, PollerOptions<DocumentModelOperationState> {
 }
 
 // @public
-export interface CustomDocumentModelsInfo {
+export function createModelFromSchema(schema: Omit<DocumentModelDetails, "createdOn">): DocumentModel<AnalyzeResult<unknown>>;
+
+// @public
+export interface CurrencyValue {
+    amount: number;
+    currencySymbol?: string;
+}
+
+// @public
+export interface CustomDocumentModelsDetails {
     count: number;
     limit: number;
 }
 
 // @public
-export interface DateFieldSchema {
-    // (undocumented)
-    readonly type: "date";
+export interface DeleteDocumentModelOptions extends OperationOptions {
 }
 
 // @public
-export interface DeleteModelOptions extends OperationOptions {
-}
-
-// @public
-export interface DocTypeInfo {
-    description?: string;
-    fieldConfidence?: {
-        [propertyName: string]: number;
-    };
-    fieldSchema: {
-        [propertyName: string]: DocumentFieldSchema;
-    };
+export interface DocumentAddressField extends DocumentFieldCommon {
+    kind: "address";
+    value?: AddressValue;
 }
 
 // @public
@@ -237,10 +137,10 @@ export class DocumentAnalysisClient {
     constructor(endpoint: string, credential: TokenCredential, options?: DocumentAnalysisClientOptions);
     constructor(endpoint: string, credential: KeyCredential, options?: DocumentAnalysisClientOptions);
     constructor(endpoint: string, credential: KeyCredential | TokenCredential, options?: DocumentAnalysisClientOptions);
-    beginAnalyzeDocuments(modelId: string, input: string | FormRecognizerRequestBody, options?: AnalyzeDocumentsOptions): Promise<AnalysisPoller>;
-    beginAnalyzeDocuments<Document>(model: DocumentModel<Document>, input: string | FormRecognizerRequestBody, options?: AnalyzeDocumentsOptions<AnalyzeResult<Document>>): Promise<AnalysisPoller<AnalyzeResult<Document>>>;
-    beginExtractGenericDocument(input: string | FormRecognizerRequestBody, options?: AnalyzeDocumentsOptions<GenericDocumentResult>): Promise<AnalysisPoller<GenericDocumentResult>>;
-    beginExtractLayout(input: string | FormRecognizerRequestBody, options?: AnalyzeDocumentsOptions<LayoutResult>): Promise<AnalysisPoller<LayoutResult>>;
+    beginAnalyzeDocument(modelId: string, document: FormRecognizerRequestBody, options?: AnalyzeDocumentOptions): Promise<AnalysisPoller>;
+    beginAnalyzeDocument<Result>(model: DocumentModel<Result>, document: FormRecognizerRequestBody, options?: AnalyzeDocumentOptions<Result>): Promise<AnalysisPoller<Result>>;
+    beginAnalyzeDocumentFromUrl(modelId: string, documentUrl: string, options?: AnalyzeDocumentOptions): Promise<AnalysisPoller>;
+    beginAnalyzeDocumentFromUrl<Result>(model: DocumentModel<Result>, documentUrl: string, options?: AnalyzeDocumentOptions<Result>): Promise<AnalysisPoller<Result>>;
 }
 
 // @public
@@ -259,36 +159,39 @@ export interface DocumentAnalysisPollOperationState<Result = AnalyzeResult<Analy
 
 // @public
 export interface DocumentArrayField<T = DocumentField> extends DocumentFieldCommon {
-    // (undocumented)
     kind: "array";
     values: T[];
 }
 
 // @public
+export type DocumentBuildMode = string;
+
+// @public
+export interface DocumentCaption {
+    boundingRegions?: BoundingRegion[];
+    content: string;
+    spans: DocumentSpan[];
+}
+
+// @public
 export interface DocumentCountryRegionField extends DocumentFieldCommon {
-    // (undocumented)
     kind: "countryRegion";
     value?: string;
 }
 
 // @public
+export interface DocumentCurrencyField extends DocumentFieldCommon {
+    kind: "currency";
+    value?: CurrencyValue;
+}
+
+// @public
 export interface DocumentDateField extends DocumentValueField<Date> {
-    // (undocumented)
     kind: "date";
 }
 
 // @public
-export interface DocumentEntity {
-    boundingRegions?: BoundingRegion[];
-    category: string;
-    confidence: number;
-    content: string;
-    spans: DocumentSpan[];
-    subCategory?: string;
-}
-
-// @public
-export type DocumentField = DocumentStringField | DocumentDateField | DocumentTimeField | DocumentPhoneNumberField | DocumentNumberField | DocumentIntegerField | DocumentSelectionMarkField | DocumentCountryRegionField | DocumentSignatureField | DocumentArrayField | DocumentObjectField;
+export type DocumentField = DocumentStringField | DocumentDateField | DocumentTimeField | DocumentPhoneNumberField | DocumentNumberField | DocumentIntegerField | DocumentSelectionMarkField | DocumentCountryRegionField | DocumentSignatureField | DocumentCurrencyField | DocumentAddressField | DocumentArrayField | DocumentObjectField;
 
 // @public
 export interface DocumentFieldCommon {
@@ -313,8 +216,14 @@ export interface DocumentFieldSchema {
 export type DocumentFieldType = string;
 
 // @public
+export interface DocumentFootnote {
+    boundingRegions?: BoundingRegion[];
+    content: string;
+    spans: DocumentSpan[];
+}
+
+// @public
 export interface DocumentIntegerField extends DocumentValueField<number> {
-    // (undocumented)
     kind: "integer";
 }
 
@@ -333,8 +242,14 @@ export interface DocumentKeyValuePair {
 }
 
 // @public
-export interface DocumentLine {
-    boundingBox?: number[];
+export interface DocumentLanguage {
+    confidence: number;
+    locale: string;
+    spans: DocumentSpan[];
+}
+
+// @public
+export interface DocumentLine extends HasBoundingPolygon {
     content: string;
     spans: DocumentSpan[];
     words: () => IterableIterator<DocumentWord>;
@@ -342,8 +257,9 @@ export interface DocumentLine {
 
 // @public
 export interface DocumentModel<Result> {
-    [fromDocument]: (input: GeneratedDocument) => Result;
+    apiVersion?: FormRecognizerApiVersion;
     modelId: string;
+    transformResult: (input: AnalyzeResult) => Result;
 }
 
 // @public
@@ -351,16 +267,16 @@ export class DocumentModelAdministrationClient {
     constructor(endpoint: string, credential: TokenCredential, options?: DocumentModelAdministrationClientOptions);
     constructor(endpoint: string, credential: KeyCredential, options?: DocumentModelAdministrationClientOptions);
     constructor(endpoint: string, credential: KeyCredential | TokenCredential, options?: DocumentModelAdministrationClientOptions);
-    beginBuildModel(modelId: string, containerUrl: string, options?: BuildModelOptions): Promise<TrainingPoller>;
-    beginComposeModel(modelId: string, componentModels: Iterable<string>, options?: BuildModelOptions): Promise<TrainingPoller>;
-    beginCopyModel(sourceModelId: string, authorization: CopyAuthorization, options?: CopyModelOptions): Promise<TrainingPoller>;
-    deleteModel(modelId: string, options?: DeleteModelOptions): Promise<void>;
+    beginBuildDocumentModel(modelId: string, containerUrl: string, buildMode: DocumentModelBuildMode, options?: BeginBuildDocumentModelOptions): Promise<DocumentModelPoller>;
+    beginComposeDocumentModel(modelId: string, componentModelIds: Iterable<string>, options?: BeginComposeDocumentModelOptions): Promise<DocumentModelPoller>;
+    beginCopyModelTo(sourceModelId: string, authorization: CopyAuthorization, options?: BeginCopyModelOptions): Promise<DocumentModelPoller>;
+    deleteDocumentModel(modelId: string, options?: DeleteDocumentModelOptions): Promise<void>;
     getCopyAuthorization(destinationModelId: string, options?: GetCopyAuthorizationOptions): Promise<CopyAuthorization>;
-    getInfo(options?: GetInfoOptions): Promise<GetInfoResponse>;
-    getModel(modelId: string, options?: GetModelOptions): Promise<ModelInfo>;
-    getOperation(operationId: string, options?: GetOperationOptions): Promise<OperationInfo>;
-    listModels(options?: ListModelsOptions): PagedAsyncIterableIterator<ModelSummary>;
-    listOperations(options?: ListOperationsOptions): PagedAsyncIterableIterator<OperationInfo>;
+    getDocumentModel(modelId: string, options?: GetModelOptions): Promise<DocumentModelDetails>;
+    getOperation(operationId: string, options?: GetOperationOptions): Promise<OperationDetails>;
+    getResourceDetails(options?: GetResourceDetailsOptions): Promise<ResourceDetails>;
+    listDocumentModels(options?: ListModelsOptions): PagedAsyncIterableIterator<DocumentModelSummary>;
+    listOperations(options?: ListOperationsOptions): PagedAsyncIterableIterator<OperationSummary>;
 }
 
 // @public
@@ -368,8 +284,73 @@ export interface DocumentModelAdministrationClientOptions extends FormRecognizer
 }
 
 // @public
+export type DocumentModelBuildMode = (typeof DocumentModelBuildMode)[keyof typeof DocumentModelBuildMode];
+
+// @public
+export const DocumentModelBuildMode: {
+    readonly Template: "template";
+    readonly Neural: "neural";
+};
+
+// @public
+export interface DocumentModelBuildOperationDetails extends OperationDetails {
+    kind: "documentModelBuild";
+    result?: DocumentModelDetails;
+}
+
+// @public
+export interface DocumentModelComposeOperationDetails extends OperationDetails {
+    kind: "documentModelCompose";
+    result?: DocumentModelDetails;
+}
+
+// @public
+export interface DocumentModelCopyToOperationDetails extends OperationDetails {
+    kind: "documentModelCopyTo";
+    result?: DocumentModelDetails;
+}
+
+// @public
+export interface DocumentModelDetails {
+    apiVersion?: string;
+    createdOn: Date;
+    description?: string;
+    docTypes?: {
+        [propertyName: string]: DocumentTypeDetails;
+    };
+    modelId: string;
+    tags?: {
+        [propertyName: string]: string;
+    };
+}
+
+// @public
+export interface DocumentModelOperationState extends PollOperationState<DocumentModelDetails> {
+    apiVersion?: string;
+    createdOn: Date;
+    lastUpdatedOn: Date;
+    operationId: string;
+    percentCompleted: number;
+    status: OperationStatus;
+    tags?: Record<string, string>;
+}
+
+// @public
+export type DocumentModelPoller = PollerLike<DocumentModelOperationState, DocumentModelDetails>;
+
+// @public
+export interface DocumentModelSummary {
+    apiVersion?: string;
+    createdOn: Date;
+    description?: string;
+    modelId: string;
+    tags?: {
+        [propertyName: string]: string;
+    };
+}
+
+// @public
 export interface DocumentNumberField extends DocumentValueField<number> {
-    // (undocumented)
     kind: "number";
 }
 
@@ -377,34 +358,39 @@ export interface DocumentNumberField extends DocumentValueField<number> {
 export interface DocumentObjectField<Properties = {
     [k: string]: DocumentField | undefined;
 }> extends DocumentFieldCommon {
-    // (undocumented)
     kind: "object";
     properties: Properties;
 }
 
 // @public
 export interface DocumentPage {
-    angle: number;
-    height: number;
-    lines: DocumentLine[];
+    angle?: number;
+    height?: number;
+    lines?: DocumentLine[];
     pageNumber: number;
     selectionMarks?: DocumentSelectionMark[];
     spans: DocumentSpan[];
-    unit: LengthUnit;
-    width: number;
-    words: DocumentWord[];
+    unit?: LengthUnit;
+    width?: number;
+    words?: DocumentWord[];
+}
+
+// @public
+export interface DocumentParagraph {
+    boundingRegions?: BoundingRegion[];
+    content: string;
+    role?: ParagraphRole;
+    spans: DocumentSpan[];
 }
 
 // @public
 export interface DocumentPhoneNumberField extends DocumentFieldCommon {
-    // (undocumented)
     kind: "phoneNumber";
     value?: string;
 }
 
 // @public
-export interface DocumentSelectionMark {
-    boundingBox?: number[];
+export interface DocumentSelectionMark extends HasBoundingPolygon {
     confidence: number;
     span: DocumentSpan;
     state: SelectionMarkState;
@@ -412,15 +398,14 @@ export interface DocumentSelectionMark {
 
 // @public
 export interface DocumentSelectionMarkField extends DocumentFieldCommon {
-    // (undocumented)
     kind: "selectionMark";
     value?: string;
 }
 
 // @public
 export interface DocumentSignatureField extends DocumentFieldCommon {
-    // (undocumented)
     kind: "signature";
+    value: "signed" | "unsigned";
 }
 
 // @public
@@ -433,8 +418,7 @@ export interface DocumentSpan {
 }
 
 // @public
-export interface DocumentStringField extends DocumentValueField<string> {
-    // (undocumented)
+export interface DocumentStringField<Value extends string = string> extends DocumentValueField<Value> {
     kind: "string";
 }
 
@@ -471,9 +455,20 @@ export type DocumentTableCellKind = string;
 
 // @public
 export interface DocumentTimeField extends DocumentFieldCommon {
-    // (undocumented)
     kind: "time";
     value?: string;
+}
+
+// @public
+export interface DocumentTypeDetails {
+    buildMode?: DocumentBuildMode;
+    description?: string;
+    fieldConfidence?: {
+        [propertyName: string]: number;
+    };
+    fieldSchema: {
+        [propertyName: string]: DocumentFieldSchema;
+    };
 }
 
 // @public
@@ -482,23 +477,28 @@ export interface DocumentValueField<T> extends DocumentFieldCommon {
 }
 
 // @public
-export interface DocumentWord {
-    boundingBox?: number[];
+export interface DocumentWord extends HasBoundingPolygon {
     confidence: number;
     content: string;
     span: DocumentSpan;
 }
 
 // @public
-export type FieldSchema = StringLikeFieldSchema | NumberFieldSchema | DateFieldSchema | ArrayFieldSchema | ObjectFieldSchema | StructuredStringFieldSchema;
+export interface ErrorModel {
+    code: string;
+    details?: ErrorModel[];
+    innererror?: InnerError;
+    message: string;
+    target?: string;
+}
 
 // @public
-export type FormRecognizerApiVersion = "2021-09-30-preview";
+export type FormRecognizerApiVersion = (typeof FormRecognizerApiVersion)[keyof typeof FormRecognizerApiVersion];
 
 // @public
 export const FormRecognizerApiVersion: {
-    readonly Latest: "2021-09-30-preview";
-    readonly Preview: "2021-09-30-preview";
+    readonly Latest: "2022-08-31";
+    readonly Stable: "2022-08-31";
 };
 
 // @public
@@ -510,56 +510,7 @@ export interface FormRecognizerCommonClientOptions extends CommonClientOptions {
 export type FormRecognizerRequestBody = NodeJS.ReadableStream | Blob | ArrayBuffer | ArrayBufferView;
 
 // @public
-export interface GeneratedDocument {
-    boundingRegions?: BoundingRegion[];
-    confidence: number;
-    docType: string;
-    fields: {
-        [propertyName: string]: GeneratedDocumentField;
-    };
-    spans: DocumentSpan[];
-}
-
-// @public
-export interface GeneratedDocumentField {
-    boundingRegions?: BoundingRegion[];
-    confidence?: number;
-    content?: string;
-    spans?: DocumentSpan[];
-    type: DocumentFieldType;
-    valueArray?: GeneratedDocumentField[];
-    valueCountryRegion?: string;
-    valueDate?: Date;
-    valueInteger?: number;
-    valueNumber?: number;
-    valueObject?: {
-        [propertyName: string]: GeneratedDocumentField;
-    };
-    valuePhoneNumber?: string;
-    valueSelectionMark?: SelectionMarkState;
-    valueSignature?: DocumentSignatureType;
-    valueString?: string;
-    valueTime?: string;
-}
-
-// @public
-export interface GenericDocumentResult extends LayoutResult {
-    entities: DocumentEntity[];
-    keyValuePairs: DocumentKeyValuePair[];
-}
-
-// @public
-export interface GetCopyAuthorizationOptions extends OperationOptions {
-    description?: string;
-}
-
-// @public
-export interface GetInfoOptions extends OperationOptions {
-}
-
-// @public
-export interface GetInfoResponse {
-    customDocumentModels: CustomDocumentModelsInfo;
+export interface GetCopyAuthorizationOptions extends OperationOptions, CommonModelCreationOptions {
 }
 
 // @public
@@ -571,340 +522,22 @@ export interface GetOperationOptions extends OperationOptions {
 }
 
 // @public
-export type IdentityDocument = ReifyPrebuiltSchema<typeof IdentityDocumentSchema>;
+export type GetOperationResponse = OperationDetailsUnion;
 
 // @public
-export const IdentityDocumentSchema: {
-    readonly modelId: "prebuilt-idDocument";
-    readonly description: "Prebuilt model to extract key information from US driver licenses and international passports.";
-    readonly createdDateTime: "2021-07-30T00:00:00Z";
-    readonly docTypes: {
-        readonly "prebuilt:idDocument:driverLicense": {
-            readonly description: "Driver License - Currently, only US driver licenses are supported.";
-            readonly fieldSchema: {
-                readonly CountryRegion: {
-                    readonly type: "countryRegion";
-                    readonly description: "Country or region code";
-                    readonly example: "USA";
-                };
-                readonly Region: {
-                    readonly type: "string";
-                    readonly description: "State or province";
-                    readonly example: "Washington";
-                };
-                readonly DocumentNumber: {
-                    readonly type: "string";
-                    readonly description: "Driver license number";
-                    readonly example: "WDLABCD456DG";
-                };
-                readonly FirstName: {
-                    readonly type: "string";
-                    readonly description: "Given name and middle initial if applicable";
-                    readonly example: "LIAM R.";
-                };
-                readonly LastName: {
-                    readonly type: "string";
-                    readonly description: "Surname";
-                    readonly example: "TALBOT";
-                };
-                readonly Address: {
-                    readonly type: "string";
-                    readonly description: "Address";
-                    readonly example: "123 STREET ADDRESS YOUR CITY WA 99999-1234";
-                };
-                readonly DateOfBirth: {
-                    readonly type: "date";
-                    readonly description: "Date of birth (DOB)";
-                    readonly example: "01/06/1958";
-                };
-                readonly DateOfExpiration: {
-                    readonly type: "date";
-                    readonly description: "Date of expiration (EXP)";
-                    readonly example: "08/12/2020";
-                };
-                readonly Sex: {
-                    readonly type: "string";
-                    readonly enum: readonly ["M", "F", "X"];
-                    readonly description: "Sex";
-                    readonly example: "M";
-                };
-                readonly Endorsements: {
-                    readonly type: "string";
-                    readonly description: "Endorsements";
-                    readonly example: "L";
-                };
-                readonly Restrictions: {
-                    readonly type: "string";
-                    readonly description: "Restrictions";
-                    readonly example: "B";
-                };
-                readonly VehicleClassifications: {
-                    readonly type: "string";
-                    readonly description: "Vehicle classification";
-                    readonly example: "D";
-                };
-            };
-        };
-        readonly "prebuilt:idDocument:passport": {
-            readonly description: "Passport";
-            readonly fieldSchema: {
-                readonly MachineReadableZone: {
-                    readonly type: "object";
-                    readonly description: "Machine readable zone (MRZ)";
-                    readonly example: "P<USABROOKS<<JENNIFER<<<<<<<<<<<<<<<<<<<<<<< 3400200135USA8001014F1905054710000307<715816";
-                    readonly properties: {
-                        readonly FirstName: {
-                            readonly type: "string";
-                            readonly description: "Given name and middle initial if applicable";
-                            readonly example: "JENNIFER";
-                        };
-                        readonly LastName: {
-                            readonly type: "string";
-                            readonly description: "Surname";
-                            readonly example: "BROOKS";
-                        };
-                        readonly DocumentNumber: {
-                            readonly type: "string";
-                            readonly description: "Passport number";
-                            readonly example: "340020013";
-                        };
-                        readonly CountryRegion: {
-                            readonly type: "countryRegion";
-                            readonly description: "Issuing country or organization";
-                            readonly example: "USA";
-                        };
-                        readonly Nationality: {
-                            readonly type: "countryRegion";
-                            readonly description: "Nationality";
-                            readonly example: "USA";
-                        };
-                        readonly DateOfBirth: {
-                            readonly type: "date";
-                            readonly description: "Date of birth";
-                            readonly example: "1980-01-01";
-                        };
-                        readonly DateOfExpiration: {
-                            readonly type: "date";
-                            readonly description: "Date of expiration";
-                            readonly example: "201-05-05";
-                        };
-                        readonly Sex: {
-                            readonly type: "string";
-                            readonly enum: readonly ["M", "F", "X"];
-                            readonly description: "Sex";
-                            readonly example: "F";
-                        };
-                    };
-                };
-            };
-        };
-    };
-};
+export interface GetResourceDetailsOptions extends OperationOptions {
+}
 
 // @public
-export type Invoice = ReifyPrebuiltSchema<typeof InvoiceSchema>;
+export interface HasBoundingPolygon {
+    polygon?: Point2D[];
+}
 
 // @public
-export const InvoiceSchema: {
-    readonly modelId: "prebuilt-invoice";
-    readonly description: "Prebuilt model to extract key information from English invoices, including customer, vendor, invoice ID, due date, total, and more.";
-    readonly createdDateTime: "2021-07-30T00:00:00Z";
-    readonly docTypes: {
-        readonly "prebuilt:invoice": {
-            readonly description: "Invoice";
-            readonly fieldSchema: {
-                readonly CustomerName: {
-                    readonly type: "string";
-                    readonly description: "Customer being invoiced";
-                    readonly example: "Microsoft Corp";
-                };
-                readonly CustomerId: {
-                    readonly type: "string";
-                    readonly description: "Reference ID for the customer";
-                    readonly example: "CID-12345";
-                };
-                readonly PurchaseOrder: {
-                    readonly type: "string";
-                    readonly description: "A purchase order reference number";
-                    readonly example: "PO-3333";
-                };
-                readonly InvoiceId: {
-                    readonly type: "string";
-                    readonly description: "ID for this specific invoice (often 'Invoice Number')";
-                    readonly example: "INV-100";
-                };
-                readonly InvoiceDate: {
-                    readonly type: "date";
-                    readonly description: "Date the invoice was issued";
-                    readonly example: "11/15/2019";
-                };
-                readonly DueDate: {
-                    readonly type: "date";
-                    readonly description: "Date payment for this invoice is due";
-                    readonly example: "12/15/2019";
-                };
-                readonly VendorName: {
-                    readonly type: "string";
-                    readonly description: "Vendor who has created this invoice";
-                    readonly example: "CONTOSO LTD.";
-                };
-                readonly VendorAddress: {
-                    readonly type: "string";
-                    readonly description: "Mailing address for the Vendor";
-                    readonly example: "123 456th St New York, NY, 10001";
-                };
-                readonly VendorAddressRecipient: {
-                    readonly type: "string";
-                    readonly description: "Name associated with the VendorAddress";
-                    readonly example: "Contoso Headquarters";
-                };
-                readonly CustomerAddress: {
-                    readonly type: "string";
-                    readonly description: "Mailing address for the Customer";
-                    readonly example: "123 Other St, Redmond WA, 98052";
-                };
-                readonly CustomerAddressRecipient: {
-                    readonly type: "string";
-                    readonly description: "Name associated with the CustomerAddress";
-                    readonly example: "Microsoft Corp";
-                };
-                readonly BillingAddress: {
-                    readonly type: "string";
-                    readonly description: "Explicit billing address for the customer";
-                    readonly example: "123 Bill St, Redmond WA, 98052";
-                };
-                readonly BillingAddressRecipient: {
-                    readonly type: "string";
-                    readonly description: "Name associated with the BillingAddress";
-                    readonly example: "Microsoft Services";
-                };
-                readonly ShippingAddress: {
-                    readonly type: "string";
-                    readonly description: "Explicit shipping address for the customer";
-                    readonly example: "123 Ship St, Redmond WA, 98052";
-                };
-                readonly ShippingAddressRecipient: {
-                    readonly type: "string";
-                    readonly description: "Name associated with the ShippingAddress";
-                    readonly example: "Microsoft Delivery";
-                };
-                readonly SubTotal: {
-                    readonly type: "number";
-                    readonly description: "Subtotal field identified on this invoice";
-                    readonly example: "$100.00";
-                };
-                readonly TotalTax: {
-                    readonly type: "number";
-                    readonly description: "Total tax field identified on this invoice";
-                    readonly example: "$10.00";
-                };
-                readonly InvoiceTotal: {
-                    readonly type: "number";
-                    readonly description: "Total new charges associated with this invoice";
-                    readonly example: "$110.00";
-                };
-                readonly AmountDue: {
-                    readonly type: "number";
-                    readonly description: "Total Amount Due to the vendor";
-                    readonly example: "$610.00";
-                };
-                readonly PreviousUnpaidBalance: {
-                    readonly type: "number";
-                    readonly description: "Explicit previously unpaid balance";
-                    readonly example: "$500.00";
-                };
-                readonly RemittanceAddress: {
-                    readonly type: "string";
-                    readonly description: "Explicit remittance or payment address for the customer";
-                    readonly example: "123 Remit St New York, NY, 10001";
-                };
-                readonly RemittanceAddressRecipient: {
-                    readonly type: "string";
-                    readonly description: "Name associated with the RemittanceAddress";
-                    readonly example: "Contoso Billing";
-                };
-                readonly ServiceAddress: {
-                    readonly type: "string";
-                    readonly description: "Explicit service address or property address for the customer";
-                    readonly example: "123 Service St, Redmond WA, 98052";
-                };
-                readonly ServiceAddressRecipient: {
-                    readonly type: "string";
-                    readonly description: "Name associated with the ServiceAddress";
-                    readonly example: "Microsoft Services";
-                };
-                readonly ServiceStartDate: {
-                    readonly type: "date";
-                    readonly description: "First date for the service period (for example, a utility bill service period)";
-                    readonly example: "10/14/2019";
-                };
-                readonly ServiceEndDate: {
-                    readonly type: "date";
-                    readonly description: "End date for the service period (for example, a utility bill service period)";
-                    readonly example: "11/14/2019";
-                };
-                readonly Items: {
-                    readonly type: "array";
-                    readonly description: "List of line items";
-                    readonly items: {
-                        readonly type: "object";
-                        readonly description: "A single line item";
-                        readonly example: "3/4/2021\nA123\nConsulting Services\b2 hours\n$30.00\n10%\n$60.00";
-                        readonly properties: {
-                            readonly Amount: {
-                                readonly type: "number";
-                                readonly description: "The amount of the line item";
-                                readonly example: "$60.00";
-                            };
-                            readonly Date: {
-                                readonly type: "date";
-                                readonly description: "Date corresponding to each line item. Often it is a date the line item was shipped";
-                                readonly example: "3/4/2021";
-                            };
-                            readonly Description: {
-                                readonly type: "string";
-                                readonly description: "The text description for the invoice line item";
-                                readonly example: "Consulting service";
-                            };
-                            readonly Quantity: {
-                                readonly type: "number";
-                                readonly description: "The quantity for this invoice line item";
-                                readonly example: "2";
-                            };
-                            readonly ProductCode: {
-                                readonly type: "string";
-                                readonly description: "Product code, product number, or SKU associated with the specific line item";
-                                readonly example: "A123";
-                            };
-                            readonly Tax: {
-                                readonly type: "number";
-                                readonly description: "Tax associated with each line item. Possible values include tax amount, tax %, and tax Y/N";
-                                readonly example: "10%";
-                            };
-                            readonly Unit: {
-                                readonly type: "string";
-                                readonly description: "The unit of the line item, e.g, kg, lb etc.";
-                                readonly example: "hours";
-                            };
-                            readonly UnitPrice: {
-                                readonly type: "number";
-                                readonly description: "The net or gross price (depending on the gross invoice setting of the invoice) of one unit of this item";
-                                readonly example: "$30.00";
-                            };
-                        };
-                    };
-                };
-            };
-        };
-    };
-};
-
-// @public
-export interface LayoutResult {
-    // (undocumented)
-    pages: DocumentPage[];
-    styles: DocumentStyle[];
-    tables: DocumentTable[];
+export interface InnerError {
+    code: string;
+    innererror?: InnerError;
+    message?: string;
 }
 
 // @public
@@ -919,58 +552,23 @@ export interface ListOperationsOptions extends OperationOptions {
 }
 
 // @public
-export type ModelInfo = ModelSummary & {
-    docTypes?: {
-        [propertyName: string]: DocTypeInfo;
-    };
-};
-
-// @public
-export interface ModelSchema {
-    docTypes: {
-        [type: string]: {
-            fieldSchema: {
-                [k: string]: FieldSchema;
-            };
-        };
-    };
-    modelId: string;
-}
-
-// @public
-export interface ModelSummary {
-    createdDateTime: Date;
-    description?: string;
-    modelId: string;
-}
-
-// @public
-export interface NumberFieldSchema<Type extends "number" | "integer" = "number" | "integer"> {
-    // (undocumented)
-    readonly type: Type;
-}
-
-// @public
-export interface ObjectFieldSchema<Properties extends {
-    readonly [k: string]: FieldSchema;
-} = {
-    readonly [k: string]: FieldSchema;
-}> {
-    readonly properties: Properties;
-    // (undocumented)
-    readonly type: "object";
-}
-
-// @public
-export interface OperationInfo {
-    createdDateTime: Date;
-    kind: OperationKind;
-    lastUpdatedDateTime: Date;
+export interface OperationDetails {
+    apiVersion?: string;
+    createdOn: Date;
+    error?: ErrorModel;
+    kind: "documentModelBuild" | "documentModelCompose" | "documentModelCopyTo";
+    lastUpdatedOn: Date;
     operationId: string;
     percentCompleted?: number;
     resourceLocation: string;
     status: OperationStatus;
+    tags?: {
+        [propertyName: string]: string;
+    };
 }
+
+// @public (undocumented)
+export type OperationDetailsUnion = OperationDetails | DocumentModelBuildOperationDetails | DocumentModelComposeOperationDetails | DocumentModelCopyToOperationDetails;
 
 // @public
 export type OperationKind = string;
@@ -979,314 +577,51 @@ export type OperationKind = string;
 export type OperationStatus = "notStarted" | "running" | "failed" | "succeeded" | "canceled";
 
 // @public
-export interface PollerOptions<TState extends PollOperationState<unknown>> {
+export interface OperationSummary {
+    apiVersion?: string;
+    createdOn: Date;
+    kind: OperationKind;
+    lastUpdatedOn: Date;
+    operationId: string;
+    percentCompleted?: number;
+    resourceLocation: string;
+    status: OperationStatus;
+    tags?: {
+        [propertyName: string]: string;
+    };
+}
+
+// @public
+export type ParagraphRole = string;
+
+// @public
+export interface Point2D {
+    x: number;
+    y: number;
+}
+
+// @public
+export interface PollerOptions<TState extends PollOperationState<unknown>> extends OperationOptions {
     onProgress?: (state: TState) => void;
     resumeFrom?: string;
     updateIntervalInMs?: number;
 }
 
 // @public
-export const PrebuiltModels: {
-    BusinessCard: DocumentModel<{
-        docType: "prebuilt:businesscard";
-        fields: {
-            contactNames?: DocumentArrayField<DocumentObjectField<    {
-            firstName?: DocumentStringField | undefined;
-            lastName?: DocumentStringField | undefined;
-            }>> | undefined;
-            companyNames?: DocumentArrayField<DocumentStringField> | undefined;
-            jobTitles?: DocumentArrayField<DocumentStringField> | undefined;
-            departments?: DocumentArrayField<DocumentStringField> | undefined;
-            addresses?: DocumentArrayField<DocumentStringField> | undefined;
-            workPhones?: DocumentArrayField<DocumentPhoneNumberField> | undefined;
-            mobilePhones?: DocumentArrayField<DocumentPhoneNumberField> | undefined;
-            faxes?: DocumentArrayField<DocumentPhoneNumberField> | undefined;
-            otherPhones?: DocumentArrayField<DocumentPhoneNumberField> | undefined;
-            emails?: DocumentArrayField<DocumentStringField> | undefined;
-            websites?: DocumentArrayField<DocumentStringField> | undefined;
-        };
-    }>;
-    IdentityDocument: DocumentModel<IdentityDocument>;
-    Invoice: DocumentModel<{
-        docType: "prebuilt:invoice";
-        fields: {
-            customerName?: DocumentStringField | undefined;
-            customerId?: DocumentStringField | undefined;
-            purchaseOrder?: DocumentStringField | undefined;
-            invoiceId?: DocumentStringField | undefined;
-            invoiceDate?: DocumentDateField | undefined;
-            dueDate?: DocumentDateField | undefined;
-            vendorName?: DocumentStringField | undefined;
-            vendorAddress?: DocumentStringField | undefined;
-            vendorAddressRecipient?: DocumentStringField | undefined;
-            customerAddress?: DocumentStringField | undefined;
-            customerAddressRecipient?: DocumentStringField | undefined;
-            billingAddress?: DocumentStringField | undefined;
-            billingAddressRecipient?: DocumentStringField | undefined;
-            shippingAddress?: DocumentStringField | undefined;
-            shippingAddressRecipient?: DocumentStringField | undefined;
-            subTotal?: DocumentNumberField | undefined;
-            totalTax?: DocumentNumberField | undefined;
-            invoiceTotal?: DocumentNumberField | undefined;
-            amountDue?: DocumentNumberField | undefined;
-            previousUnpaidBalance?: DocumentNumberField | undefined;
-            remittanceAddress?: DocumentStringField | undefined;
-            remittanceAddressRecipient?: DocumentStringField | undefined;
-            serviceAddress?: DocumentStringField | undefined;
-            serviceAddressRecipient?: DocumentStringField | undefined;
-            serviceStartDate?: DocumentDateField | undefined;
-            serviceEndDate?: DocumentDateField | undefined;
-            items?: DocumentArrayField<DocumentObjectField<    {
-            date?: DocumentDateField | undefined;
-            amount?: DocumentNumberField | undefined;
-            description?: DocumentStringField | undefined;
-            quantity?: DocumentNumberField | undefined;
-            productCode?: DocumentStringField | undefined;
-            tax?: DocumentNumberField | undefined;
-            unit?: DocumentStringField | undefined;
-            unitPrice?: DocumentNumberField | undefined;
-            }>> | undefined;
-        };
-    }>;
-    Receipt: DocumentModel<{
-        docType: "prebuilt:receipt";
-        fields: {
-            items?: DocumentArrayField<DocumentObjectField<    {
-            date?: DocumentDateField | undefined;
-            description?: DocumentStringField | undefined;
-            quantity?: DocumentNumberField | undefined;
-            totalPrice?: DocumentNumberField | undefined;
-            name?: DocumentStringField | undefined;
-            price?: DocumentNumberField | undefined;
-            category?: DocumentStringField | undefined;
-            }>> | undefined;
-            tax?: DocumentNumberField | undefined;
-            locale?: DocumentStringField | undefined;
-            receiptType?: DocumentStringField | undefined;
-            merchantName?: DocumentStringField | undefined;
-            merchantPhoneNumber?: DocumentPhoneNumberField | undefined;
-            merchantAddress?: DocumentStringField | undefined;
-            total?: DocumentNumberField | undefined;
-            transactionDate?: DocumentDateField | undefined;
-            transactionTime?: DocumentTimeField | undefined;
-            subtotal?: DocumentNumberField | undefined;
-            tip?: DocumentNumberField | undefined;
-            arrivalDate?: DocumentDateField | undefined;
-            departureDate?: DocumentDateField | undefined;
-            currency?: DocumentStringField | undefined;
-            merchantAliases?: DocumentArrayField<DocumentStringField> | undefined;
-        };
-    }>;
-};
-
-// @public
-export type Receipt = ReifyPrebuiltSchema<typeof ReceiptSchema>;
-
-// @public
-export const ReceiptSchema: {
-    readonly modelId: "prebuilt-receipt";
-    readonly description: "Prebuilt model to extract key information from English receipts, including merchant name, transaction date, transaction total, and more.";
-    readonly createdDateTime: "2021-07-30T00:00:00Z";
-    readonly docTypes: {
-        readonly "prebuilt:receipt": {
-            readonly description: "Receipt";
-            readonly fieldSchema: {
-                readonly ReceiptType: {
-                    readonly type: "string";
-                    readonly enum: readonly ["Hotel", "CreditCard", "Itemized", "Gas", "Parking", "Other"];
-                    readonly description: "Type of receipt";
-                    readonly example: "Itemized";
-                };
-                readonly Locale: {
-                    readonly type: "string";
-                    readonly enum: readonly ["en-AU", "en-CA", "en-GB", "en-IN", "en-US"];
-                    readonly description: "Locale";
-                    readonly example: "en-US";
-                };
-                readonly MerchantName: {
-                    readonly type: "string";
-                    readonly description: "Name of the merchant issuing the receipt";
-                    readonly example: "Contoso";
-                };
-                readonly MerchantPhoneNumber: {
-                    readonly type: "phoneNumber";
-                    readonly description: "Listed phone number of merchant";
-                    readonly example: "987-654-3210";
-                };
-                readonly MerchantAddress: {
-                    readonly type: "string";
-                    readonly description: "Listed address of merchant";
-                    readonly example: "123 Main St Redmond WA 98052";
-                };
-                readonly Total: {
-                    readonly type: "number";
-                    readonly description: "Full transaction total of receipt";
-                    readonly example: "$14.34";
-                };
-                readonly TransactionDate: {
-                    readonly type: "date";
-                    readonly description: "Date the receipt was issued";
-                    readonly example: "June 06, 2019";
-                };
-                readonly TransactionTime: {
-                    readonly type: "time";
-                    readonly description: "Time the receipt was issued";
-                    readonly example: "4:49 PM";
-                };
-                readonly Subtotal: {
-                    readonly type: "number";
-                    readonly description: "Subtotal of receipt, often before taxes are applied";
-                    readonly example: "$12.34";
-                };
-                readonly Tax: {
-                    readonly type: "number";
-                    readonly description: "Tax on receipt, often sales tax or equivalent";
-                    readonly example: "$2.00";
-                };
-                readonly Tip: {
-                    readonly type: "number";
-                    readonly description: "Tip included by buyer";
-                    readonly example: "$1.00";
-                };
-                readonly ArrivalDate: {
-                    readonly type: "date";
-                    readonly description: "Date of arrival";
-                    readonly example: "27Mar21";
-                };
-                readonly DepartureDate: {
-                    readonly type: "date";
-                    readonly description: "Date of departure";
-                    readonly example: "28Mar21";
-                };
-                readonly Currency: {
-                    readonly type: "string";
-                    readonly enum: readonly ["MIXED", "USD", "AUD", "CAD", "INR", "GBP", "EUR"];
-                    readonly description: "Currency unit of receipt amounts, or 'MIXED' if multiple values are found";
-                    readonly example: "USD";
-                };
-                readonly MerchantAliases: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "string";
-                        readonly description: "Alternative name of merchant";
-                        readonly example: "Contoso (R)";
-                    };
-                };
-                readonly Items: {
-                    readonly type: "array";
-                    readonly items: {
-                        readonly type: "object";
-                        readonly description: "Extracted line item";
-                        readonly example: "1\nSurface Pro 6\n$999.00\n$999.00";
-                        readonly properties: {
-                            readonly TotalPrice: {
-                                readonly type: "number";
-                                readonly description: "Total price of line item";
-                                readonly example: "$999.00";
-                            };
-                            readonly Name: {
-                                readonly type: "string";
-                                readonly description: "Item name";
-                                readonly example: "Surface Pro 6";
-                            };
-                            readonly Quantity: {
-                                readonly type: "number";
-                                readonly description: "Quantity of each item";
-                                readonly example: "1";
-                            };
-                            readonly Price: {
-                                readonly type: "number";
-                                readonly description: "Individual price of each item unit";
-                                readonly example: "$999.00";
-                            };
-                            readonly Description: {
-                                readonly type: "string";
-                                readonly description: "Item description";
-                                readonly example: "Room Charge";
-                            };
-                            readonly Date: {
-                                readonly type: "date";
-                                readonly description: "Item date";
-                                readonly example: "27Mar21";
-                            };
-                            readonly Category: {
-                                readonly type: "string";
-                                readonly enum: readonly ["Room", "Meals", "Tax", "Deposit", "Credit", "Other"];
-                                readonly description: "Item category";
-                                readonly example: "Room";
-                            };
-                        };
-                    };
-                };
-            };
-        };
-    };
-};
-
-// @public
-export type ReifyFieldSchema<Schema extends Readonly<FieldSchema>> = Schema extends StructuredStringFieldSchema<infer Type> ? {
-    time: DocumentTimeField;
-    phoneNumber: DocumentPhoneNumberField;
-}[Type] : Schema extends StringLikeFieldSchema<infer Type> ? {
-    string: Schema extends {
-        enum: string[];
-    } ? DocumentStringField & {
-        value?: Schema["enum"][number];
-    } : DocumentStringField;
-    countryRegion: DocumentCountryRegionField;
-}[Type] : Schema extends NumberFieldSchema<infer Type> ? {
-    number: DocumentNumberField;
-    integer: DocumentIntegerField;
-}[Type] : Schema extends DateFieldSchema ? DocumentDateField : Schema extends ArrayFieldSchema<infer Item> ? DocumentArrayField<ReifyFieldSchema<Item>> : Schema extends ObjectFieldSchema<infer Properties> ? DocumentObjectField<{
-    [K in Extract<keyof Properties, string> as Uncapitalize<K>]?: ReifyFieldSchema<Properties[K]>;
-}> : never;
-
-// @public
-export type ReifyPrebuiltSchema<Schema extends Readonly<ModelSchema>> = {
-    [DocType in keyof Schema["docTypes"]]: {
-        docType: DocType;
-        fields: {
-            [K in Extract<keyof Schema["docTypes"][DocType]["fieldSchema"], string> as Uncapitalize<K>]?: ReifyFieldSchema<Schema["docTypes"][DocType]["fieldSchema"][K]>;
-        };
-    };
-}[keyof Schema["docTypes"]];
+export interface ResourceDetails {
+    customDocumentModels: CustomDocumentModelsDetails;
+}
 
 // @public
 export type SelectionMarkState = string;
 
 // @public
-export type StringIndexType = typeof StringIndexType[keyof typeof StringIndexType];
+export type StringIndexType = (typeof StringIndexType)[keyof typeof StringIndexType];
 
 // @public
 export const StringIndexType: {
     readonly Utf16CodeUnit: "utf16CodeUnit";
     readonly UnicodeCodePoint: "unicodeCodePoint";
 };
-
-// @public
-export interface StringLikeFieldSchema<Type extends "string" | "countryRegion" = "string" | "countryRegion"> {
-    // (undocumented)
-    readonly enum?: readonly string[];
-    // (undocumented)
-    readonly type: Type;
-}
-
-// @public
-export interface StructuredStringFieldSchema<Type extends "time" | "phoneNumber" = "time" | "phoneNumber"> {
-    // (undocumented)
-    readonly type: Type;
-}
-
-// @public
-export type TrainingPoller = PollerLike<TrainingPollOperationState, ModelInfo>;
-
-// @public
-export interface TrainingPollOperationState extends PollOperationState<ModelInfo> {
-    createdOn: Date;
-    lastUpdatedOn: Date;
-    operationId: string;
-    percentCompleted: number;
-    status: OperationStatus;
-}
 
 ```

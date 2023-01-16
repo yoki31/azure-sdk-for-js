@@ -4,20 +4,21 @@
 import fs from "fs-extra";
 import path from "path";
 import * as ts from "typescript";
-import { convert } from "../../commands/samples/tsToJs";
+import { convert } from "./convert";
 import { createPrinter } from "../printer";
 import { createAccumulator } from "../typescript/accumulator";
 import { createDiagnosticEmitter } from "../typescript/diagnostic";
 import { AzSdkMetaTags, AZSDK_META_TAG_PREFIX, ModuleInfo, VALID_AZSDK_META_TAGS } from "./info";
 import { testSyntax } from "./syntax";
-import { isDependency, isRelativePath, toCommonJs } from "./transforms";
+import { createToCommonJsTransform, isDependency, isRelativePath } from "./transforms";
 
 const log = createPrinter("samples:processor");
 
 export async function processSources(
   sourceDirectory: string,
   sources: string[],
-  fail: (...values: unknown[]) => never
+  fail: (...values: unknown[]) => never,
+  requireInScope: (moduleSpecifier: string) => unknown
 ): Promise<ModuleInfo[]> {
   // Project-scoped information (shared between all source files)
   let hadUnsupportedSyntax = false;
@@ -105,7 +106,7 @@ export async function processSources(
       fileName: source,
       transformers: {
         before: [sourceProcessor],
-        after: [toCommonJs],
+        after: [createToCommonJsTransform(requireInScope)],
       },
     });
 
@@ -329,7 +330,6 @@ function processExportDefault(
       // If there is no name, the declaration is anonymous, and we will bind it as an expression in module.exports
       const initializer = ts.isClassDeclaration(decl)
         ? factory.createClassExpression(
-            decl.decorators,
             updatedModifiers,
             undefined,
             decl.typeParameters,
@@ -339,7 +339,7 @@ function processExportDefault(
         : decl.body === undefined // This is a strange case that I assume has to do with overload declarations.
         ? undefined
         : factory.createFunctionExpression(
-            updatedModifiers,
+            updatedModifiers as readonly ts.Modifier[], // it's not legal to decorate function expressions so these should all be modifiers.
             decl.asteriskToken,
             undefined,
             decl.typeParameters,
@@ -360,7 +360,6 @@ function processExportDefault(
     return ts.isClassDeclaration(decl)
       ? factory.updateClassDeclaration(
           decl,
-          decl.decorators,
           updatedModifiers,
           decl.name,
           decl.typeParameters,
@@ -369,7 +368,6 @@ function processExportDefault(
         )
       : factory.updateFunctionDeclaration(
           decl,
-          decl.decorators,
           updatedModifiers,
           decl.asteriskToken,
           decl.name,

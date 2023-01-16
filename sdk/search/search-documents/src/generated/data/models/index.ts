@@ -7,6 +7,7 @@
  */
 
 import * as coreClient from "@azure/core-client";
+import * as coreHttpCompat from "@azure/core-http-compat";
 
 /** Describes an error condition for the Azure Cognitive Search API. */
 export interface SearchError {
@@ -82,7 +83,7 @@ export interface AnswerResult {
   /** Describes unknown properties. The value of an unknown property can be of "any" type. */
   [property: string]: any;
   /**
-   * The score value represents how relevant the answer is to the the query relative to other answers returned for the query.
+   * The score value represents how relevant the answer is to the query relative to other answers returned for the query.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly score: number;
@@ -350,12 +351,6 @@ export interface AutocompleteRequest {
 }
 
 /** Parameter group */
-export interface RequestOptions {
-  /** The tracking ID sent with the request to help with debugging. */
-  xMsClientRequestId?: string;
-}
-
-/** Parameter group */
 export interface SearchOptions {
   /** A value that specifies whether to fetch the total count of results. Default is false. Setting this value to true may have a performance impact. Note that the count returned is an approximation. */
   includeTotalResultCount?: boolean;
@@ -532,9 +527,9 @@ export enum KnownQueryLanguage {
   ArJo = "ar-jo",
   /** Query language value for Danish (Denmark). */
   DaDk = "da-dk",
-  /** Query language value for Norwegian (Normway). */
+  /** Query language value for Norwegian (Norway). */
   NoNo = "no-no",
-  /** Query language value for Bulgarian (Bulgary). */
+  /** Query language value for Bulgarian (Bulgaria). */
   BgBg = "bg-bg",
   /** Query language value for Croatian (Croatia). */
   HrHr = "hr-hr",
@@ -650,8 +645,8 @@ export enum KnownQueryLanguage {
  * **ar-kw**: Query language value for Arabic (Kuwait). \
  * **ar-jo**: Query language value for Arabic (Jordan). \
  * **da-dk**: Query language value for Danish (Denmark). \
- * **no-no**: Query language value for Norwegian (Normway). \
- * **bg-bg**: Query language value for Bulgarian (Bulgary). \
+ * **no-no**: Query language value for Norwegian (Norway). \
+ * **bg-bg**: Query language value for Bulgarian (Bulgaria). \
  * **hr-hr**: Query language value for Croatian (Croatia). \
  * **hr-ba**: Query language value for Croatian (Bosnia and Herzegovina). \
  * **ms-my**: Query language value for Malay (Malaysia). \
@@ -812,10 +807,7 @@ export type AutocompleteMode = "oneTerm" | "twoTerms" | "oneTermWithContext";
 
 /** Optional parameters. */
 export interface DocumentsCountOptionalParams
-  extends coreClient.OperationOptions {
-  /** Parameter group */
-  requestOptionsParam?: RequestOptions;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the count operation. */
 export type DocumentsCountResponse = {
@@ -827,8 +819,6 @@ export type DocumentsCountResponse = {
 export interface DocumentsSearchGetOptionalParams
   extends coreClient.OperationOptions {
   /** Parameter group */
-  requestOptionsParam?: RequestOptions;
-  /** Parameter group */
   searchOptions?: SearchOptions;
   /** A full-text search query expression; Use "*" or omit this parameter to match all documents. */
   searchText?: string;
@@ -839,10 +829,7 @@ export type DocumentsSearchGetResponse = SearchDocumentsResult;
 
 /** Optional parameters. */
 export interface DocumentsSearchPostOptionalParams
-  extends coreClient.OperationOptions {
-  /** Parameter group */
-  requestOptionsParam?: RequestOptions;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the searchPost operation. */
 export type DocumentsSearchPostResponse = SearchDocumentsResult;
@@ -850,8 +837,6 @@ export type DocumentsSearchPostResponse = SearchDocumentsResult;
 /** Optional parameters. */
 export interface DocumentsGetOptionalParams
   extends coreClient.OperationOptions {
-  /** Parameter group */
-  requestOptionsParam?: RequestOptions;
   /** List of field names to retrieve for the document; Any field not retrieved will be missing from the returned document. */
   selectedFields?: string[];
 }
@@ -863,8 +848,6 @@ export type DocumentsGetResponse = Record<string, unknown>;
 export interface DocumentsSuggestGetOptionalParams
   extends coreClient.OperationOptions {
   /** Parameter group */
-  requestOptionsParam?: RequestOptions;
-  /** Parameter group */
   suggestOptions?: SuggestOptions;
 }
 
@@ -873,20 +856,14 @@ export type DocumentsSuggestGetResponse = SuggestDocumentsResult;
 
 /** Optional parameters. */
 export interface DocumentsSuggestPostOptionalParams
-  extends coreClient.OperationOptions {
-  /** Parameter group */
-  requestOptionsParam?: RequestOptions;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the suggestPost operation. */
 export type DocumentsSuggestPostResponse = SuggestDocumentsResult;
 
 /** Optional parameters. */
 export interface DocumentsIndexOptionalParams
-  extends coreClient.OperationOptions {
-  /** Parameter group */
-  requestOptionsParam?: RequestOptions;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the index operation. */
 export type DocumentsIndexResponse = IndexDocumentsResult;
@@ -894,8 +871,6 @@ export type DocumentsIndexResponse = IndexDocumentsResult;
 /** Optional parameters. */
 export interface DocumentsAutocompleteGetOptionalParams
   extends coreClient.OperationOptions {
-  /** Parameter group */
-  requestOptionsParam?: RequestOptions;
   /** Parameter group */
   autocompleteOptions?: AutocompleteOptions;
 }
@@ -905,17 +880,14 @@ export type DocumentsAutocompleteGetResponse = AutocompleteResult;
 
 /** Optional parameters. */
 export interface DocumentsAutocompletePostOptionalParams
-  extends coreClient.OperationOptions {
-  /** Parameter group */
-  requestOptionsParam?: RequestOptions;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the autocompletePost operation. */
 export type DocumentsAutocompletePostResponse = AutocompleteResult;
 
 /** Optional parameters. */
 export interface SearchClientOptionalParams
-  extends coreClient.ServiceClientOptions {
+  extends coreHttpCompat.ExtendedServiceClientOptions {
   /** Overrides client endpoint. */
   endpoint?: string;
 }

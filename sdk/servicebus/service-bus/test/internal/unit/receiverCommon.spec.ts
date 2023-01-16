@@ -278,6 +278,9 @@ describe("shared receiver code", () => {
             },
             connectionId: "id",
             operationType: RetryOperationType.connection,
+            retryOptions: {
+              retryDelayInMs: 2000,
+            },
           },
         },
         fakeRetry
@@ -289,6 +292,73 @@ describe("shared receiver code", () => {
       ]);
 
       assert.equal(numRetryCalls, 2 + 1);
+    });
+
+    it("respects retry options", async () => {
+      const errorMessages: string[] = [];
+      const errorCount = 3;
+      let numRetryCalls = 0;
+
+      const fakeRetry = async <T>(): Promise<T> => {
+        ++numRetryCalls;
+
+        if (numRetryCalls < errorCount + 1) {
+          // force retry<> to get called ${errorCount} times (because
+          // we "failed" and threw exceptions and 1 more time where
+          // we succeed.
+          throw new Error(`Attempt ${numRetryCalls}: Force another call of retry<>`);
+        }
+
+        return Promise.resolve({} as T);
+      };
+
+      const retryDelayInMs = 2000;
+      let previousAttemptTime = Date.now();
+      await retryForever(
+        {
+          logPrefix: "logPrefix",
+          logger: logger,
+          onError: (err) => {
+            errorMessages.push(err.message);
+            if (numRetryCalls > 1) {
+              // not the first attempt
+              const currentTime = Date.now();
+              const elapsed = currentTime - previousAttemptTime;
+              console.log(
+                `###  ${elapsed} ms passed (from ${previousAttemptTime} to ${currentTime})`
+              );
+              const expectedDelay = retryDelayInMs - 5; // with error tolerance to account for time accuracy issue
+              if (elapsed < expectedDelay) {
+                errorMessages.push(
+                  `Elapsed time ${elapsed} ms (from ${previousAttemptTime} to ${currentTime}) is shorter than expected. The wait between attempts should have been about ${retryDelayInMs} ms.`
+                );
+              }
+              previousAttemptTime = currentTime;
+            }
+          },
+          retryConfig: {
+            operation: async () => {
+              ++numRetryCalls;
+
+              return 1;
+            },
+            connectionId: "id",
+            operationType: RetryOperationType.connection,
+            retryOptions: {
+              retryDelayInMs,
+            },
+          },
+        },
+        fakeRetry
+      );
+
+      assert.deepEqual(errorMessages, [
+        "Attempt 1: Force another call of retry<>",
+        "Attempt 2: Force another call of retry<>",
+        "Attempt 3: Force another call of retry<>",
+      ]);
+
+      assert.equal(numRetryCalls, errorCount + 1);
     });
   });
 });
@@ -308,6 +378,7 @@ it("error handler wrapper", () => {
             entityPath: args.entityPath,
             errorSource: args.errorSource,
             code: sbe.code,
+            identifier: args.identifier,
           },
           {
             name: "ServiceBusError",
@@ -316,6 +387,7 @@ it("error handler wrapper", () => {
             entityPath: "entity path",
             errorSource: "renewLock",
             code: "ServiceCommunicationProblem",
+            identifier: "identifier",
           }
         );
 
@@ -341,6 +413,7 @@ it("error handler wrapper", () => {
     entityPath: "entity path",
     errorSource: "renewLock",
     fullyQualifiedNamespace: "fully qualified namespace",
+    identifier: "identifier",
   });
 
   assert.isTrue(logErrorCalled, "log error should have been called");
@@ -379,7 +452,7 @@ it("getMessageIterator doesn't yield empty responses", async () => {
       allReceivedMessages.push(m);
     }
     assert.fail("Should throw");
-  } catch (err) {
+  } catch (err: any) {
     assert.equal("We're okay to end it now", err.message);
     assert.deepEqual(
       [

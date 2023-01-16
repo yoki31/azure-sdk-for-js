@@ -6,40 +6,40 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { PrivateEndpointConnections } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { KeyVaultManagementClientContext } from "../keyVaultManagementClientContext";
+import { KeyVaultManagementClient } from "../keyVaultManagementClient";
 import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
 import { LroImpl } from "../lroImpl";
 import {
   PrivateEndpointConnection,
   PrivateEndpointConnectionsListByResourceNextOptionalParams,
   PrivateEndpointConnectionsListByResourceOptionalParams,
+  PrivateEndpointConnectionsListByResourceResponse,
   PrivateEndpointConnectionsGetOptionalParams,
   PrivateEndpointConnectionsGetResponse,
   PrivateEndpointConnectionsPutOptionalParams,
   PrivateEndpointConnectionsPutResponse,
   PrivateEndpointConnectionsDeleteOptionalParams,
   PrivateEndpointConnectionsDeleteResponse,
-  PrivateEndpointConnectionsListByResourceResponse,
   PrivateEndpointConnectionsListByResourceNextResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a PrivateEndpointConnections. */
+/** Class containing PrivateEndpointConnections operations. */
 export class PrivateEndpointConnectionsImpl
   implements PrivateEndpointConnections {
-  private readonly client: KeyVaultManagementClientContext;
+  private readonly client: KeyVaultManagementClient;
 
   /**
    * Initialize a new instance of the class PrivateEndpointConnections class.
    * @param client Reference to the service client
    */
-  constructor(client: KeyVaultManagementClientContext) {
+  constructor(client: KeyVaultManagementClient) {
     this.client = client;
   }
 
@@ -67,11 +67,15 @@ export class PrivateEndpointConnectionsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByResourcePagingPage(
           resourceGroupName,
           vaultName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -80,15 +84,22 @@ export class PrivateEndpointConnectionsImpl
   private async *listByResourcePagingPage(
     resourceGroupName: string,
     vaultName: string,
-    options?: PrivateEndpointConnectionsListByResourceOptionalParams
+    options?: PrivateEndpointConnectionsListByResourceOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<PrivateEndpointConnection[]> {
-    let result = await this._listByResource(
-      resourceGroupName,
-      vaultName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: PrivateEndpointConnectionsListByResourceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResource(
+        resourceGroupName,
+        vaultName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceNext(
         resourceGroupName,
@@ -97,7 +108,9 @@ export class PrivateEndpointConnectionsImpl
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -226,10 +239,12 @@ export class PrivateEndpointConnectionsImpl
       { resourceGroupName, vaultName, privateEndpointConnectionName, options },
       deleteOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**

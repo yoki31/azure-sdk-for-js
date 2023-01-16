@@ -16,6 +16,7 @@ import {
   AgentPoolsCreateOrUpdateOptionalParams,
   AgentPoolsCreateOrUpdateResponse,
   AgentPoolsDeleteOptionalParams,
+  AgentPoolsDeleteResponse,
   AgentPoolsGetUpgradeProfileOptionalParams,
   AgentPoolsGetUpgradeProfileResponse,
   AgentPoolsGetAvailableAgentPoolVersionsOptionalParams,
@@ -28,7 +29,7 @@ import {
 export interface AgentPools {
   /**
    * Gets a list of agent pools in the specified managed cluster.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param options The options parameters.
    */
@@ -39,7 +40,7 @@ export interface AgentPools {
   ): PagedAsyncIterableIterator<AgentPool>;
   /**
    * Gets the specified managed cluster agent pool.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param agentPoolName The name of the agent pool.
    * @param options The options parameters.
@@ -52,7 +53,7 @@ export interface AgentPools {
   ): Promise<AgentPoolsGetResponse>;
   /**
    * Creates or updates an agent pool in the specified managed cluster.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param agentPoolName The name of the agent pool.
    * @param parameters The agent pool to create or update.
@@ -72,7 +73,7 @@ export interface AgentPools {
   >;
   /**
    * Creates or updates an agent pool in the specified managed cluster.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param agentPoolName The name of the agent pool.
    * @param parameters The agent pool to create or update.
@@ -87,7 +88,7 @@ export interface AgentPools {
   ): Promise<AgentPoolsCreateOrUpdateResponse>;
   /**
    * Deletes an agent pool in the specified managed cluster.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param agentPoolName The name of the agent pool.
    * @param options The options parameters.
@@ -97,10 +98,15 @@ export interface AgentPools {
     resourceName: string,
     agentPoolName: string,
     options?: AgentPoolsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+  ): Promise<
+    PollerLike<
+      PollOperationState<AgentPoolsDeleteResponse>,
+      AgentPoolsDeleteResponse
+    >
+  >;
   /**
    * Deletes an agent pool in the specified managed cluster.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param agentPoolName The name of the agent pool.
    * @param options The options parameters.
@@ -110,10 +116,10 @@ export interface AgentPools {
     resourceName: string,
     agentPoolName: string,
     options?: AgentPoolsDeleteOptionalParams
-  ): Promise<void>;
+  ): Promise<AgentPoolsDeleteResponse>;
   /**
    * Gets the upgrade profile for an agent pool.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param agentPoolName The name of the agent pool.
    * @param options The options parameters.
@@ -128,7 +134,7 @@ export interface AgentPools {
    * See [supported Kubernetes
    * versions](https://docs.microsoft.com/azure/aks/supported-kubernetes-versions) for more details about
    * the version lifecycle.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param options The options parameters.
    */
@@ -141,7 +147,7 @@ export interface AgentPools {
    * Upgrading the node image version of an agent pool applies the newest OS and runtime updates to the
    * nodes. AKS provides one new image per week with the latest updates. For more details on node image
    * versions, see: https://docs.microsoft.com/azure/aks/node-image-upgrade
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param agentPoolName The name of the agent pool.
    * @param options The options parameters.
@@ -156,7 +162,7 @@ export interface AgentPools {
    * Upgrading the node image version of an agent pool applies the newest OS and runtime updates to the
    * nodes. AKS provides one new image per week with the latest updates. For more details on node image
    * versions, see: https://docs.microsoft.com/azure/aks/node-image-upgrade
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param agentPoolName The name of the agent pool.
    * @param options The options parameters.

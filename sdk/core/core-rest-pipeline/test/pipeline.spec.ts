@@ -3,12 +3,12 @@
 
 import { assert } from "chai";
 import {
-  createEmptyPipeline,
-  PipelinePolicy,
   HttpClient,
-  createPipelineRequest,
+  PipelinePolicy,
+  createEmptyPipeline,
   createHttpHeaders,
   createPipelineFromOptions,
+  createPipelineRequest,
 } from "../src";
 
 describe("HttpsPipeline", function () {
@@ -165,17 +165,24 @@ describe("HttpsPipeline", function () {
       sendRequest: (request, next) => next(request),
       name: "test4",
     };
+    const testPolicy5: PipelinePolicy = {
+      sendRequest: (request, next) => next(request),
+      name: "test5",
+    };
     pipeline.addPolicy(testPolicy, { phase: "Retry" });
     pipeline.addPolicy(testPolicy2, { phase: "Serialize" });
     pipeline.addPolicy(testPolicy3);
     pipeline.addPolicy(testPolicy4, { phase: "Deserialize" });
+    pipeline.addPolicy(testPolicy5, { phase: "Sign" });
 
     const policies = pipeline.getOrderedPolicies();
-    assert.strictEqual(policies.length, 4);
-    assert.strictEqual(policies[0], testPolicy2);
-    assert.strictEqual(policies[1], testPolicy3);
-    assert.strictEqual(policies[2], testPolicy4);
-    assert.strictEqual(policies[3], testPolicy);
+    assert.deepStrictEqual(policies, [
+      testPolicy2,
+      testPolicy3,
+      testPolicy4,
+      testPolicy,
+      testPolicy5,
+    ]);
   });
 
   it("prevents phases from getting out of order", function () {
@@ -298,8 +305,6 @@ describe("HttpsPipeline", function () {
 
     const pipeline2 = pipeline.clone();
 
-    pipeline.removePolicy({ name: testPolicy.name });
-
     const testPolicy2: PipelinePolicy = {
       sendRequest: (request, next) => next(request),
       name: "test2",
@@ -312,6 +317,8 @@ describe("HttpsPipeline", function () {
     };
 
     pipeline2.addPolicy(testPolicy3);
+
+    pipeline.removePolicy({ name: testPolicy.name });
 
     const policies = pipeline.getOrderedPolicies();
     assert.strictEqual(policies.length, 1);
@@ -388,5 +395,48 @@ describe("HttpsPipeline", function () {
       const response = await pipeline.sendRequest(testHttpClient, request);
       assert.strictEqual(response.status, 200);
     });
+  });
+
+  it("afterPhase ordering occurs even when phase is empty", function () {
+    const pipeline = createEmptyPipeline();
+    const testPolicy: PipelinePolicy = {
+      sendRequest: (request, next) => next(request),
+      name: "test",
+    };
+    const testPolicy2: PipelinePolicy = {
+      sendRequest: (request, next) => next(request),
+      name: "test2",
+    };
+    pipeline.addPolicy(testPolicy, { afterPhase: "Retry" });
+    pipeline.addPolicy(testPolicy2);
+    const policies = pipeline.getOrderedPolicies();
+    assert.deepStrictEqual(policies, [testPolicy2, testPolicy]);
+  });
+
+  it("afterPhase should work on a single policy", function () {
+    const pipeline = createEmptyPipeline();
+    const testPolicy: PipelinePolicy = {
+      sendRequest: (request, next) => next(request),
+      name: "test",
+    };
+    pipeline.addPolicy(testPolicy, { afterPhase: "Retry" });
+    const policies = pipeline.getOrderedPolicies();
+    assert.deepStrictEqual(policies, [testPolicy]);
+  });
+
+  it("afterPhase respects phase ordering", function () {
+    const pipeline = createEmptyPipeline();
+    const testPolicy: PipelinePolicy = {
+      sendRequest: (request, next) => next(request),
+      name: "test",
+    };
+    const testPolicy2: PipelinePolicy = {
+      sendRequest: (request, next) => next(request),
+      name: "test2",
+    };
+    pipeline.addPolicy(testPolicy, { afterPhase: "Retry" });
+    pipeline.addPolicy(testPolicy2, { phase: "Sign" });
+    const policies = pipeline.getOrderedPolicies();
+    assert.deepStrictEqual(policies, [testPolicy, testPolicy2]);
   });
 });

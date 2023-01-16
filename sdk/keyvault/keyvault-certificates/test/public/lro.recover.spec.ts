@@ -1,16 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
+import { assert } from "@azure/test-utils";
 import { Context } from "mocha";
-import { env, Recorder } from "@azure-tools/test-recorder";
+import { env, isPlaybackMode, Recorder } from "@azure-tools/test-recorder";
 import { PollerStoppedError } from "@azure/core-lro";
 
 import { CertificateClient, DeletedCertificate, DefaultCertificatePolicy } from "../../src";
-import { assertThrowsAbortError } from "../utils/utils.common";
-import { testPollerProperties } from "../utils/recorderUtils";
-import { authenticate } from "../utils/testAuthentication";
-import TestClient from "../utils/testClient";
+import { assertThrowsAbortError } from "./utils/common";
+import { testPollerProperties } from "./utils/recorderUtils";
+import { authenticate } from "./utils/testAuthentication";
+import { getServiceVersion } from "./utils/common";
+import TestClient from "./utils/testClient";
 
 describe("Certificates client - LRO - recoverDelete", () => {
   const certificatePrefix = `lroRecover${env.CERTIFICATE_NAME || "CertificateName"}`;
@@ -20,7 +21,7 @@ describe("Certificates client - LRO - recoverDelete", () => {
   let recorder: Recorder;
 
   beforeEach(async function (this: Context) {
-    const authentication = await authenticate(this);
+    const authentication = await authenticate(this, getServiceVersion());
     certificateSuffix = authentication.suffix;
     client = authentication.client;
     testClient = authentication.testClient;
@@ -67,6 +68,7 @@ describe("Certificates client - LRO - recoverDelete", () => {
   });
 
   it("can resume from a stopped poller", async function (this: Context) {
+    this.retries(5);
     const certificateName = testClient.formatName(
       `${certificatePrefix}-${this!.test!.title}-${certificateSuffix}`
     );
@@ -114,7 +116,10 @@ describe("Certificates client - LRO - recoverDelete", () => {
 
   // On playback mode, the tests happen too fast for the timeout to work
   it("can recover a deleted certificate with requestOptions timeout", async function (this: Context) {
-    recorder.skip(undefined, "Timeout tests don't work on playback mode.");
+    if (isPlaybackMode()) {
+      this.skip();
+    }
+
     const certificateName = testClient.formatName(
       `${certificatePrefix}-${this!.test!.title}-${certificateSuffix}`
     );

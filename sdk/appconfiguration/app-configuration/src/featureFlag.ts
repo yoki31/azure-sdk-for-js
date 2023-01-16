@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { errorMessageForUnexpectedSetting } from "./internal/helpers";
-import { JsonFeatureFlagValue } from "./internal/jsonModels";
 import { ConfigurationSetting, ConfigurationSettingParam } from "./models";
+import { JsonFeatureFlagValue } from "./internal/jsonModels";
+import { logger } from "./logger";
 
 /**
  * The prefix for feature flags.
@@ -57,7 +57,9 @@ export const FeatureFlagHelper = {
   toConfigurationSettingParam: (
     featureFlag: ConfigurationSettingParam<FeatureFlagValue>
   ): ConfigurationSettingParam => {
+    logger.info("Encoding FeatureFlag value in a ConfigurationSetting:", featureFlag);
     if (!featureFlag.value) {
+      logger.error("FeatureFlag has an unexpected value", featureFlag);
       throw new TypeError(`FeatureFlag has an unexpected value - ${featureFlag.value}`);
     }
     let key = featureFlag.key;
@@ -89,8 +91,12 @@ export const FeatureFlagHelper = {
 export function parseFeatureFlag(
   setting: ConfigurationSetting
 ): ConfigurationSetting<FeatureFlagValue> {
+  logger.info("Parsing the value to return the FeatureFlagValue", setting);
   if (!isFeatureFlag(setting)) {
-    throw TypeError(errorMessageForUnexpectedSetting(setting.key, "FeatureFlag"));
+    logger.error("Invalid FeatureFlag input", setting);
+    throw TypeError(
+      `Setting with key ${setting.key} is not a valid FeatureFlag, make sure to have the correct content-type and a valid non-null value.`
+    );
   }
 
   const jsonFeatureFlagValue = JSON.parse(setting.value) as JsonFeatureFlagValue;

@@ -1,52 +1,51 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { isPlaybackMode, record, Recorder, isLiveMode } from "@azure-tools/test-recorder";
+import { Recorder, isLiveMode } from "@azure-tools/test-recorder";
 import { Context } from "mocha";
 import { Suite } from "mocha";
 import { assert } from "chai";
-import { SearchIndexClient, SynonymMap, SearchIndex } from "../../../src";
+import { SearchIndex, SearchIndexClient, SynonymMap } from "../../../src";
 import { Hotel } from "../utils/interfaces";
-import { createClients, environmentSetup } from "../utils/recordedClient";
+import { createClients } from "../utils/recordedClient";
 import {
+  WAIT_TIME,
+  createRandomIndexName,
   createSimpleIndex,
   createSynonymMaps,
   deleteSynonymMaps,
-  WAIT_TIME,
-  createRandomIndexName,
 } from "../utils/setup";
 import { delay, serviceVersions } from "../../../src/serviceUtils";
 import { versionsToTest } from "@azure/test-utils";
-
-const TEST_INDEX_NAME = isLiveMode() ? createRandomIndexName() : "hotel-live-test3";
 
 versionsToTest(serviceVersions, {}, (serviceVersion, onVersions) => {
   onVersions({ minVer: "2020-06-30" }).describe("SearchIndexClient", function (this: Suite) {
     let recorder: Recorder;
     let indexClient: SearchIndexClient;
+    let TEST_INDEX_NAME: string;
 
     this.timeout(99999);
 
     beforeEach(async function (this: Context) {
-      ({ indexClient } = createClients<Hotel>(TEST_INDEX_NAME, serviceVersion));
-      if (!isPlaybackMode()) {
-        await createSynonymMaps(indexClient);
-        await createSimpleIndex(indexClient, TEST_INDEX_NAME);
-        await delay(WAIT_TIME);
-      }
-      recorder = record(this, environmentSetup);
-      // create the clients again, but hooked up to the recorder
-      ({ indexClient } = createClients<Hotel>(TEST_INDEX_NAME, serviceVersion));
+      recorder = new Recorder(this.currentTest);
+      TEST_INDEX_NAME = createRandomIndexName();
+      ({ indexClient, indexName: TEST_INDEX_NAME } = await createClients<Hotel>(
+        serviceVersion,
+        recorder,
+        TEST_INDEX_NAME
+      ));
+
+      await createSynonymMaps(indexClient);
+      await createSimpleIndex(indexClient, TEST_INDEX_NAME);
+      await delay(WAIT_TIME);
     });
 
     afterEach(async function () {
+      await indexClient.deleteIndex(TEST_INDEX_NAME);
+      await delay(WAIT_TIME);
+      await deleteSynonymMaps(indexClient);
       if (recorder) {
         await recorder.stop();
-      }
-      if (!isPlaybackMode()) {
-        await indexClient.deleteIndex(TEST_INDEX_NAME);
-        await delay(WAIT_TIME);
-        await deleteSynonymMaps(indexClient);
       }
     });
 
@@ -80,7 +79,7 @@ versionsToTest(serviceVersions, {}, (serviceVersion, onVersions) => {
         let retrievalError: boolean = false;
         try {
           await indexClient.getSynonymMap("garbxyz");
-        } catch (ex) {
+        } catch (ex: any) {
           retrievalError = true;
         }
         assert.isTrue(retrievalError);
@@ -157,7 +156,7 @@ versionsToTest(serviceVersions, {}, (serviceVersion, onVersions) => {
         let retrievalError: boolean = false;
         try {
           await indexClient.getIndex("garbxyz");
-        } catch (ex) {
+        } catch (ex: any) {
           retrievalError = true;
         }
         assert.isTrue(retrievalError);

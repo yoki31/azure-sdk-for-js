@@ -1,6 +1,6 @@
 # Release History
 
-## 2.0.0-beta.2 (Unreleased)
+## 2.1.0-beta.3 (Unreleased)
 
 ### Features Added
 
@@ -10,17 +10,43 @@
 
 ### Other Changes
 
-## 2.0.0-beta.1 (2021-10-09)
+## 2.1.0-beta.2 (2022-11-28)
+    
+**Features**
 
-This is the first preview for the new version of the `@azure/arm-keyvault` package that follows the new [guidelines for TypeScript SDKs](https://azure.github.io/azure-sdk/typescript_introduction.html) for Azure services.
+  - Added Interface Action
+  - Added Interface Key
+  - Added Interface KeyReleasePolicy
+  - Added Interface KeyRotationPolicyAttributes
+  - Added Interface LifetimeAction
+  - Added Interface ManagedHsm
+  - Added Interface ManagedHsmsUpdateHeaders
+  - Added Interface MhsmPrivateEndpointConnection
+  - Added Interface MhsmPrivateLinkResource
+  - Added Interface PrivateEndpointConnection
+  - Added Interface PrivateLinkResource
+  - Added Interface RotationPolicy
+  - Added Interface Secret
+  - Added Interface SecretAttributes
+  - Added Interface Trigger
+  - Added Type Alias KeyRotationPolicyActionType
+  - Interface KeyProperties has a new optional parameter releasePolicy
+  - Interface KeyProperties has a new optional parameter rotationPolicy
+  - Interface MhsmPrivateEndpointConnectionItem has a new optional parameter etag
+  - Interface MhsmPrivateEndpointConnectionItem has a new optional parameter id
+  - Enum KnownJsonWebKeyOperation has a new value Release
+  - Enum KnownKeyPermissions has a new value Getrotationpolicy
+  - Enum KnownKeyPermissions has a new value Release
+  - Enum KnownKeyPermissions has a new value Rotate
+  - Enum KnownKeyPermissions has a new value Setrotationpolicy
+    
+    
+## 2.0.0 (2022-01-17)
 
-While this package remains auto generated, the SDK generator itself has undergone changes to comply with the above guidelines in order to generate packages that are idiomatic to the JavaScript/TypeScript ecosystem and consistent with other packages for Azure services. For more on this, please see [State of the Azure SDK 2021](https://devblogs.microsoft.com/azure-sdk/state-of-the-azure-sdk-2021/).
+The package of @azure/arm-keyvault is using our next generation design principles since version 2.0.0, which contains breaking changes.
 
-Please note that this version has breaking changes, all of which were made after careful consideration during the authoring of the guidelines and user studies.
+To understand the detail of the change, please refer to [Changelog](https://aka.ms/js-track2-changelog).
 
-**Noteworthy changes and features**
-- Authentication: The packages `@azure/ms-rest-nodeauth` or `@azure/ms-rest-browserauth` are no longer supported. Use package [@azure/identity](https://www.npmjs.com/package/@azure/identity) instead. Select a credential from Azure Identity examples based on the authentication method of your choice.
-- Callbacks: Method overloads that used callbacks have been removed and the use of promises is encouraged instead.
-- List operations now return an iterable result that follows the `PagedAsyncIterableIterator` interface as opposed to the previous model where you had to make a new request using the link to the next page.
-- Long running operations i.e. the Lro related object returned by methods whose names started with `begin`, now uses `pollUntilDone` to check whether the request is finished, instead of `pollUntilFinished`. To get the final result, use the corresponding method that will have the suffix `AndWait`.
-- The SDK only supports ECMAScript 2015 (ES6) and beyond, all projects that referenced this SDK should be upgraded to use ES6.
+To migrate the existing applications to the latest version, please refer to [Migration Guide](https://aka.ms/js-track2-migration-guide).
+
+To learn more, please refer to our documentation [Quick Start](https://aka.ms/js-track2-quickstart).

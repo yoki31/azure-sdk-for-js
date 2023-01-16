@@ -1073,6 +1073,7 @@ export const BlobName: coreHttp.CompositeMapper = {
       content: {
         serializedName: "content",
         xmlName: "content",
+        xmlIsMsText: true,
         type: {
           name: "String"
         }
@@ -1302,7 +1303,8 @@ export const BlobPropertiesInternal: coreHttp.CompositeMapper = {
             "P80",
             "Hot",
             "Cool",
-            "Archive"
+            "Archive",
+            "Cold"
           ]
         }
       },
@@ -1685,6 +1687,13 @@ export const PageList: coreHttp.CompositeMapper = {
               className: "ClearRange"
             }
           }
+        }
+      },
+      continuationToken: {
+        serializedName: "NextMarker",
+        xmlName: "NextMarker",
+        type: {
+          name: "String"
         }
       }
     }
@@ -3189,6 +3198,61 @@ export const ContainerSubmitBatchExceptionHeaders: coreHttp.CompositeMapper = {
   type: {
     name: "Composite",
     className: "ContainerSubmitBatchExceptionHeaders",
+    modelProperties: {
+      errorCode: {
+        serializedName: "x-ms-error-code",
+        xmlName: "x-ms-error-code",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const ContainerFilterBlobsHeaders: coreHttp.CompositeMapper = {
+  serializedName: "Container_filterBlobsHeaders",
+  type: {
+    name: "Composite",
+    className: "ContainerFilterBlobsHeaders",
+    modelProperties: {
+      clientRequestId: {
+        serializedName: "x-ms-client-request-id",
+        xmlName: "x-ms-client-request-id",
+        type: {
+          name: "String"
+        }
+      },
+      requestId: {
+        serializedName: "x-ms-request-id",
+        xmlName: "x-ms-request-id",
+        type: {
+          name: "String"
+        }
+      },
+      version: {
+        serializedName: "x-ms-version",
+        xmlName: "x-ms-version",
+        type: {
+          name: "String"
+        }
+      },
+      date: {
+        serializedName: "date",
+        xmlName: "date",
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const ContainerFilterBlobsExceptionHeaders: coreHttp.CompositeMapper = {
+  serializedName: "Container_filterBlobsExceptionHeaders",
+  type: {
+    name: "Composite",
+    className: "ContainerFilterBlobsExceptionHeaders",
     modelProperties: {
       errorCode: {
         serializedName: "x-ms-error-code",

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
+import { assert } from "@azure/test-utils";
 import { Context } from "mocha";
 import { env, Recorder } from "@azure-tools/test-recorder";
 
@@ -11,9 +11,10 @@ import {
   DefaultCertificatePolicy,
   KeyVaultCertificateWithPolicy,
 } from "../../src";
-import { testPollerProperties } from "../utils/recorderUtils";
-import { authenticate } from "../utils/testAuthentication";
-import TestClient from "../utils/testClient";
+import { testPollerProperties } from "./utils/recorderUtils";
+import { authenticate } from "./utils/testAuthentication";
+import { getServiceVersion } from "./utils/common";
+import TestClient from "./utils/testClient";
 
 describe("Certificates client - LRO - certificate operation", () => {
   const certificatePrefix = `lroOperation${env.CERTIFICATE_NAME || "CertificateName"}`;
@@ -23,7 +24,7 @@ describe("Certificates client - LRO - certificate operation", () => {
   let recorder: Recorder;
 
   beforeEach(async function (this: Context) {
-    const authentication = await authenticate(this);
+    const authentication = await authenticate(this, getServiceVersion());
     certificateSuffix = authentication.suffix;
     client = authentication.client;
     testClient = authentication.testClient;
@@ -37,6 +38,7 @@ describe("Certificates client - LRO - certificate operation", () => {
   // The tests follow
 
   it("can wait until a certificate is created by getting the poller from getCertificateOperation", async function (this: Context) {
+    this.retries(5);
     const certificateName = testClient.formatName(
       `${certificatePrefix}-${this!.test!.title}-${certificateSuffix}`
     );
@@ -64,6 +66,7 @@ describe("Certificates client - LRO - certificate operation", () => {
   });
 
   it("can resume from a stopped poller", async function (this: Context) {
+    this.retries(5);
     const certificateName = testClient.formatName(
       `${certificatePrefix}-${this!.test!.title}-${certificateSuffix}`
     );
@@ -89,7 +92,8 @@ describe("Certificates client - LRO - certificate operation", () => {
     const completeCertificate: KeyVaultCertificateWithPolicy = await resumePoller.pollUntilDone();
     assert.equal(completeCertificate.name, certificateName);
 
-    const operation: CertificateOperation = resumePoller.getOperationState().certificateOperation!;
+    const operation: CertificateOperation = await resumePoller.getOperationState()
+      .certificateOperation!;
     assert.equal(operation.status, "completed");
     assert.ok(resumePoller.getOperationState().isCompleted);
   });

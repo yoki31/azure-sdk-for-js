@@ -7,12 +7,15 @@
 /// <reference lib="esnext.asynciterable" />
 
 import { AzureKeyCredential } from '@azure/core-auth';
-import { CommonClientOptions } from '@azure/core-client';
+import { ExtendedCommonClientOptions } from '@azure/core-http-compat';
 import { KeyCredential } from '@azure/core-auth';
 import { OperationOptions } from '@azure/core-client';
 import { PagedAsyncIterableIterator } from '@azure/core-paging';
 import { RestError } from '@azure/core-rest-pipeline';
 import { TokenCredential } from '@azure/core-auth';
+
+// @public
+export type AliasIterator = PagedAsyncIterableIterator<SearchIndexAlias, SearchIndexAlias[], {}>;
 
 // @public
 export interface AnalyzedTokenInfo {
@@ -97,6 +100,17 @@ export interface AzureActiveDirectoryApplicationCredentials {
 export { AzureKeyCredential }
 
 // @public
+export type AzureMachineLearningSkill = BaseSearchIndexerSkill & {
+    odatatype: "#Microsoft.Skills.Custom.AmlSkill";
+    scoringUri?: string;
+    authenticationKey?: string;
+    resourceId?: string;
+    timeout?: string;
+    region?: string;
+    degreeOfParallelism?: number;
+};
+
+// @public
 export interface BaseCharFilter {
     name: string;
     odatatype: "#Microsoft.Azure.Search.MappingCharFilter" | "#Microsoft.Azure.Search.PatternReplaceCharFilter";
@@ -146,7 +160,7 @@ export interface BaseScoringFunction {
 
 // @public
 export interface BaseSearchIndexerDataIdentity {
-    odatatype: "#Microsoft.Azure.Search.SearchIndexerDataNoneIdentity" | "#Microsoft.Azure.Search.SearchIndexerDataUserAssignedIdentity";
+    odatatype: "#Microsoft.Azure.Search.DataNoneIdentity" | "#Microsoft.Azure.Search.DataUserAssignedIdentity";
 }
 
 // @public
@@ -155,7 +169,7 @@ export interface BaseSearchIndexerSkill {
     description?: string;
     inputs: InputFieldMappingEntry[];
     name?: string;
-    odatatype: "#Microsoft.Skills.Util.ConditionalSkill" | "#Microsoft.Skills.Text.KeyPhraseExtractionSkill" | "#Microsoft.Skills.Vision.OcrSkill" | "#Microsoft.Skills.Vision.ImageAnalysisSkill" | "#Microsoft.Skills.Text.LanguageDetectionSkill" | "#Microsoft.Skills.Util.ShaperSkill" | "#Microsoft.Skills.Text.MergeSkill" | "#Microsoft.Skills.Text.EntityRecognitionSkill" | "#Microsoft.Skills.Text.SentimentSkill" | "#Microsoft.Skills.Text.V3.SentimentSkill" | "#Microsoft.Skills.Text.V3.EntityLinkingSkill" | "#Microsoft.Skills.Text.V3.EntityRecognitionSkill" | "#Microsoft.Skills.Text.PIIDetectionSkill" | "#Microsoft.Skills.Text.SplitSkill" | "#Microsoft.Skills.Text.CustomEntityLookupSkill" | "#Microsoft.Skills.Text.TranslationSkill" | "#Microsoft.Skills.Util.DocumentExtractionSkill" | "#Microsoft.Skills.Custom.WebApiSkill";
+    odatatype: "#Microsoft.Skills.Util.ConditionalSkill" | "#Microsoft.Skills.Text.KeyPhraseExtractionSkill" | "#Microsoft.Skills.Vision.OcrSkill" | "#Microsoft.Skills.Vision.ImageAnalysisSkill" | "#Microsoft.Skills.Text.LanguageDetectionSkill" | "#Microsoft.Skills.Util.ShaperSkill" | "#Microsoft.Skills.Text.MergeSkill" | "#Microsoft.Skills.Text.EntityRecognitionSkill" | "#Microsoft.Skills.Text.SentimentSkill" | "#Microsoft.Skills.Text.V3.SentimentSkill" | "#Microsoft.Skills.Text.V3.EntityLinkingSkill" | "#Microsoft.Skills.Text.V3.EntityRecognitionSkill" | "#Microsoft.Skills.Text.PIIDetectionSkill" | "#Microsoft.Skills.Text.SplitSkill" | "#Microsoft.Skills.Text.CustomEntityLookupSkill" | "#Microsoft.Skills.Text.TranslationSkill" | "#Microsoft.Skills.Util.DocumentExtractionSkill" | "#Microsoft.Skills.Custom.WebApiSkill" | "#Microsoft.Skills.Custom.AmlSkill";
     outputs: OutputFieldMappingEntry[];
 }
 
@@ -263,6 +277,9 @@ export interface CorsOptions {
 export type CountDocumentsOptions = OperationOptions;
 
 // @public
+export type CreateAliasOptions = OperationOptions;
+
+// @public
 export type CreateDataSourceConnectionOptions = OperationOptions;
 
 // @public
@@ -270,6 +287,11 @@ export type CreateIndexerOptions = OperationOptions;
 
 // @public
 export type CreateIndexOptions = OperationOptions;
+
+// @public
+export interface CreateOrUpdateAliasOptions extends OperationOptions {
+    onlyIfUnchanged?: boolean;
+}
 
 // @public
 export interface CreateorUpdateDataSourceConnectionOptions extends OperationOptions {
@@ -384,6 +406,11 @@ export const DEFAULT_RETRY_COUNT: number;
 export type DefaultCognitiveServicesAccount = BaseCognitiveServicesAccount & {
     odatatype: "#Microsoft.Azure.Search.DefaultCognitiveServices";
 };
+
+// @public
+export interface DeleteAliasOptions extends OperationOptions {
+    onlyIfUnchanged?: boolean;
+}
 
 // @public
 export interface DeleteDataSourceConnectionOptions extends OperationOptions {
@@ -545,6 +572,9 @@ export class GeographyPoint {
     longitude: number;
     toJSON(): Record<string, unknown>;
 }
+
+// @public
+export type GetAliasOptions = OperationOptions;
 
 // @public
 export type GetDataSourceConnectionOptions = OperationOptions;
@@ -956,11 +986,58 @@ export enum KnownEntityRecognitionSkillLanguage {
 
 // @public
 export enum KnownImageAnalysisSkillLanguage {
+    Ar = "ar",
+    Az = "az",
+    Bg = "bg",
+    Bs = "bs",
+    Ca = "ca",
+    Cs = "cs",
+    Cy = "cy",
+    Da = "da",
+    De = "de",
+    El = "el",
     En = "en",
     Es = "es",
+    Et = "et",
+    Eu = "eu",
+    Fi = "fi",
+    Fr = "fr",
+    Ga = "ga",
+    Gl = "gl",
+    He = "he",
+    Hi = "hi",
+    Hr = "hr",
+    Hu = "hu",
+    Id = "id",
+    It = "it",
     Ja = "ja",
+    Kk = "kk",
+    Ko = "ko",
+    Lt = "lt",
+    Lv = "lv",
+    Mk = "mk",
+    Ms = "ms",
+    Nb = "nb",
+    Nl = "nl",
+    Pl = "pl",
+    Prs = "prs",
     Pt = "pt",
-    Zh = "zh"
+    PtBR = "pt-BR",
+    PtPT = "pt-PT",
+    Ro = "ro",
+    Ru = "ru",
+    Sk = "sk",
+    Sl = "sl",
+    SrCyrl = "sr-Cyrl",
+    SrLatn = "sr-Latn",
+    Sv = "sv",
+    Th = "th",
+    Tr = "tr",
+    Uk = "uk",
+    Vi = "vi",
+    Zh = "zh",
+    ZhHans = "zh-Hans",
+    ZhHant = "zh-Hant"
 }
 
 // @public
@@ -1116,32 +1193,176 @@ export enum KnownLineEnding {
 
 // @public
 export enum KnownOcrSkillLanguage {
+    Af = "af",
+    Anp = "anp",
     Ar = "ar",
+    Ast = "ast",
+    Awa = "awa",
+    Az = "az",
+    Be = "be",
+    BeCyrl = "be-cyrl",
+    BeLatn = "be-latn",
+    Bfy = "bfy",
+    Bfz = "bfz",
+    Bg = "bg",
+    Bgc = "bgc",
+    Bho = "bho",
+    Bi = "bi",
+    Bns = "bns",
+    Br = "br",
+    Bra = "bra",
+    Brx = "brx",
+    Bs = "bs",
+    Bua = "bua",
+    Ca = "ca",
+    Ceb = "ceb",
+    Ch = "ch",
+    CnrCyrl = "cnr-cyrl",
+    CnrLatn = "cnr-latn",
+    Co = "co",
+    Crh = "crh",
     Cs = "cs",
+    Csb = "csb",
+    Cy = "cy",
     Da = "da",
     De = "de",
+    Dhi = "dhi",
+    Doi = "doi",
+    Dsb = "dsb",
     El = "el",
     En = "en",
     Es = "es",
+    Et = "et",
+    Eu = "eu",
+    Fa = "fa",
     Fi = "fi",
+    Fil = "fil",
+    Fj = "fj",
+    Fo = "fo",
     Fr = "fr",
+    Fur = "fur",
+    Fy = "fy",
+    Ga = "ga",
+    Gag = "gag",
+    Gd = "gd",
+    Gil = "gil",
+    Gl = "gl",
+    Gon = "gon",
+    Gv = "gv",
+    Gvr = "gvr",
+    Haw = "haw",
+    Hi = "hi",
+    Hlb = "hlb",
+    Hne = "hne",
+    Hni = "hni",
+    Hoc = "hoc",
+    Hr = "hr",
+    Hsb = "hsb",
+    Ht = "ht",
     Hu = "hu",
+    Ia = "ia",
+    Id = "id",
+    Is = "is",
     It = "it",
+    Iu = "iu",
     Ja = "ja",
+    Jns = "Jns",
+    Jv = "jv",
+    Kaa = "kaa",
+    KaaCyrl = "kaa-cyrl",
+    Kac = "kac",
+    Kea = "kea",
+    Kfq = "kfq",
+    Kha = "kha",
+    KkCyrl = "kk-cyrl",
+    KkLatn = "kk-latn",
+    Kl = "kl",
+    Klr = "klr",
+    Kmj = "kmj",
     Ko = "ko",
+    Kos = "kos",
+    Kpy = "kpy",
+    Krc = "krc",
+    Kru = "kru",
+    Ksh = "ksh",
+    KuArab = "ku-arab",
+    KuLatn = "ku-latn",
+    Kum = "kum",
+    Kw = "kw",
+    Ky = "ky",
+    La = "la",
+    Lb = "lb",
+    Lkt = "lkt",
+    Lt = "lt",
+    Mi = "mi",
+    Mn = "mn",
+    Mr = "mr",
+    Ms = "ms",
+    Mt = "mt",
+    Mww = "mww",
+    Myv = "myv",
+    Nap = "nap",
     Nb = "nb",
+    Ne = "ne",
+    Niu = "niu",
     Nl = "nl",
+    No = "no",
+    Nog = "nog",
+    Oc = "oc",
+    Os = "os",
+    Pa = "pa",
     Pl = "pl",
+    Prs = "prs",
+    Ps = "ps",
     Pt = "pt",
+    Quc = "quc",
+    Rab = "rab",
+    Rm = "rm",
     Ro = "ro",
     Ru = "ru",
+    Sa = "sa",
+    Sat = "sat",
+    Sck = "sck",
+    Sco = "sco",
     Sk = "sk",
+    Sl = "sl",
+    Sm = "sm",
+    Sma = "sma",
+    Sme = "sme",
+    Smj = "smj",
+    Smn = "smn",
+    Sms = "sms",
+    So = "so",
+    Sq = "sq",
+    Sr = "sr",
     SrCyrl = "sr-Cyrl",
     SrLatn = "sr-Latn",
+    Srx = "srx",
     Sv = "sv",
+    Sw = "sw",
+    Tet = "tet",
+    Tg = "tg",
+    Thf = "thf",
+    Tk = "tk",
+    To = "to",
     Tr = "tr",
+    Tt = "tt",
+    Tyv = "tyv",
+    Ug = "ug",
+    Unk = "unk",
+    Ur = "ur",
+    Uz = "uz",
+    UzArab = "uz-arab",
+    UzCyrl = "uz-cyrl",
+    Vo = "vo",
+    Wae = "wae",
+    Xnr = "xnr",
+    Xsr = "xsr",
+    Yua = "yua",
+    Za = "za",
     ZhHans = "zh-Hans",
-    ZhHant = "zh-Hant"
+    ZhHant = "zh-Hant",
+    Zu = "zu"
 }
 
 // @public
@@ -1254,6 +1475,13 @@ export enum KnownRegexFlags {
     Multiline = "MULTILINE",
     UnicodeCase = "UNICODE_CASE",
     UnixLines = "UNIX_LINES"
+}
+
+// @public
+export enum KnownSearchAudience {
+    AzureChina = "https://search.azure.cn",
+    AzureGovernment = "https://search.azure.us",
+    AzurePublicCloud = "https://search.azure.com"
 }
 
 // @public
@@ -1530,6 +1758,9 @@ export type LimitTokenFilter = BaseTokenFilter & {
 export type LineEnding = string;
 
 // @public
+export type ListAliasesOptions = OperationOptions;
+
+// @public
 export type ListDataSourceConnectionsOptions = OperationOptions;
 
 // @public
@@ -1798,6 +2029,13 @@ export interface ScoringProfile {
 export type ScoringStatistics = "local" | "global";
 
 // @public
+export interface SearchAlias {
+    etag?: string;
+    indexes: string[];
+    name: string;
+}
+
+// @public
 export class SearchClient<T> implements IndexDocumentsClient<T> {
     constructor(endpoint: string, indexName: string, credential: KeyCredential | TokenCredential, options?: SearchClientOptions);
     // @deprecated
@@ -1819,9 +2057,10 @@ export class SearchClient<T> implements IndexDocumentsClient<T> {
 }
 
 // @public
-export interface SearchClientOptions extends CommonClientOptions {
+export interface SearchClientOptions extends ExtendedCommonClientOptions {
     // @deprecated
     apiVersion?: string;
+    audience?: string;
     serviceVersion?: string;
 }
 
@@ -1872,23 +2111,31 @@ export interface SearchIndex {
 }
 
 // @public
+export type SearchIndexAlias = SearchAlias;
+
+// @public
 export class SearchIndexClient {
     constructor(endpoint: string, credential: KeyCredential | TokenCredential, options?: SearchIndexClientOptions);
     analyzeText(indexName: string, options: AnalyzeTextOptions): Promise<AnalyzeResult>;
     // @deprecated
     readonly apiVersion: string;
+    createAlias(alias: SearchIndexAlias, options?: CreateAliasOptions): Promise<SearchIndexAlias>;
     createIndex(index: SearchIndex, options?: CreateIndexOptions): Promise<SearchIndex>;
+    createOrUpdateAlias(alias: SearchIndexAlias, options?: CreateOrUpdateAliasOptions): Promise<SearchIndexAlias>;
     createOrUpdateIndex(index: SearchIndex, options?: CreateOrUpdateIndexOptions): Promise<SearchIndex>;
     createOrUpdateSynonymMap(synonymMap: SynonymMap, options?: CreateOrUpdateSynonymMapOptions): Promise<SynonymMap>;
     createSynonymMap(synonymMap: SynonymMap, options?: CreateSynonymMapOptions): Promise<SynonymMap>;
+    deleteAlias(alias: string | SearchIndexAlias, options?: DeleteAliasOptions): Promise<void>;
     deleteIndex(index: string | SearchIndex, options?: DeleteIndexOptions): Promise<void>;
     deleteSynonymMap(synonymMap: string | SynonymMap, options?: DeleteSynonymMapOptions): Promise<void>;
     readonly endpoint: string;
+    getAlias(aliasName: string, options?: GetAliasOptions): Promise<SearchIndexAlias>;
     getIndex(indexName: string, options?: GetIndexOptions): Promise<SearchIndex>;
     getIndexStatistics(indexName: string, options?: GetIndexStatisticsOptions): Promise<SearchIndexStatistics>;
     getSearchClient<T>(indexName: string, options?: SearchClientOptions): SearchClient<T>;
     getServiceStatistics(options?: GetServiceStatisticsOptions): Promise<SearchServiceStatistics>;
     getSynonymMap(synonymMapName: string, options?: GetSynonymMapsOptions): Promise<SynonymMap>;
+    listAliases(options?: ListAliasesOptions): AliasIterator;
     listIndexes(options?: ListIndexesOptions): IndexIterator;
     listIndexesNames(options?: ListIndexesOptions): IndexNameIterator;
     listSynonymMaps(options?: ListSynonymMapsOptions): Promise<Array<SynonymMap>>;
@@ -1897,9 +2144,10 @@ export class SearchIndexClient {
 }
 
 // @public
-export interface SearchIndexClientOptions extends CommonClientOptions {
+export interface SearchIndexClientOptions extends ExtendedCommonClientOptions {
     // @deprecated
     apiVersion?: string;
+    audience?: string;
     serviceVersion?: string;
 }
 
@@ -1959,9 +2207,10 @@ export class SearchIndexerClient {
 }
 
 // @public
-export interface SearchIndexerClientOptions extends CommonClientOptions {
+export interface SearchIndexerClientOptions extends ExtendedCommonClientOptions {
     // @deprecated
     apiVersion?: string;
+    audience?: string;
     serviceVersion?: string;
 }
 
@@ -1976,7 +2225,7 @@ export type SearchIndexerDataIdentity = SearchIndexerDataNoneIdentity | SearchIn
 
 // @public
 export type SearchIndexerDataNoneIdentity = BaseSearchIndexerDataIdentity & {
-    odatatype: "#Microsoft.Azure.Search.SearchIndexerDataNoneIdentity";
+    odatatype: "#Microsoft.Azure.Search.DataNoneIdentity";
 };
 
 // @public
@@ -1998,7 +2247,7 @@ export type SearchIndexerDataSourceType = string;
 
 // @public
 export type SearchIndexerDataUserAssignedIdentity = BaseSearchIndexerDataIdentity & {
-    odatatype: "#Microsoft.Azure.Search.SearchIndexerDataUserAssignedIdentity";
+    odatatype: "#Microsoft.Azure.Search.DataUserAssignedIdentity";
     userAssignedIdentity: string;
 };
 
@@ -2058,7 +2307,7 @@ export interface SearchIndexerLimits {
 }
 
 // @public
-export type SearchIndexerSkill = ConditionalSkill | KeyPhraseExtractionSkill | OcrSkill | ImageAnalysisSkill | LanguageDetectionSkill | ShaperSkill | MergeSkill | EntityRecognitionSkill | SentimentSkill | SplitSkill | PIIDetectionSkill | EntityRecognitionSkillV3 | EntityLinkingSkill | SentimentSkillV3 | CustomEntityLookupSkill | TextTranslationSkill | DocumentExtractionSkill | WebApiSkill;
+export type SearchIndexerSkill = ConditionalSkill | KeyPhraseExtractionSkill | OcrSkill | ImageAnalysisSkill | LanguageDetectionSkill | ShaperSkill | MergeSkill | EntityRecognitionSkill | SentimentSkill | SplitSkill | PIIDetectionSkill | EntityRecognitionSkillV3 | EntityLinkingSkill | SentimentSkillV3 | CustomEntityLookupSkill | TextTranslationSkill | DocumentExtractionSkill | WebApiSkill | AzureMachineLearningSkill;
 
 // @public
 export interface SearchIndexerSkillset {
@@ -2279,6 +2528,7 @@ export type SentimentSkillV3 = BaseSearchIndexerSkill & {
 
 // @public
 export interface ServiceCounters {
+    aliasCounter?: ResourceCounter;
     dataSourceCounter: ResourceCounter;
     documentCounter: ResourceCounter;
     indexCounter: ResourceCounter;

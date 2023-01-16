@@ -6,27 +6,31 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Vaults } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { KeyVaultManagementClientContext } from "../keyVaultManagementClientContext";
+import { KeyVaultManagementClient } from "../keyVaultManagementClient";
 import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
 import { LroImpl } from "../lroImpl";
 import {
   Vault,
   VaultsListByResourceGroupNextOptionalParams,
   VaultsListByResourceGroupOptionalParams,
+  VaultsListByResourceGroupResponse,
   VaultsListBySubscriptionNextOptionalParams,
   VaultsListBySubscriptionOptionalParams,
+  VaultsListBySubscriptionResponse,
   DeletedVault,
   VaultsListDeletedNextOptionalParams,
   VaultsListDeletedOptionalParams,
+  VaultsListDeletedResponse,
   Resource,
   VaultsListNextOptionalParams,
   VaultsListOptionalParams,
+  VaultsListResponse,
   VaultCreateOrUpdateParameters,
   VaultsCreateOrUpdateOptionalParams,
   VaultsCreateOrUpdateResponse,
@@ -40,13 +44,9 @@ import {
   AccessPolicyUpdateKind,
   VaultsUpdateAccessPolicyOptionalParams,
   VaultsUpdateAccessPolicyResponse,
-  VaultsListByResourceGroupResponse,
-  VaultsListBySubscriptionResponse,
-  VaultsListDeletedResponse,
   VaultsGetDeletedOptionalParams,
   VaultsGetDeletedResponse,
   VaultsPurgeDeletedOptionalParams,
-  VaultsListResponse,
   VaultCheckNameAvailabilityParameters,
   VaultsCheckNameAvailabilityOptionalParams,
   VaultsCheckNameAvailabilityResponse,
@@ -57,15 +57,15 @@ import {
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a Vaults. */
+/** Class containing Vaults operations. */
 export class VaultsImpl implements Vaults {
-  private readonly client: KeyVaultManagementClientContext;
+  private readonly client: KeyVaultManagementClient;
 
   /**
    * Initialize a new instance of the class Vaults class.
    * @param client Reference to the service client
    */
-  constructor(client: KeyVaultManagementClientContext) {
+  constructor(client: KeyVaultManagementClient) {
     this.client = client;
   }
 
@@ -87,19 +87,33 @@ export class VaultsImpl implements Vaults {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings
+        );
       }
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: VaultsListByResourceGroupOptionalParams
+    options?: VaultsListByResourceGroupOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<Vault[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VaultsListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
@@ -107,7 +121,9 @@ export class VaultsImpl implements Vaults {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -138,22 +154,34 @@ export class VaultsImpl implements Vaults {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listBySubscriptionPagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listBySubscriptionPagingPage(options, settings);
       }
     };
   }
 
   private async *listBySubscriptionPagingPage(
-    options?: VaultsListBySubscriptionOptionalParams
+    options?: VaultsListBySubscriptionOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<Vault[]> {
-    let result = await this._listBySubscription(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VaultsListBySubscriptionResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listBySubscription(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listBySubscriptionNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -180,22 +208,34 @@ export class VaultsImpl implements Vaults {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listDeletedPagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listDeletedPagingPage(options, settings);
       }
     };
   }
 
   private async *listDeletedPagingPage(
-    options?: VaultsListDeletedOptionalParams
+    options?: VaultsListDeletedOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<DeletedVault[]> {
-    let result = await this._listDeleted(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VaultsListDeletedResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listDeleted(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listDeletedNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -222,22 +262,34 @@ export class VaultsImpl implements Vaults {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
       }
     };
   }
 
   private async *listPagingPage(
-    options?: VaultsListOptionalParams
+    options?: VaultsListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<Resource[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VaultsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -311,10 +363,12 @@ export class VaultsImpl implements Vaults {
       { resourceGroupName, vaultName, parameters, options },
       createOrUpdateOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -527,10 +581,12 @@ export class VaultsImpl implements Vaults {
       { vaultName, location, options },
       purgeDeletedOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -752,10 +808,6 @@ const updateAccessPolicyOperationSpec: coreClient.OperationSpec = {
     201: {
       bodyMapper: Mappers.VaultAccessPolicyParameters
     },
-    404: {
-      bodyMapper: Mappers.CloudError,
-      isError: true
-    },
     default: {
       bodyMapper: Mappers.CloudError
     }
@@ -858,10 +910,6 @@ const purgeDeletedOperationSpec: coreClient.OperationSpec = {
     201: {},
     202: {},
     204: {},
-    404: {
-      bodyMapper: Mappers.CloudError,
-      isError: true
-    },
     default: {
       bodyMapper: Mappers.CloudError
     }

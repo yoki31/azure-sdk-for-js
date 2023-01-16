@@ -1,24 +1,24 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { PipelineResponse, SendRequest, PipelinePolicy } from "@azure/core-rest-pipeline";
 import {
-  OperationRequest,
-  SerializerOptions,
-  XmlOptions,
-  XML_CHARKEY,
-  RequiredSerializerOptions,
-  OperationArguments,
-  XML_ATTRKEY,
-  OperationSpec,
   DictionaryMapper,
+  OperationArguments,
+  OperationRequest,
+  OperationSpec,
+  RequiredSerializerOptions,
+  SerializerOptions,
+  XML_ATTRKEY,
+  XML_CHARKEY,
+  XmlOptions,
 } from "./interfaces";
-import { MapperTypeNames } from "./serializer";
-import { getPathStringFromParameter } from "./interfaceHelpers";
+import { PipelinePolicy, PipelineResponse, SendRequest } from "@azure/core-rest-pipeline";
 import {
   getOperationArgumentValueFromParameter,
   getOperationRequestInfo,
 } from "./operationHelpers";
+import { MapperTypeNames } from "./serializer";
+import { getPathStringFromParameter } from "./interfaceHelpers";
 
 /**
  * The programmatic identifier of the serializationPolicy.
@@ -196,7 +196,7 @@ export function serializeRequestBody(
           request.body = JSON.stringify(request.body);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(
         `Error "${error.message}" occurred in serializing the payload - ${JSON.stringify(
           serializedName,

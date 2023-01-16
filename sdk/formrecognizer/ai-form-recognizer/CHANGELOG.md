@@ -1,12 +1,96 @@
 # Release History
 
-## 4.0.0-beta.3 (Unreleased)
+## 4.0.0 (2022-09-08)
 
 ### Features Added
 
+- Updated the SDK to use the latest Generally Available (GA) version of the Form Recognizer REST API: `2022-08-01`.
+
 ### Breaking Changes
 
+- Renamed `DocumentModelAdministrationClient` methods to have the word `Document` in them, for example `getModel` and `listModels` are updated to `getDocumentModel` and `listDocumentModels` respectively.
+- Renamed all fields named `createdDateTime` and `lastUpdateDateTime` to `createdOn` and `lastUpdatedOn` respectively.
+
+## 4.0.0-beta.6 (2022-08-09)
+
+### Features Added
+
+- Refactored generic `DocumentModel` support to be more robust to different kinds of models. It now supports strongly-typed results for `prebuilt-read`, `prebuilt-layout`, and `prebuilt-document`. See the "Breaking Changes" section for more information about how to replace existing usage of `PrebuiltModels` with new model code.
+- `DocumentModelAdministrationClient#getOperation` returns additional `result` (operation result) and `error` (includes detailed error info) fields.
+
+### Breaking Changes
+
+- Removed `PrebuiltModels` and all of its fields as well as related helper types. The strongly-typed functionality previously provided by `PrebuiltModels` is now provided by sample code that you can copy into your own project. See the [`prebuilt` samples directory](https://github.com/azure/azure-sdk-for-js/tree/main/sdk/formrecognizer/ai-form-recognizer/samples-dev/prebuilt/) for models compatible with the current Form Recognizer API.
+- Separated URL-based and file-based analysis inputs into two separate methods: `beginAnalyzeDocument` (for file stream inputs) and `beginAnalyzeDocumentFromUrl` (for URL-based inputs). Previously, both were accepted as inputs to a single `beginAnalyzeDocument` method, and a string value would be interpreted as if it were a URL, but this was confusing. The two inputs now have distinct signatures and documentation.
+- Removed the `beginExtractLayout`, `beginExtractGeneralDocument`, and `beginReadDocument` methods. Strongly-typed `DocumentModel` instances for the corresponding `prebuilt-layout`, `prebuilt-document`, and `prebuilt-read` models are located in the [`prebuilt` samples directory](https://github.com/azure/azure-sdk-for-js/tree/main/sdk/formrecognizer/ai-form-recognizer/samples-dev/prebuilt/).
+- Changed the suffix `-Info` for the methods and interfaces such as `DocumentModelAdministrationClient#getResourceInfo` and `DocumentModelInfo` to `-Details`.
+- Array properties of `AnalyzeResult`, such as `documents`, `languages`, and `pages` are now optional. If the value is `undefined`, then the model does not support the given feature. Previously, we returned an empty array, even if the model didn't support the feature.
+
+### Other Changes
+
+- Strongly-typed analysis functionality now checks that the `DocumentAnalysisClient`'s API version now matches the assumed API version of the `DocumentModel` exactly. This ensures that a strongly-typed model can only be used with the API version it was created for, so that future changes cannot violate the model's schema.
+- Renamed the following types:
+  - `TrainingPoller` -> `DocumentModelPoller`
+  - `GetInfoResponse` -> `ResourceDetails`
+  - In instances where we use `Model` as a prefix, updated it to `DocumentModel`. For example, `ModelInfo` -> `DocumentModelDetails`, `ModelSummary` -> `DocumentModelSummary`.
+  - `BuildModelOptions` -> `CreateModelOptions`, the options bag types for `beginComposeModel` and `beginCopyModelTo`, and `beginBuildModel` methods inherit from `CreateModelOptions`.
+
+## 4.0.0-beta.5 (2022-06-22)
+
 ### Bugs Fixed
+
+- Reworked a lookbehind regular expression that was preventing `@azure/ai-form-recognizer` from loading in Safari.
+
+## 4.0.0-beta.4 (2022-06-07)
+
+### Features Added
+
+- Updated the SDK to use the latest preview version of the Form Recognizer service: `2022-06-30-preview`.
+- Added a `paragraphs` property to the `AnalyzeResult` type and a new `DocumentParagraph` type. This property represents the paragraph structure of the input document's text.
+- Documents may now contain a `DocumentAddressField` type, which has an object with several fields related to physical addresses, such as `streetAddress`, `city`, and `state` as its value. This field is identified by the value `"address"` in the `kind` field.
+- Added a `kind` field to `DocumentPage`. For now, the only supported value of this field is `"document"`. In the future, other page kinds may be added, indicating different dispositions of the extracted page elements.
+
+### Breaking Changes
+
+- [**DEPRECATION**] Deprecated `PrebuiltModels`. In a future version (prior to a stable release), `PrebuiltModels` and its fields will be replaced with an out-of-tree solution for obtaining strongly-typed analysis results.
+- [**DEPRECATION**] Deprecated `beginExtractLayout`, `beginExtractGeneralDocument`, and `beginReadDocument`. In a future version (prior to a stable release), these methods will be removed, and `beginAnalyzeDocument` will be enhanced to provide the same restricted types.
+- Renamed the `beginCopyModel` method of `DocumentModelAdministrationClient` to `beginCopyModelTo`. [#20775](https://github.com/Azure/azure-sdk-for-js/pull/20775)
+- Renamed `BoundingRegion#boundingBox` to `BoundingRegion#polygon`, as the service may now provide arbitrary, polygonal bounding areas rather than just rectangles.
+  - The polygon is represented as an array of `Point2D`, clockwise from the left, -180 degrees inclusive.
+- Removed the `entities` property from the `AnalyzeResult` type. This field may be reintroduced in a future version, but service API version `2022-06-30-preview` no longer returns this field.
+- Renamed the `languageCode` property in the `DocumentLanguage` type to `locale`.
+- Made the `angle`, `height`, `lines`, `unit`, `width`, and `words` properties of `DocumentPage` optional, as not all page kinds are guaranteed to support these fields.
+
+## 4.0.0-beta.3 (2022-02-10)
+
+### Features Added
+
+- Updated the SDK to use the latest preview version of the Form Recognizer service: `2022-01-30-preview`.
+- A new prebuilt model, `PrebuiltModels.TaxUsW2`, is available. It supports extracting data from United States W2 tax forms such as employee and employer information, IRS control number, tax withholding information, etc.
+- Added a new method, `beginReadDocument` to `DocumentAnalysisClient`. This method uses the "prebuilt-read" model to extract textual information from the document such as page text contents and language spans.
+- Added a `languages` field to the `AnalyzeResult` type. This field contains information about regions of text in the document that were identified as being of a particular written language. A `DocumentLanguage` consists of the identified `languageCode` (ISO 639-1 or BCP 47 language code), a list of `spans` of text that are of that language, and a `confidence` value (between zero and one) that the assessment is correct.
+- Added a `tags` field to `BuildModelOptions`, `GetCopyAuthorizationOptions`, and `ModelSummary`. Tags are user-specified key-value pairs that are immutably associated with the model. If tags are provided when a model is created, the Form Recognizer service will return the same tags as part of the model's summary. The `OperationInfo` and `TrainingPollOperationState` of a model creation operation also produce the `tags` if they were provided in the `BuildModelOptions`.
+- Models now report the service API version used to create the model and that will be used for analysis in the `apiVersion` field.
+- Documents may now contain a new field type `DocumentCurrencyField`, which has an object with `amount` and `currencySymbol` fields as its value. This field is identified by the value `"currency"` in the `kind` field. The `amount` field contains the amount of the currency value, and the `currencySymbol` field may contain a three-letter currency symbol if one was identified for the field. For example, the text `$100.50` may have an `amount` of `100.5` and a `currencySymbol` of "USD".
+- Added support for setting the `buildMode` of a model building operation and introduced the "neural" build mode. Previous versions of the service and SDK only supported a single build mode that is now known as the "template" mode. Template models only accept documents that have the same basic page structure (i.e. a uniform visual appearance, or the same _relative_ positioning of elements within the document), hence a fixed document "template." Neural models support document classes that have the same information, but different page structures. Examples of these documents include United States W2 tax forms, which all share the same information, but may vary in appearance by the company that created the document. Neural models currently only support English text, and are more costly and time-consuming to train and use for analysis, but should yield higher-quality results for English documents that do not follow a "template."
+- The `DocTypeInfo` type now has a `buildMode` field that contains the build mode originally used to create the document type.
+
+### Breaking Changes
+
+- Renamed the `beginAnalyzeDocuments` method of `DocumentAnalysisClient` to `beginAnalyzeDocument` for accuracy (only one input document is supported, though the document may contain multiple pages in certain file formats) and for consistency with other Azure SDK packages.
+  - Renamed the options bag type `AnalyzeDocumentsOptions` to `AnalyzeDocumentOptions` for consistency with the method name.
+- The `buildMode` parameter of `DocumentModelAdminsitrationClient#beginBuildModel` is a required parameter. To retain the same behavior as in previous versions, explicitly use the template build mode (pass the value `"template"` to the method).
+- The `GeneratedDocument` type (as well as related types like `GeneratedDocumentField`) was removed from the public API and its uses replaced with `unknown`, as it is only intended for internal use. These types represented raw REST API response types that are not exposed at runtime by the client methods.
+- Removed the `Preview` variant from the `FormRecognizerApiVersion` object because it will never be different from the `Latest` version in beta packages, and stable packages will not support it.
+- Renamed `beginExtractGenericDocument` and `GenericDocumentResult` to `beginExtractGeneralDocument` and `GeneralDocumentResult` for consistency with other Form Recognizer SDK packages.
+- Several of the prebuilt model schemas and result types have changed:
+  - The document type naming convention has changed. Instead of separation by colons (e.g. "prebuilt:receipt"), prebuilt model document type names are now separated by periods and are no longer prefixed with "prebuilt" ("prebuilt:idDocument:driverLicense" becomes "idDocument.driverLicense", "prebuilt:invoice" becomes just "invoice").
+  - In the `prebuilt-invoice` model, several numeric fields that represented amounts of money have been changed to a designated `"currency"` type. These include the `subTotal`, `totalTax`, `invoiceTotal`, `amountDue`, and `previousUnpaidBalance` fields of invoices and the `amount`, `tax`, and `unitPrice` fields of invoice items (a subfield of invoices).
+
+### Bugs Fixed
+
+- The `LayoutResult` and `GeneralDocumentResult` types were missing the `apiVersion`, `modelId`, and `content` fields that are common to all other analysis results. This version adds them through a new interface, `AnalyzeResultCommon`, that includes these fields. `LayoutResult`, `GeneralDocumentResult`, `ReadResult`, and `AnalyzeResult` all now extend the `AnalyzeResultCommon` interface.
+- The `DocumentSignatureField` interface was missing a type for its `value` property. The property existed at runtime, but no type information was available for this field. The `value` property has been added to the interface.
 
 ### Other Changes
 
@@ -188,7 +272,7 @@ This new major version beta introduces a full redesign of the Azure Form Recogni
   - [Breaking] Remove `getFormTrainingClient()` from `FormRecognizerClient`. A new method `getFormRecognizerClient()` is added to `FormTrainingClient`
   - [Breaking] `useTrainingLabels` parameter is now required for `beginTraining()` method.
   - [Breaking] Rename `intervalInMs` to `updateIntervalInMs` for all LRO poller options.
-  - [Breaking] Remove `USReceipt` and assoicated types.
+  - [Breaking] Remove `USReceipt` and associated types.
   - Rename the first parameter of `beginRecognizeContent()` from `data` to `form`.
   - Rename the second parameter of `beginRecognizeForms()` from `data` to `form`.
   - Rename the first parameter of `beginRecognizeReceipts()` from `data` to `receipt`.

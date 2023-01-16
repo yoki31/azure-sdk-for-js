@@ -8,6 +8,7 @@ import { AccessToken } from '@azure/core-auth';
 import { AzureLogger } from '@azure/logger';
 import { CommonClientOptions } from '@azure/core-client';
 import { GetTokenOptions } from '@azure/core-auth';
+import { LogPolicyOptions } from '@azure/core-rest-pipeline';
 import { TokenCredential } from '@azure/core-auth';
 
 export { AccessToken }
@@ -57,9 +58,13 @@ export interface AuthenticationRequiredErrorOptions {
 
 // @public
 export class AuthorizationCodeCredential implements TokenCredential {
-    constructor(tenantId: string | "common", clientId: string, clientSecret: string, authorizationCode: string, redirectUri: string, options?: TokenCredentialOptions);
-    constructor(tenantId: string | "common", clientId: string, authorizationCode: string, redirectUri: string, options?: TokenCredentialOptions);
+    constructor(tenantId: string | "common", clientId: string, clientSecret: string, authorizationCode: string, redirectUri: string, options?: AuthorizationCodeCredentialOptions);
+    constructor(tenantId: string | "common", clientId: string, authorizationCode: string, redirectUri: string, options?: AuthorizationCodeCredentialOptions);
     getToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken>;
+}
+
+// @public
+export interface AuthorizationCodeCredentialOptions extends MultiTenantTokenCredentialOptions {
 }
 
 // @public
@@ -77,7 +82,7 @@ export class AzureCliCredential implements TokenCredential {
 }
 
 // @public
-export interface AzureCliCredentialOptions extends TokenCredentialOptions {
+export interface AzureCliCredentialOptions extends MultiTenantTokenCredentialOptions {
     tenantId?: string;
 }
 
@@ -88,7 +93,7 @@ export class AzurePowerShellCredential implements TokenCredential {
 }
 
 // @public
-export interface AzurePowerShellCredentialOptions extends TokenCredentialOptions {
+export interface AzurePowerShellCredentialOptions extends MultiTenantTokenCredentialOptions {
     tenantId?: string;
 }
 
@@ -99,29 +104,45 @@ export type BrowserLoginStyle = "redirect" | "popup";
 export class ChainedTokenCredential implements TokenCredential {
     constructor(...sources: TokenCredential[]);
     getToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken>;
-    protected UnavailableMessage: string;
+}
+
+// @public
+export class ClientAssertionCredential implements TokenCredential {
+    constructor(tenantId: string, clientId: string, getAssertion: () => Promise<string>, options?: ClientAssertionCredentialOptions);
+    getToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken>;
+}
+
+// @public
+export interface ClientAssertionCredentialOptions extends MultiTenantTokenCredentialOptions {
 }
 
 // @public
 export class ClientCertificateCredential implements TokenCredential {
     constructor(tenantId: string, clientId: string, certificatePath: string, options?: ClientCertificateCredentialOptions);
-    constructor(tenantId: string, clientId: string, configuration: ClientCertificateCredentialPEMConfiguration, options?: ClientCertificateCredentialOptions);
+    constructor(tenantId: string, clientId: string, configuration: ClientCertificatePEMCertificatePath, options?: ClientCertificateCredentialOptions);
+    constructor(tenantId: string, clientId: string, configuration: ClientCertificatePEMCertificate, options?: ClientCertificateCredentialOptions);
     getToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken>;
 }
 
 // @public
-export interface ClientCertificateCredentialOptions extends TokenCredentialOptions, CredentialPersistenceOptions {
+export interface ClientCertificateCredentialOptions extends MultiTenantTokenCredentialOptions, CredentialPersistenceOptions {
     sendCertificateChain?: boolean;
 }
 
 // @public
-export type ClientCertificateCredentialPEMConfiguration = {
+export type ClientCertificateCredentialPEMConfiguration = ClientCertificatePEMCertificate | ClientCertificatePEMCertificatePath;
+
+// @public
+export interface ClientCertificatePEMCertificate {
     certificate: string;
-    certificatePath?: never;
-} | {
-    certificate?: never;
+    certificatePassword?: string;
+}
+
+// @public
+export interface ClientCertificatePEMCertificatePath {
+    certificatePassword?: string;
     certificatePath: string;
-};
+}
 
 // @public
 export class ClientSecretCredential implements TokenCredential {
@@ -130,7 +151,7 @@ export class ClientSecretCredential implements TokenCredential {
 }
 
 // @public
-export interface ClientSecretCredentialOptions extends TokenCredentialOptions, CredentialPersistenceOptions {
+export interface ClientSecretCredentialOptions extends MultiTenantTokenCredentialOptions, CredentialPersistenceOptions {
 }
 
 // @public
@@ -148,13 +169,24 @@ export const CredentialUnavailableErrorName = "CredentialUnavailableError";
 
 // @public
 export class DefaultAzureCredential extends ChainedTokenCredential {
+    constructor(options?: DefaultAzureCredentialClientIdOptions);
+    constructor(options?: DefaultAzureCredentialResourceIdOptions);
     constructor(options?: DefaultAzureCredentialOptions);
 }
 
 // @public
-export interface DefaultAzureCredentialOptions extends TokenCredentialOptions {
+export interface DefaultAzureCredentialClientIdOptions extends DefaultAzureCredentialOptions {
     managedIdentityClientId?: string;
+}
+
+// @public
+export interface DefaultAzureCredentialOptions extends MultiTenantTokenCredentialOptions {
     tenantId?: string;
+}
+
+// @public
+export interface DefaultAzureCredentialResourceIdOptions extends DefaultAzureCredentialOptions {
+    managedIdentityResourceId: string;
 }
 
 // @public
@@ -191,7 +223,7 @@ export class EnvironmentCredential implements TokenCredential {
 }
 
 // @public
-export interface EnvironmentCredentialOptions extends TokenCredentialOptions {
+export interface EnvironmentCredentialOptions extends MultiTenantTokenCredentialOptions {
 }
 
 // @public
@@ -237,7 +269,7 @@ export interface InteractiveBrowserCredentialNodeOptions extends InteractiveCred
 }
 
 // @public
-export interface InteractiveCredentialOptions extends TokenCredentialOptions {
+export interface InteractiveCredentialOptions extends MultiTenantTokenCredentialOptions {
     authenticationRecord?: AuthenticationRecord;
     disableAutomaticAuthentication?: boolean;
 }
@@ -248,13 +280,30 @@ export const logger: AzureLogger;
 // @public
 export class ManagedIdentityCredential implements TokenCredential {
     constructor(clientId: string, options?: TokenCredentialOptions);
-    constructor(options?: TokenCredentialOptions);
+    constructor(options?: ManagedIdentityCredentialClientIdOptions);
+    constructor(options?: ManagedIdentityCredentialResourceIdOptions);
     getToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken>;
 }
 
 // @public
+export interface ManagedIdentityCredentialClientIdOptions extends TokenCredentialOptions {
+    clientId?: string;
+}
+
+// @public
+export interface ManagedIdentityCredentialResourceIdOptions extends TokenCredentialOptions {
+    resourceId: string;
+}
+
+// @public
+export interface MultiTenantTokenCredentialOptions extends TokenCredentialOptions {
+    additionallyAllowedTenants?: string[];
+}
+
+// @public
 export class OnBehalfOfCredential implements TokenCredential {
-    constructor(options: OnBehalfOfCredentialOptions);
+    constructor(options: OnBehalfOfCredentialCertificateOptions & MultiTenantTokenCredentialOptions & CredentialPersistenceOptions);
+    constructor(options: OnBehalfOfCredentialSecretOptions & MultiTenantTokenCredentialOptions & CredentialPersistenceOptions);
     getToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken>;
 }
 
@@ -262,21 +311,18 @@ export class OnBehalfOfCredential implements TokenCredential {
 export interface OnBehalfOfCredentialCertificateOptions {
     certificatePath: string;
     clientId: string;
-    clientSecret?: never;
     sendCertificateChain?: boolean;
     tenantId: string;
     userAssertionToken: string;
 }
 
 // @public
-export type OnBehalfOfCredentialOptions = (OnBehalfOfCredentialSecretOptions | OnBehalfOfCredentialCertificateOptions) & TokenCredentialOptions & CredentialPersistenceOptions;
+export type OnBehalfOfCredentialOptions = (OnBehalfOfCredentialSecretOptions | OnBehalfOfCredentialCertificateOptions) & MultiTenantTokenCredentialOptions & CredentialPersistenceOptions;
 
 // @public
 export interface OnBehalfOfCredentialSecretOptions {
-    certificatePath?: never;
     clientId: string;
     clientSecret: string;
-    sendCertificateChain?: never;
     tenantId: string;
     userAssertionToken: string;
 }
@@ -296,6 +342,9 @@ export { TokenCredential }
 // @public
 export interface TokenCredentialOptions extends CommonClientOptions {
     authorityHost?: string;
+    loggingOptions?: LogPolicyOptions & {
+        allowLoggingAccountIdentifiers?: boolean;
+    };
 }
 
 // @public
@@ -308,7 +357,7 @@ export class UsernamePasswordCredential implements TokenCredential {
 }
 
 // @public
-export interface UsernamePasswordCredentialOptions extends TokenCredentialOptions, CredentialPersistenceOptions {
+export interface UsernamePasswordCredentialOptions extends MultiTenantTokenCredentialOptions, CredentialPersistenceOptions {
 }
 
 // @public
@@ -318,7 +367,7 @@ export class VisualStudioCodeCredential implements TokenCredential {
 }
 
 // @public
-export interface VisualStudioCodeCredentialOptions extends TokenCredentialOptions {
+export interface VisualStudioCodeCredentialOptions extends MultiTenantTokenCredentialOptions {
     tenantId?: string;
 }
 

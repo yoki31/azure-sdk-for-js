@@ -1,182 +1,308 @@
 {
- "recordings": [
-  {
-   "method": "POST",
-   "url": "https://login.microsoftonline.com/88888888-8888-8888-8888-888888888888/oauth2/v2.0/token",
-   "query": {},
-   "requestBody": "response_type=token&grant_type=client_credentials&client_id=azure_client_id&client_secret=azure_client_secret&scope=https%3A%2F%2Fsanitized%2F",
-   "status": 200,
-   "response": "{\"token_type\":\"Bearer\",\"expires_in\":86399,\"ext_expires_in\":86399,\"access_token\":\"access_token\"}",
-   "responseHeaders": {
-    "cache-control": "no-store, no-cache",
-    "content-length": "1331",
-    "content-type": "application/json; charset=utf-8",
-    "date": "Sat, 23 Oct 2021 00:57:30 GMT",
-    "expires": "-1",
-    "nel": "{\"report_to\":\"network-errors\",\"max_age\":86400,\"success_fraction\":0.001,\"failure_fraction\":1.0}",
-    "p3p": "CP=\"DSP CUR OTPi IND OTRi ONL FIN\"",
-    "pragma": "no-cache",
-    "referrer-policy": "strict-origin-when-cross-origin",
-    "report-to": "{\"group\":\"network-errors\",\"max_age\":86400,\"endpoints\":[{\"url\":\"https://identity.nel.measure.office.net/api/report?catId=GW+estsfd+wst\"}]}",
-    "strict-transport-security": "max-age=31536000; includeSubDomains",
-    "x-content-type-options": "nosniff",
-    "x-ms-ests-server": "2.1.12171.14 - SCUS ProdSlices",
-    "x-ms-request-id": "30b253dc-ec45-4177-a6af-07c5e6380600"
-   }
-  },
-  {
-   "method": "POST",
-   "url": "https://endpoint/text/analytics/v3.2-preview.2/analyze",
-   "query": {},
-   "requestBody": "{\"analysisInput\":{\"documents\":[{\"id\":\"1\",\"text\":\"Microsoft was founded by Bill Gates and Paul Allen\",\"language\":\"en\"},{\"id\":\"2\",\"text\":\"Microsoft fue fundado por Bill Gates y Paul Allen\",\"language\":\"es\"}]},\"tasks\":{\"keyPhraseExtractionTasks\":[{\"parameters\":{\"model-version\":\"latest\"}}]}}",
-   "status": 202,
-   "response": "",
-   "responseHeaders": {
-    "apim-request-id": "f9e23a49-c37e-42b4-b0dd-b4962110bf65",
-    "date": "Sat, 23 Oct 2021 00:57:31 GMT",
-    "operation-location": "https://endpoint/text/analytics/v3.2-preview.2/analyze/jobs/49e7a04e-c2e6-4813-8900-e2f4d18122f0",
-    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    "x-content-type-options": "nosniff",
-    "x-envoy-upstream-service-time": "245"
-   }
-  },
-  {
-   "method": "GET",
-   "url": "https://endpoint/text/analytics/v3.2-preview.2/analyze/jobs/49e7a04e-c2e6-4813-8900-e2f4d18122f0",
-   "query": {
-    "$top": "20",
-    "$skip": "0"
-   },
-   "requestBody": null,
-   "status": 200,
-   "response": "{\"jobId\":\"49e7a04e-c2e6-4813-8900-e2f4d18122f0\",\"lastUpdateDateTime\":\"2021-10-23T00:57:31Z\",\"createdDateTime\":\"2021-10-23T00:57:31Z\",\"expirationDateTime\":\"2021-10-24T00:57:31Z\",\"status\":\"notStarted\",\"errors\":[],\"tasks\":{\"completed\":0,\"failed\":0,\"inProgress\":1,\"total\":1}}",
-   "responseHeaders": {
-    "apim-request-id": "6160e021-3920-4a4b-aadf-487608f43349",
-    "content-type": "application/json; charset=utf-8",
-    "date": "Sat, 23 Oct 2021 00:57:31 GMT",
-    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    "x-content-type-options": "nosniff",
-    "x-envoy-upstream-service-time": "7"
-   }
-  },
-  {
-   "method": "GET",
-   "url": "https://endpoint/text/analytics/v3.2-preview.2/analyze/jobs/49e7a04e-c2e6-4813-8900-e2f4d18122f0",
-   "query": {
-    "$top": "20",
-    "$skip": "0"
-   },
-   "requestBody": null,
-   "status": 200,
-   "response": "{\"jobId\":\"49e7a04e-c2e6-4813-8900-e2f4d18122f0\",\"lastUpdateDateTime\":\"2021-10-23T00:57:31Z\",\"createdDateTime\":\"2021-10-23T00:57:31Z\",\"expirationDateTime\":\"2021-10-24T00:57:31Z\",\"status\":\"running\",\"errors\":[],\"tasks\":{\"completed\":0,\"failed\":0,\"inProgress\":1,\"total\":1}}",
-   "responseHeaders": {
-    "apim-request-id": "243710fe-2108-4530-962d-248e22ad5d59",
-    "content-type": "application/json; charset=utf-8",
-    "date": "Sat, 23 Oct 2021 00:57:31 GMT",
-    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    "x-content-type-options": "nosniff",
-    "x-envoy-upstream-service-time": "8"
-   }
-  },
-  {
-   "method": "GET",
-   "url": "https://endpoint/text/analytics/v3.2-preview.2/analyze/jobs/49e7a04e-c2e6-4813-8900-e2f4d18122f0",
-   "query": {
-    "$top": "20",
-    "$skip": "0"
-   },
-   "requestBody": null,
-   "status": 200,
-   "response": "{\"jobId\":\"49e7a04e-c2e6-4813-8900-e2f4d18122f0\",\"lastUpdateDateTime\":\"2021-10-23T00:57:32Z\",\"createdDateTime\":\"2021-10-23T00:57:31Z\",\"expirationDateTime\":\"2021-10-24T00:57:31Z\",\"status\":\"running\",\"errors\":[],\"tasks\":{\"completed\":0,\"failed\":0,\"inProgress\":1,\"total\":1}}",
-   "responseHeaders": {
-    "apim-request-id": "c39072ca-4019-4794-8a58-c55d1ed99ce5",
-    "content-type": "application/json; charset=utf-8",
-    "date": "Sat, 23 Oct 2021 00:57:34 GMT",
-    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    "x-content-type-options": "nosniff",
-    "x-envoy-upstream-service-time": "8"
-   }
-  },
-  {
-   "method": "GET",
-   "url": "https://endpoint/text/analytics/v3.2-preview.2/analyze/jobs/49e7a04e-c2e6-4813-8900-e2f4d18122f0",
-   "query": {
-    "$top": "20",
-    "$skip": "0"
-   },
-   "requestBody": null,
-   "status": 200,
-   "response": "{\"jobId\":\"49e7a04e-c2e6-4813-8900-e2f4d18122f0\",\"lastUpdateDateTime\":\"2021-10-23T00:57:32Z\",\"createdDateTime\":\"2021-10-23T00:57:31Z\",\"expirationDateTime\":\"2021-10-24T00:57:31Z\",\"status\":\"running\",\"errors\":[],\"tasks\":{\"completed\":0,\"failed\":0,\"inProgress\":1,\"total\":1}}",
-   "responseHeaders": {
-    "apim-request-id": "246c2f99-a2e4-4b45-a589-8bef59ccae6b",
-    "content-type": "application/json; charset=utf-8",
-    "date": "Sat, 23 Oct 2021 00:57:36 GMT",
-    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    "x-content-type-options": "nosniff",
-    "x-envoy-upstream-service-time": "60"
-   }
-  },
-  {
-   "method": "GET",
-   "url": "https://endpoint/text/analytics/v3.2-preview.2/analyze/jobs/49e7a04e-c2e6-4813-8900-e2f4d18122f0",
-   "query": {
-    "$top": "20",
-    "$skip": "0"
-   },
-   "requestBody": null,
-   "status": 200,
-   "response": "{\"jobId\":\"49e7a04e-c2e6-4813-8900-e2f4d18122f0\",\"lastUpdateDateTime\":\"2021-10-23T00:57:32Z\",\"createdDateTime\":\"2021-10-23T00:57:31Z\",\"expirationDateTime\":\"2021-10-24T00:57:31Z\",\"status\":\"running\",\"errors\":[],\"tasks\":{\"completed\":0,\"failed\":0,\"inProgress\":1,\"total\":1}}",
-   "responseHeaders": {
-    "apim-request-id": "9d34a032-ef1c-4621-8d5b-8728f2b85bef",
-    "content-type": "application/json; charset=utf-8",
-    "date": "Sat, 23 Oct 2021 00:57:37 GMT",
-    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    "x-content-type-options": "nosniff",
-    "x-envoy-upstream-service-time": "11"
-   }
-  },
-  {
-   "method": "GET",
-   "url": "https://endpoint/text/analytics/v3.2-preview.2/analyze/jobs/49e7a04e-c2e6-4813-8900-e2f4d18122f0",
-   "query": {
-    "$top": "20",
-    "$skip": "0"
-   },
-   "requestBody": null,
-   "status": 200,
-   "response": "{\"jobId\":\"49e7a04e-c2e6-4813-8900-e2f4d18122f0\",\"lastUpdateDateTime\":\"2021-10-23T00:57:39Z\",\"createdDateTime\":\"2021-10-23T00:57:31Z\",\"expirationDateTime\":\"2021-10-24T00:57:31Z\",\"status\":\"succeeded\",\"errors\":[],\"tasks\":{\"completed\":1,\"failed\":0,\"inProgress\":0,\"total\":1,\"keyPhraseExtractionTasks\":[{\"lastUpdateDateTime\":\"2021-10-23T00:57:39.5410691Z\",\"state\":\"succeeded\",\"results\":{\"documents\":[{\"id\":\"1\",\"keyPhrases\":[\"Bill Gates\",\"Paul Allen\",\"Microsoft\"],\"warnings\":[]},{\"id\":\"2\",\"keyPhrases\":[\"Bill Gates\",\"Paul Allen\",\"Microsoft\"],\"warnings\":[]}],\"errors\":[],\"modelVersion\":\"2021-06-01\"}}]}}",
-   "responseHeaders": {
-    "apim-request-id": "474c56f2-805a-497e-a6e3-ef167e19733c",
-    "content-type": "application/json; charset=utf-8",
-    "date": "Sat, 23 Oct 2021 00:57:39 GMT",
-    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    "x-content-type-options": "nosniff",
-    "x-envoy-upstream-service-time": "78"
-   }
-  },
-  {
-   "method": "GET",
-   "url": "https://endpoint/text/analytics/v3.2-preview.2/analyze/jobs/49e7a04e-c2e6-4813-8900-e2f4d18122f0",
-   "query": {
-    "$top": "20",
-    "$skip": "0"
-   },
-   "requestBody": null,
-   "status": 200,
-   "response": "{\"jobId\":\"49e7a04e-c2e6-4813-8900-e2f4d18122f0\",\"lastUpdateDateTime\":\"2021-10-23T00:57:39Z\",\"createdDateTime\":\"2021-10-23T00:57:31Z\",\"expirationDateTime\":\"2021-10-24T00:57:31Z\",\"status\":\"succeeded\",\"errors\":[],\"tasks\":{\"completed\":1,\"failed\":0,\"inProgress\":0,\"total\":1,\"keyPhraseExtractionTasks\":[{\"lastUpdateDateTime\":\"2021-10-23T00:57:39.5410691Z\",\"state\":\"succeeded\",\"results\":{\"documents\":[{\"id\":\"1\",\"keyPhrases\":[\"Bill Gates\",\"Paul Allen\",\"Microsoft\"],\"warnings\":[]},{\"id\":\"2\",\"keyPhrases\":[\"Bill Gates\",\"Paul Allen\",\"Microsoft\"],\"warnings\":[]}],\"errors\":[],\"modelVersion\":\"2021-06-01\"}}]}}",
-   "responseHeaders": {
-    "apim-request-id": "c3f09db1-9f22-49ae-b785-6b422159e61d",
-    "content-type": "application/json; charset=utf-8",
-    "date": "Sat, 23 Oct 2021 00:57:39 GMT",
-    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-    "x-content-type-options": "nosniff",
-    "x-envoy-upstream-service-time": "181"
-   }
-  }
- ],
- "uniqueTestInfo": {
-  "uniqueName": {},
-  "newDate": {}
- },
- "hash": "16c8a31abbc40220a3d080d74cb1bd0d"
+  "Entries": [
+    {
+      "RequestUri": "https://endpoint/text/analytics/v3.1/analyze",
+      "RequestMethod": "POST",
+      "RequestHeaders": {
+        "Accept": "application/json, text/json",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US",
+        "Authorization": "Sanitized",
+        "Connection": "keep-alive",
+        "Content-Length": "287",
+        "Content-Type": "application/json",
+        "Referer": "http://localhost:9876/",
+        "sec-ch-ua": "",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/103.0.5058.0 Safari/537.36",
+        "x-ms-client-request-id": "f69d060c-a97e-486c-bf60-c03512b4fa4d",
+        "x-ms-useragent": "azsdk-js-ai-textanalytics/5.1.1 azsdk-js-ai-text-analytics/5.1.1 core-rest-pipeline/1.9.1 OS/Linuxx86_64"
+      },
+      "RequestBody": {
+        "analysisInput": {
+          "documents": [
+            {
+              "id": "1",
+              "text": "Microsoft was founded by Bill Gates and Paul Allen",
+              "language": "en"
+            },
+            {
+              "id": "2",
+              "text": "Microsoft fue fundado por Bill Gates y Paul Allen",
+              "language": "es"
+            }
+          ]
+        },
+        "tasks": {
+          "keyPhraseExtractionTasks": [
+            {
+              "parameters": {
+                "model-version": "latest"
+              }
+            }
+          ]
+        }
+      },
+      "StatusCode": 202,
+      "ResponseHeaders": {
+        "apim-request-id": "0dfca5c0-9bb5-48d0-8143-f19b665b93ae",
+        "Date": "Fri, 22 Jul 2022 02:41:23 GMT",
+        "operation-location": "https://endpoint/text/analytics/v3.1/analyze/jobs/d34844a9-964a-47e9-9481-c7e071d67693",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Transfer-Encoding": "chunked",
+        "X-Content-Type-Options": "nosniff",
+        "x-envoy-upstream-service-time": "172"
+      },
+      "ResponseBody": null
+    },
+    {
+      "RequestUri": "https://endpoint/text/analytics/v3.1/analyze/jobs/d34844a9-964a-47e9-9481-c7e071d67693?$top=20\u0026$skip=0",
+      "RequestMethod": "GET",
+      "RequestHeaders": {
+        "Accept": "application/json, text/json",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US",
+        "Authorization": "Sanitized",
+        "Connection": "keep-alive",
+        "Referer": "http://localhost:9876/",
+        "sec-ch-ua": "",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/103.0.5058.0 Safari/537.36",
+        "x-ms-client-request-id": "09912616-2578-4d04-be16-c221e3c463c4",
+        "x-ms-useragent": "azsdk-js-ai-textanalytics/5.1.1 azsdk-js-ai-text-analytics/5.1.1 core-rest-pipeline/1.9.1 OS/Linuxx86_64"
+      },
+      "RequestBody": null,
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "apim-request-id": "f36c7d30-6048-45c6-a53b-a4db2d98740f",
+        "Content-Type": "application/json; charset=utf-8",
+        "Date": "Fri, 22 Jul 2022 02:41:24 GMT",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Transfer-Encoding": "chunked",
+        "X-Content-Type-Options": "nosniff",
+        "x-envoy-upstream-service-time": "7"
+      },
+      "ResponseBody": {
+        "jobId": "d34844a9-964a-47e9-9481-c7e071d67693",
+        "lastUpdateDateTime": "2022-07-22T02:41:24Z",
+        "createdDateTime": "2022-07-22T02:41:24Z",
+        "expirationDateTime": "2022-07-23T02:41:24Z",
+        "status": "notStarted",
+        "errors": [],
+        "tasks": {
+          "completed": 0,
+          "failed": 0,
+          "inProgress": 1,
+          "total": 1
+        }
+      }
+    },
+    {
+      "RequestUri": "https://endpoint/text/analytics/v3.1/analyze/jobs/d34844a9-964a-47e9-9481-c7e071d67693?$top=20\u0026$skip=0",
+      "RequestMethod": "GET",
+      "RequestHeaders": {
+        "Accept": "application/json, text/json",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US",
+        "Authorization": "Sanitized",
+        "Connection": "keep-alive",
+        "Referer": "http://localhost:9876/",
+        "sec-ch-ua": "",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/103.0.5058.0 Safari/537.36",
+        "x-ms-client-request-id": "c432c58b-18c4-4f26-b93e-f15330c898c1",
+        "x-ms-useragent": "azsdk-js-ai-textanalytics/5.1.1 azsdk-js-ai-text-analytics/5.1.1 core-rest-pipeline/1.9.1 OS/Linuxx86_64"
+      },
+      "RequestBody": null,
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "apim-request-id": "11e6dcac-da49-4e94-bfdd-f2278302b893",
+        "Content-Type": "application/json; charset=utf-8",
+        "Date": "Fri, 22 Jul 2022 02:41:24 GMT",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Transfer-Encoding": "chunked",
+        "X-Content-Type-Options": "nosniff",
+        "x-envoy-upstream-service-time": "6"
+      },
+      "ResponseBody": {
+        "jobId": "d34844a9-964a-47e9-9481-c7e071d67693",
+        "lastUpdateDateTime": "2022-07-22T02:41:25Z",
+        "createdDateTime": "2022-07-22T02:41:24Z",
+        "expirationDateTime": "2022-07-23T02:41:24Z",
+        "status": "running",
+        "errors": [],
+        "tasks": {
+          "completed": 0,
+          "failed": 0,
+          "inProgress": 1,
+          "total": 1
+        }
+      }
+    },
+    {
+      "RequestUri": "https://endpoint/text/analytics/v3.1/analyze/jobs/d34844a9-964a-47e9-9481-c7e071d67693?$top=20\u0026$skip=0",
+      "RequestMethod": "GET",
+      "RequestHeaders": {
+        "Accept": "application/json, text/json",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US",
+        "Authorization": "Sanitized",
+        "Connection": "keep-alive",
+        "Referer": "http://localhost:9876/",
+        "sec-ch-ua": "",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/103.0.5058.0 Safari/537.36",
+        "x-ms-client-request-id": "ce8927c7-cd08-48fd-9ace-d73b2fb89596",
+        "x-ms-useragent": "azsdk-js-ai-textanalytics/5.1.1 azsdk-js-ai-text-analytics/5.1.1 core-rest-pipeline/1.9.1 OS/Linuxx86_64"
+      },
+      "RequestBody": null,
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "apim-request-id": "a90cd015-0736-4251-a84a-ee58eaac8f5f",
+        "Content-Type": "application/json; charset=utf-8",
+        "Date": "Fri, 22 Jul 2022 02:41:28 GMT",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Transfer-Encoding": "chunked",
+        "X-Content-Type-Options": "nosniff",
+        "x-envoy-upstream-service-time": "92"
+      },
+      "ResponseBody": {
+        "jobId": "d34844a9-964a-47e9-9481-c7e071d67693",
+        "lastUpdateDateTime": "2022-07-22T02:41:26Z",
+        "createdDateTime": "2022-07-22T02:41:24Z",
+        "expirationDateTime": "2022-07-23T02:41:24Z",
+        "status": "succeeded",
+        "errors": [],
+        "tasks": {
+          "completed": 1,
+          "failed": 0,
+          "inProgress": 0,
+          "total": 1,
+          "keyPhraseExtractionTasks": [
+            {
+              "lastUpdateDateTime": "2022-07-22T02:41:26.7135696Z",
+              "state": "succeeded",
+              "results": {
+                "documents": [
+                  {
+                    "id": "1",
+                    "keyPhrases": [
+                      "Bill Gates",
+                      "Paul Allen",
+                      "Microsoft"
+                    ],
+                    "warnings": []
+                  },
+                  {
+                    "id": "2",
+                    "keyPhrases": [
+                      "Bill Gates",
+                      "Paul Allen",
+                      "Microsoft"
+                    ],
+                    "warnings": []
+                  }
+                ],
+                "errors": [],
+                "modelVersion": "2022-07-01"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "RequestUri": "https://endpoint/text/analytics/v3.1/analyze/jobs/d34844a9-964a-47e9-9481-c7e071d67693?$top=20\u0026$skip=0",
+      "RequestMethod": "GET",
+      "RequestHeaders": {
+        "Accept": "application/json, text/json",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US",
+        "Authorization": "Sanitized",
+        "Connection": "keep-alive",
+        "Referer": "http://localhost:9876/",
+        "sec-ch-ua": "",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/103.0.5058.0 Safari/537.36",
+        "x-ms-client-request-id": "ffaf039f-3310-4843-8220-9f5fd4a72fc0",
+        "x-ms-useragent": "azsdk-js-ai-textanalytics/5.1.1 azsdk-js-ai-text-analytics/5.1.1 core-rest-pipeline/1.9.1 OS/Linuxx86_64"
+      },
+      "RequestBody": null,
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "apim-request-id": "b8902bdc-883a-416e-84ce-72ba21fe1745",
+        "Content-Type": "application/json; charset=utf-8",
+        "Date": "Fri, 22 Jul 2022 02:41:28 GMT",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Transfer-Encoding": "chunked",
+        "X-Content-Type-Options": "nosniff",
+        "x-envoy-upstream-service-time": "32"
+      },
+      "ResponseBody": {
+        "jobId": "d34844a9-964a-47e9-9481-c7e071d67693",
+        "lastUpdateDateTime": "2022-07-22T02:41:26Z",
+        "createdDateTime": "2022-07-22T02:41:24Z",
+        "expirationDateTime": "2022-07-23T02:41:24Z",
+        "status": "succeeded",
+        "errors": [],
+        "tasks": {
+          "completed": 1,
+          "failed": 0,
+          "inProgress": 0,
+          "total": 1,
+          "keyPhraseExtractionTasks": [
+            {
+              "lastUpdateDateTime": "2022-07-22T02:41:26.7135696Z",
+              "state": "succeeded",
+              "results": {
+                "documents": [
+                  {
+                    "id": "1",
+                    "keyPhrases": [
+                      "Bill Gates",
+                      "Paul Allen",
+                      "Microsoft"
+                    ],
+                    "warnings": []
+                  },
+                  {
+                    "id": "2",
+                    "keyPhrases": [
+                      "Bill Gates",
+                      "Paul Allen",
+                      "Microsoft"
+                    ],
+                    "warnings": []
+                  }
+                ],
+                "errors": [],
+                "modelVersion": "2022-07-01"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "Variables": {}
 }

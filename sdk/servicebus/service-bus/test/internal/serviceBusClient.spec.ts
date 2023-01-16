@@ -17,7 +17,8 @@ import {
 } from "../../src";
 import { DispositionType, ServiceBusReceivedMessage } from "../../src/serviceBusMessage";
 import { getReceiverClosedErrorMsg, getSenderClosedErrorMsg } from "../../src/util/errors";
-import { EnvVarNames, getEnvVars, isNode } from "../public/utils/envVarUtils";
+import { EnvVarNames, getEnvVars } from "../public/utils/envVarUtils";
+import { isNode } from "@azure/core-util";
 import { checkWithTimeout, TestClientType, TestMessage } from "../public/utils/testUtils";
 import {
   createServiceBusClientForTests,
@@ -68,34 +69,113 @@ describe("ServiceBusClient live tests", () => {
         ? sbClientWithRelaxedEndPoint.createReceiver(entities.queue)
         : sbClientWithRelaxedEndPoint.createReceiver(entities.topic!, entities.subscription!);
 
-      // Send and receive messages
-      const testMessages = entities.usesSessions
-        ? TestMessage.getSessionSample()
-        : TestMessage.getSample();
-      await sender.sendMessages(testMessages);
-      await testPeekMsgsLength(receiver, 1);
+      try {
+        // Send and receive messages
+        const testMessages = entities.usesSessions
+          ? TestMessage.getSessionSample()
+          : TestMessage.getSample();
+        await sender.sendMessages(testMessages);
+        await testPeekMsgsLength(receiver, 1);
 
-      const msgs = await receiver.receiveMessages(1);
+        const msgs = await receiver.receiveMessages(1);
 
-      should.equal(Array.isArray(msgs), true, "`ReceivedMessages` is not an array");
-      should.equal(msgs.length, 1, "Unexpected number of messages");
-      should.equal(msgs[0].body, testMessages.body, "MessageBody is different than expected");
-      should.equal(
-        msgs[0].messageId,
-        testMessages.messageId,
-        "MessageId is different than expected"
-      );
-      should.equal(msgs[0].deliveryCount, 0, "DeliveryCount is different than expected");
-      await receiver.completeMessage(msgs[0]);
+        should.equal(Array.isArray(msgs), true, "`ReceivedMessages` is not an array");
+        should.equal(msgs.length, 1, "Unexpected number of messages");
+        should.equal(msgs[0].body, testMessages.body, "MessageBody is different than expected");
+        should.equal(
+          msgs[0].messageId,
+          testMessages.messageId,
+          "MessageId is different than expected"
+        );
+        should.equal(msgs[0].deliveryCount, 0, "DeliveryCount is different than expected");
+        await receiver.completeMessage(msgs[0]);
 
-      await testPeekMsgsLength(receiver, 0);
-
-      // Clean up
-      await sbClient.test.after();
-      await sender.close();
-      await receiver.close();
-      await sbClientWithRelaxedEndPoint.close();
+        await testPeekMsgsLength(receiver, 0);
+      } finally {
+        // Clean up
+        await sbClient.test.after();
+        await sender.close();
+        await receiver.close();
+        await sbClientWithRelaxedEndPoint.close();
+      }
     });
+
+    it.skip(
+      noSessionTestClientType + ":can omit message body when peeking",
+      async function (): Promise<void> {
+        // Create a test client to get the entity types
+        const sbClient = createServiceBusClientForTests();
+        const entities = await sbClient.test.createTestEntities(noSessionTestClientType);
+        await sbClient.close();
+
+        // Create a sb client, sender, receiver with relaxed endpoint
+        const sbClientWithRelaxedEndPoint = new ServiceBusClient(
+          getEnvVars().SERVICEBUS_CONNECTION_STRING.replace("sb://", "CheeseBurger://")
+        );
+        const sender = sbClientWithRelaxedEndPoint.createSender(entities.queue || entities.topic!);
+        const receiver = entities.queue
+          ? sbClientWithRelaxedEndPoint.createReceiver(entities.queue)
+          : sbClientWithRelaxedEndPoint.createReceiver(entities.topic!, entities.subscription!);
+        try {
+          // Send and receive messages
+          const testMessages = entities.usesSessions
+            ? TestMessage.getSessionSample()
+            : TestMessage.getSample();
+          await sender.sendMessages(testMessages);
+
+          let peekedMsgs = await receiver.peekMessages(2, {
+            omitMessageBody: true,
+            fromSequenceNumber: Long.ZERO,
+          });
+          should.equal(peekedMsgs.length, 1, "expecting one peeked message 1");
+          should.not.exist(peekedMsgs[0].body);
+          should.exist(
+            peekedMsgs[0]._rawAmqpMessage.deliveryAnnotations,
+            "expecting deliveryAnnotations"
+          );
+          const omittedSize = Number(
+            peekedMsgs[0]._rawAmqpMessage.deliveryAnnotations!["omitted-message-body-size"]
+          );
+          should.equal(omittedSize > 0, true);
+
+          peekedMsgs = await receiver.peekMessages(2, {
+            omitMessageBody: false,
+            fromSequenceNumber: Long.ZERO,
+          });
+          should.equal(peekedMsgs.length, 1, "expecting one peeked message 2");
+          should.exist(peekedMsgs[0].body);
+          should.exist(
+            peekedMsgs[0]._rawAmqpMessage.deliveryAnnotations,
+            "expecting deliveryAnnotations"
+          );
+          should.not.exist(
+            peekedMsgs[0]._rawAmqpMessage.deliveryAnnotations!["omitted-message-body-size"],
+            "Not expecting omitted-message-body-size"
+          );
+
+          peekedMsgs = await receiver.peekMessages(2, { fromSequenceNumber: Long.ZERO });
+          should.equal(peekedMsgs.length, 1, "expecting one peeked message 3");
+          should.exist(peekedMsgs[0].body);
+          should.exist(
+            peekedMsgs[0]._rawAmqpMessage.deliveryAnnotations,
+            "expecting deliveryAnnotations"
+          );
+          should.not.exist(
+            peekedMsgs[0]._rawAmqpMessage.deliveryAnnotations!["omitted-message-body-size"],
+            "Not expecting omitted-message-body-size"
+          );
+
+          await receiver.receiveMessages(2);
+          await testPeekMsgsLength(receiver, 0);
+        } finally {
+          // Clean up
+          await sbClient.test.after();
+          await sender.close();
+          await receiver.close();
+          await sbClientWithRelaxedEndPoint.close();
+        }
+      }
+    );
   });
 
   describe("Errors with non existing Namespace", function (): void {
@@ -142,7 +222,7 @@ describe("ServiceBusClient live tests", () => {
     });
 
     it("throws error when receiving streaming data from a non existing namespace", async function (): Promise<void> {
-      const receiver = sbClient.createReceiver("some-queue");
+      const receiver = sbClient.createReceiver("some-queue", { identifier: "receiverId" });
       reduceRetries(receiver);
 
       try {
@@ -155,12 +235,14 @@ describe("ServiceBusClient live tests", () => {
               errorSource: args.errorSource,
               entityPath: args.entityPath,
               fullyQualifiedNamespace: args.fullyQualifiedNamespace,
+              identifier: args.identifier,
             };
 
             actual.should.deep.equal({
               errorSource: "receive",
               entityPath: receiver.entityPath,
               fullyQualifiedNamespace: sbClient.fullyQualifiedNamespace,
+              identifier: "receiverId",
             } as Omit<ProcessErrorArgs, "error">);
 
             testError(args.error);
@@ -190,17 +272,20 @@ describe("ServiceBusClient live tests", () => {
       await sbClient.test.after();
     });
 
-    const testError = (err: Error | ServiceBusError, entityPath: string): void => {
+    const testError = (err: Error | ServiceBusError, entityPath?: string): void => {
       if (!isServiceBusError(err)) {
         should.equal(true, false, "Error expected to be instance of ServiceBusError");
       } else {
         should.equal(err.code, "MessagingEntityNotFound", "Error code is different than expected");
-        should.equal(
-          err.message.includes(
-            `The messaging entity 'sb://${sbClient.fullyQualifiedNamespace}/${entityPath}' could not be found.`
-          ),
-          true
-        );
+        if (entityPath) {
+          should.equal(
+            err.message.includes(
+              `The messaging entity 'sb://${sbClient.fullyQualifiedNamespace}/${entityPath}' could not be found.`
+            ),
+            true,
+            `Expecting error message to contain "The messaging entity 'sb://${sbClient.fullyQualifiedNamespace}/${entityPath}' could not be found." but got ${err.message}`
+          );
+        }
         errorWasThrown = true;
       }
     };
@@ -212,7 +297,7 @@ describe("ServiceBusClient live tests", () => {
       should.equal(errorWasThrown, true, "Error thrown flag must be true");
     });
 
-    it("throws error when receiving batch data from a non existing subscription", async function (): Promise<void> {
+    it("throws error when receiving batch data from a non existing topic", async function (): Promise<void> {
       const receiver = sbClient.createReceiver("some-topic-name", "some-subscription-name");
       await receiver
         .receiveMessages(1)
@@ -221,8 +306,29 @@ describe("ServiceBusClient live tests", () => {
       should.equal(errorWasThrown, true, "Error thrown flag must be true");
     });
 
+    it("throws error when receiving batch data from a non existing subscription", async function (): Promise<void> {
+      const entityNames = await sbClient.test.createTestEntities(TestClientType.PartitionedTopic);
+      if (!entityNames.topic) {
+        throw new Error("Expecting valid topic name");
+      }
+      const receiver = sbClient.createReceiver(entityNames.topic, "some-subscription-name");
+      await receiver.receiveMessages(1).catch((err) => {
+        testError(err);
+        console.log(err.message);
+        const namespace = sbClient.fullyQualifiedNamespace.split(".")[0];
+        const entityPattern = `The messaging entity '${namespace}:topic:${entityNames.topic}.*|some-subscription-name`;
+        should.equal(
+          new RegExp(entityPattern).test(err.message),
+          true,
+          `Expect error message to contain pattern "${entityPattern}" but got ${err.message}`
+        );
+      });
+
+      should.equal(errorWasThrown, true, "Error thrown flag must be true");
+    });
+
     it("throws error when receiving streaming data from a non existing queue", async function (): Promise<void> {
-      const receiver = sbClient.createReceiver("some-name");
+      const receiver = sbClient.createReceiver("some-name", { identifier: "receiverId" });
       reduceRetries(receiver);
 
       receiver.subscribe({
@@ -234,12 +340,14 @@ describe("ServiceBusClient live tests", () => {
             errorSource: args.errorSource,
             entityPath: args.entityPath,
             fullyQualifiedNamespace: args.fullyQualifiedNamespace,
+            identifier: args.identifier,
           };
 
           actual.should.deep.equal({
             errorSource: "receive",
             entityPath: receiver.entityPath,
             fullyQualifiedNamespace: sbClient.fullyQualifiedNamespace,
+            identifier: "receiverId",
           } as Omit<ProcessErrorArgs, "error">);
 
           testError(args.error, "some-name");
@@ -254,31 +362,85 @@ describe("ServiceBusClient live tests", () => {
       await receiver.close();
     });
 
-    it("throws error when receiving streaming data from a non existing subscription", async function (): Promise<void> {
-      const receiver = sbClient.createReceiver(
-        "some-topic-name",
-        "some-subscription-name"
-      ) as ServiceBusReceiverImpl;
+    it("throws error when receiving streaming data from a non existing topic", async function (): Promise<void> {
+      const receiver = sbClient.createReceiver("some-topic-name", "some-subscription-name", {
+        identifier: "receiverId",
+      }) as ServiceBusReceiverImpl;
       reduceRetries(receiver);
 
       receiver.subscribe({
         async processMessage() {
-          throw "processMessage should not have been called when receive call is made from a non existing namespace";
+          throw "processMessage should not have been called when subscribing to a non existing topic";
         },
         async processError(args) {
           const expected: Omit<ProcessErrorArgs, "error"> = {
             errorSource: args.errorSource,
             entityPath: args.entityPath,
             fullyQualifiedNamespace: args.fullyQualifiedNamespace,
+            identifier: args.identifier,
           };
 
           expected.should.deep.equal({
             errorSource: "receive",
             entityPath: receiver.entityPath,
             fullyQualifiedNamespace: sbClient.fullyQualifiedNamespace,
+            identifier: "receiverId",
           } as Omit<ProcessErrorArgs, "error">);
 
           testError(args.error, "some-topic-name/Subscriptions/some-subscription-name");
+        },
+      });
+
+      should.equal(
+        await checkWithTimeout(
+          () => errorWasThrown === true,
+          1000,
+          CoreAmqpConstants.defaultOperationTimeoutInMs * 2 // arbitrary, just don't want it to be too short.
+        ),
+        true,
+        "Error thrown flag must be true"
+      );
+
+      await receiver.close();
+    });
+
+    it("throws error when receiving streaming data from a non existing subscription", async function (): Promise<void> {
+      const entityNames = await sbClient.test.createTestEntities(TestClientType.PartitionedTopic);
+      if (!entityNames.topic) {
+        throw new Error("Expecting valid topic name");
+      }
+      const receiver = sbClient.createReceiver(entityNames.topic, "some-subscription-name", {
+        identifier: "receiverId",
+      }) as ServiceBusReceiverImpl;
+      reduceRetries(receiver);
+
+      receiver.subscribe({
+        async processMessage() {
+          throw "processMessage should not have been called when receive call when subscribing to a non existing subscription";
+        },
+        async processError(args) {
+          const expected: Omit<ProcessErrorArgs, "error"> = {
+            errorSource: args.errorSource,
+            entityPath: args.entityPath,
+            fullyQualifiedNamespace: args.fullyQualifiedNamespace,
+            identifier: args.identifier,
+          };
+
+          expected.should.deep.equal({
+            errorSource: "receive",
+            entityPath: receiver.entityPath,
+            fullyQualifiedNamespace: sbClient.fullyQualifiedNamespace,
+            identifier: "receiverId",
+          } as Omit<ProcessErrorArgs, "error">);
+
+          testError(args.error);
+          const namespace = sbClient.fullyQualifiedNamespace.split(".")[0];
+          const entityPattern = `The messaging entity '${namespace}:topic:${entityNames.topic}.*|some-subscription-name`;
+          should.equal(
+            new RegExp(entityPattern).test(args.error.message),
+            true,
+            `Expect error message to contain pattern "${entityPattern}" but got ${args.error.message}`
+          );
         },
       });
 
@@ -301,7 +463,7 @@ describe("ServiceBusClient live tests", () => {
 
     const env = getEnvVars();
     const serviceBusEndpoint = (env.SERVICEBUS_CONNECTION_STRING.match(
-      "Endpoint=sb://((.*).servicebus.windows.net)"
+      "Endpoint=sb://((.*).servicebus.(windows.net|usgovcloudapi.net|chinacloudapi.cn))"
     ) || "")[1];
 
     /**
@@ -330,7 +492,7 @@ describe("ServiceBusClient live tests", () => {
     it("throws error for invalid tokenCredentials", async function (): Promise<void> {
       try {
         new ServiceBusClient(serviceBusEndpoint, [] as any);
-      } catch (err) {
+      } catch (err: any) {
         errorWasThrown = true;
         should.equal(
           err.message,
@@ -345,7 +507,7 @@ describe("ServiceBusClient live tests", () => {
     it("throws error for undefined tokenCredentials", async function (): Promise<void> {
       try {
         new ServiceBusClient(serviceBusEndpoint, undefined as any);
-      } catch (err) {
+      } catch (err: any) {
         errorWasThrown = true;
         should.equal(
           err.message,
@@ -361,7 +523,7 @@ describe("ServiceBusClient live tests", () => {
       it("throws error for invalid host name", async function (): Promise<void> {
         try {
           new ServiceBusClient(123 as any, getDefaultTokenCredential());
-        } catch (error) {
+        } catch (error: any) {
           errorWasThrown = true;
           should.equal(
             error.message,
@@ -485,7 +647,7 @@ describe("ServiceBusClient live tests", () => {
           default:
             break;
         }
-      } catch (error) {
+      } catch (error: any) {
         caughtError = error;
       }
 
@@ -553,7 +715,7 @@ describe("ServiceBusClient live tests", () => {
       let errorNewSender: string = "";
       try {
         sbClient.createSender(entityName.queue ?? entityName.topic!);
-      } catch (err) {
+      } catch (err: any) {
         errorNewSender = err.message;
       }
       should.equal(
@@ -589,7 +751,7 @@ describe("ServiceBusClient live tests", () => {
             console.log(e);
           },
         });
-      } catch (err) {
+      } catch (err: any) {
         errorReceiveStream = err.message;
       }
       should.equal(
@@ -626,7 +788,7 @@ describe("ServiceBusClient live tests", () => {
       let errorNewReceiver: string = "";
       try {
         receiver = await sbClient.test.createPeekLockReceiver(entityName);
-      } catch (err) {
+      } catch (err: any) {
         errorNewReceiver = err.message;
       }
       should.equal(

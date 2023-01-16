@@ -416,7 +416,9 @@ export interface Certificate {
  */
 export interface ApplicationPackageReference {
   /**
-   * The ID of the application to deploy.
+   * The ID of the application to deploy. When creating a pool, the package's application ID must
+   * be fully qualified
+   * (/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Batch/batchAccounts/{accountName}/applications/{applicationName}).
    */
   applicationId: string;
   /**
@@ -531,7 +533,8 @@ export interface NodeFile {
 
 /**
  * An interface representing Schedule.
- * @summary The schedule according to which Jobs will be created
+ * @summary The schedule according to which Jobs will be created. All times are fixed respective to
+ * UTC and are not impacted by daylight saving time.
  */
 export interface Schedule {
   /**
@@ -595,8 +598,8 @@ export interface JobConstraints {
    * Batch service will try each Task once, and may then retry up to this limit. For example, if
    * the maximum retry count is 3, Batch tries a Task up to 4 times (one initial try and 3
    * retries). If the maximum retry count is 0, the Batch service does not retry Tasks. If the
-   * maximum retry count is -1, the Batch service retries Tasks without limit. The default value is
-   * 0 (no retries).
+   * maximum retry count is -1, the Batch service retries the Task without limit, however this is
+   * not recommended for a start task or any task. The default value is 0 (no retries)
    */
   maxTaskRetryCount?: number;
 }
@@ -766,6 +769,21 @@ export interface EnvironmentSetting {
   name: string;
   /**
    * The value of the environment variable.
+   */
+  value?: string;
+}
+
+/**
+ * An interface representing HttpHeader.
+ * @summary An HTTP header name-value pair
+ */
+export interface HttpHeader {
+  /**
+   * The case-insensitive name of the header to be used while uploading output files.
+   */
+  name: string;
+  /**
+   * The value of the header to be used while uploading output files.
    */
   value?: string;
 }
@@ -945,7 +963,8 @@ export interface WindowsUserConfiguration {
  */
 export interface UserAccount {
   /**
-   * The name of the user Account.
+   * The name of the user Account. Names can contain any Unicode characters up to a maximum length
+   * of 20.
    */
   name: string;
   /**
@@ -995,7 +1014,8 @@ export interface TaskConstraints {
    * then retry up to this limit. For example, if the maximum retry count is 3, Batch tries the
    * Task up to 4 times (one initial try and 3 retries). If the maximum retry count is 0, the Batch
    * service does not retry the Task after the first attempt. If the maximum retry count is -1, the
-   * Batch service retries the Task without limit.
+   * Batch service retries the Task without limit, however this is not recommended for a start task
+   * or any task. The default value is 0 (no retries)
    */
   maxTaskRetryCount?: number;
 }
@@ -1025,6 +1045,13 @@ export interface OutputFileBlobContainerDestination {
    * containerUrl. The identity must have write access to the Azure Blob Storage container
    */
   identityReference?: ComputeNodeIdentityReference;
+  /**
+   * A list of name-value pairs for headers to be used in uploading output files. These headers
+   * will be specified when uploading files to Azure Storage. Official document on allowed headers
+   * when uploading blobs:
+   * https://docs.microsoft.com/en-us/rest/api/storageservices/put-blob#request-headers-all-blob-types
+   */
+  uploadHeaders?: HttpHeader[];
 }
 
 /**
@@ -1216,7 +1243,7 @@ export interface JobManagerTask {
    */
   authenticationTokenSettings?: AuthenticationTokenSettings;
   /**
-   * Whether the Job Manager Task may run on a low-priority Compute Node. The default value is
+   * Whether the Job Manager Task may run on a Spot/Low-priority Compute Node. The default value is
    * true.
    */
   allowLowPriorityNode?: boolean;
@@ -1473,7 +1500,8 @@ export interface StartTask {
    * Batch service will try the Task once, and may then retry up to this limit. For example, if the
    * maximum retry count is 3, Batch tries the Task up to 4 times (one initial try and 3 retries).
    * If the maximum retry count is 0, the Batch service does not retry the Task. If the maximum
-   * retry count is -1, the Batch service retries the Task without limit.
+   * retry count is -1, the Batch service retries the Task without limit, however this is not
+   * recommended for a start task or any task. The default value is 0 (no retries)
    */
   maxTaskRetryCount?: number;
   /**
@@ -1922,7 +1950,7 @@ export interface PublicIPAddressConfiguration {
   /**
    * The list of public IPs which the Batch service will use when provisioning Compute Nodes. The
    * number of IPs specified here limits the maximum size of the Pool - 100 dedicated nodes or 100
-   * low-priority nodes can be allocated for each public IP. For example, a pool needing 250
+   * Spot/Low-priority nodes can be allocated for each public IP. For example, a pool needing 250
    * dedicated VMs would need at least 3 public IPs specified. Each element of this collection is
    * of the form:
    * /subscriptions/{subscription}/resourceGroups/{group}/providers/Microsoft.Network/publicIPAddresses/{ip}.
@@ -2185,7 +2213,7 @@ export interface PoolSpecification {
    */
   targetDedicatedNodes?: number;
   /**
-   * The desired number of low-priority Compute Nodes in the Pool. This property must not be
+   * The desired number of Spot/Low-priority Compute Nodes in the Pool. This property must not be
    * specified if enableAutoScale is set to true. If enableAutoScale is set to false, then you must
    * set either targetDedicatedNodes, targetLowPriorityNodes, or both.
    */
@@ -2239,10 +2267,12 @@ export interface PoolSpecification {
    */
   certificateReferences?: CertificateReference[];
   /**
-   * The list of Packages to be installed on each Compute Node in the Pool. Changes to Package
-   * references affect all new Nodes joining the Pool, but do not affect Compute Nodes that are
-   * already in the Pool until they are rebooted or reimaged. There is a maximum of 10 Package
-   * references on any given Pool.
+   * The list of Packages to be installed on each Compute Node in the Pool. When creating a pool,
+   * the package's application ID must be fully qualified
+   * (/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Batch/batchAccounts/{accountName}/applications/{applicationName}).
+   * Changes to Package references affect all new Nodes joining the Pool, but do not affect Compute
+   * Nodes that are already in the Pool until they are rebooted or reimaged. There is a maximum of
+   * 10 Package references on any given Pool.
    */
   applicationPackageReferences?: ApplicationPackageReference[];
   /**
@@ -2267,6 +2297,11 @@ export interface PoolSpecification {
    * CIFS/SMB, and Blobfuse.
    */
   mountConfiguration?: MountConfiguration[];
+  /**
+   * The desired node communication mode for the pool. If omitted, the default value is Default.
+   * Possible values include: 'default', 'classic', 'simplified'
+   */
+  targetNodeCommunicationMode?: NodeCommunicationMode;
 }
 
 /**
@@ -2338,6 +2373,13 @@ export interface JobSpecification {
    * update a Job's priority after it has been created using by using the update Job API.
    */
   priority?: number;
+  /**
+   * Whether Tasks in this job can be preempted by other high priority jobs. If the value is set to
+   * True, other high priority jobs submitted to the system will take precedence and will be able
+   * requeue tasks from this job. You can update a job's allowTaskPreemption after it has been
+   * created using the update job API.
+   */
+  allowTaskPreemption?: boolean;
   /**
    * The maximum number of tasks that can be executed in parallel for the job. The value of
    * maxParallelTasks must be -1 or greater than 0 if specified. If not specified, the default
@@ -2598,7 +2640,8 @@ export interface CloudJobSchedule {
    */
   previousStateTransitionTime?: Date;
   /**
-   * The schedule according to which Jobs will be created.
+   * The schedule according to which Jobs will be created. All times are fixed respective to UTC
+   * and are not impacted by daylight saving time.
    */
   schedule?: Schedule;
   /**
@@ -2641,7 +2684,8 @@ export interface JobScheduleAddParameter {
    */
   displayName?: string;
   /**
-   * The schedule according to which Jobs will be created.
+   * The schedule according to which Jobs will be created. All times are fixed respective to UTC
+   * and are not impacted by daylight saving time.
    */
   schedule: Schedule;
   /**
@@ -2788,6 +2832,13 @@ export interface CloudJob {
    */
   priority?: number;
   /**
+   * Whether Tasks in this job can be preempted by other high priority jobs. If the value is set to
+   * True, other high priority jobs submitted to the system will take precedence and will be able
+   * requeue tasks from this job. You can update a job's allowTaskPreemption after it has been
+   * created using the update job API.
+   */
+  allowTaskPreemption?: boolean;
+  /**
    * The maximum number of tasks that can be executed in parallel for the job. The value of
    * maxParallelTasks must be -1 or greater than 0 if specified. If not specified, the default
    * value is -1, which means there's no limit to the number of tasks that can be run at once. You
@@ -2889,6 +2940,13 @@ export interface JobAddParameter {
    * Default value: -1.
    */
   maxParallelTasks?: number;
+  /**
+   * Whether Tasks in this job can be preempted by other high priority jobs. If the value is set to
+   * True, other high priority jobs submitted to the system will take precedence and will be able
+   * requeue tasks from this job. You can update a job's allowTaskPreemption after it has been
+   * created using the update job API.
+   */
+  allowTaskPreemption?: boolean;
   /**
    * The execution constraints for the Job.
    */
@@ -3493,8 +3551,8 @@ export interface CloudPool {
    */
   currentDedicatedNodes?: number;
   /**
-   * The number of low-priority Compute Nodes currently in the Pool. low-priority Compute Nodes
-   * which have been preempted are included in this count.
+   * The number of Spot/Low-priority Compute Nodes currently in the Pool. Spot/Low-priority Compute
+   * Nodes which have been preempted are included in this count.
    */
   currentLowPriorityNodes?: number;
   /**
@@ -3502,7 +3560,7 @@ export interface CloudPool {
    */
   targetDedicatedNodes?: number;
   /**
-   * The desired number of low-priority Compute Nodes in the Pool.
+   * The desired number of Spot/Low-priority Compute Nodes in the Pool.
    */
   targetLowPriorityNodes?: number;
   /**
@@ -3603,6 +3661,17 @@ export interface CloudPool {
    * '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}'.
    */
   identity?: BatchPoolIdentity;
+  /**
+   * The desired node communication mode for the pool. If omitted, the default value is Default.
+   * Possible values include: 'default', 'classic', 'simplified'
+   */
+  targetNodeCommunicationMode?: NodeCommunicationMode;
+  /**
+   * The current state of the pool communication mode. Possible values include: 'default',
+   * 'classic', 'simplified'
+   * **NOTE: This property will not be serialized. It can only be populated by the server.**
+   */
+  readonly currentNodeCommunicationMode?: NodeCommunicationMode;
 }
 
 /**
@@ -3664,7 +3733,7 @@ export interface PoolAddParameter {
    */
   targetDedicatedNodes?: number;
   /**
-   * The desired number of low-priority Compute Nodes in the Pool. This property must not be
+   * The desired number of Spot/Low-priority Compute Nodes in the Pool. This property must not be
    * specified if enableAutoScale is set to true. If enableAutoScale is set to false, then you must
    * set either targetDedicatedNodes, targetLowPriorityNodes, or both.
    */
@@ -3720,10 +3789,12 @@ export interface PoolAddParameter {
    */
   certificateReferences?: CertificateReference[];
   /**
-   * The list of Packages to be installed on each Compute Node in the Pool. Changes to Package
-   * references affect all new Nodes joining the Pool, but do not affect Compute Nodes that are
-   * already in the Pool until they are rebooted or reimaged. There is a maximum of 10 Package
-   * references on any given Pool.
+   * The list of Packages to be installed on each Compute Node in the Pool. When creating a pool,
+   * the package's application ID must be fully qualified
+   * (/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Batch/batchAccounts/{accountName}/applications/{applicationName}).
+   * Changes to Package references affect all new Nodes joining the Pool, but do not affect Compute
+   * Nodes that are already in the Pool until they are rebooted or reimaged. There is a maximum of
+   * 10 Package references on any given Pool.
    */
   applicationPackageReferences?: ApplicationPackageReference[];
   /**
@@ -3758,6 +3829,11 @@ export interface PoolAddParameter {
    * storage using Azure fileshare, NFS, CIFS or Blobfuse based file system.
    */
   mountConfiguration?: MountConfiguration[];
+  /**
+   * The desired node communication mode for the pool. If omitted, the default value is Default.
+   * Possible values include: 'default', 'classic', 'simplified'
+   */
+  targetNodeCommunicationMode?: NodeCommunicationMode;
 }
 
 /**
@@ -4698,11 +4774,11 @@ export interface ComputeNode {
    */
   url?: string;
   /**
-   * The current state of the Compute Node. The low-priority Compute Node has been preempted. Tasks
-   * which were running on the Compute Node when it was preempted will be rescheduled when another
-   * Compute Node becomes available. Possible values include: 'idle', 'rebooting', 'reimaging',
-   * 'running', 'unusable', 'creating', 'starting', 'waitingForStartTask', 'startTaskFailed',
-   * 'unknown', 'leavingPool', 'offline', 'preempted'
+   * The current state of the Compute Node. The Spot/Low-priority Compute Node has been preempted.
+   * Tasks which were running on the Compute Node when it was preempted will be rescheduled when
+   * another Compute Node becomes available. Possible values include: 'idle', 'rebooting',
+   * 'reimaging', 'running', 'unusable', 'creating', 'starting', 'waitingForStartTask',
+   * 'startTaskFailed', 'unknown', 'leavingPool', 'offline', 'preempted'
    */
   state?: ComputeNodeState;
   /**
@@ -4795,7 +4871,7 @@ export interface ComputeNode {
   errors?: ComputeNodeError[];
   /**
    * Whether this Compute Node is a dedicated Compute Node. If false, the Compute Node is a
-   * low-priority Compute Node.
+   * Spot/Low-priority Compute Node.
    */
   isDedicated?: boolean;
   /**
@@ -4870,8 +4946,9 @@ export interface ComputeNodeGetRemoteLoginSettingsResult {
  */
 export interface JobSchedulePatchParameter {
   /**
-   * The schedule according to which Jobs will be created. If you do not specify this element, the
-   * existing schedule is left unchanged.
+   * The schedule according to which Jobs will be created. All times are fixed respective to UTC
+   * and are not impacted by daylight saving time. If you do not specify this element, the existing
+   * schedule is left unchanged.
    */
   schedule?: Schedule;
   /**
@@ -4893,8 +4970,9 @@ export interface JobSchedulePatchParameter {
  */
 export interface JobScheduleUpdateParameter {
   /**
-   * The schedule according to which Jobs will be created. If you do not specify this element, it
-   * is equivalent to passing the default schedule: that is, a single Job scheduled to run
+   * The schedule according to which Jobs will be created. All times are fixed respective to UTC
+   * and are not impacted by daylight saving time. If you do not specify this element, it is
+   * equivalent to passing the default schedule: that is, a single Job scheduled to run
    * immediately.
    */
   schedule: Schedule;
@@ -4954,6 +5032,13 @@ export interface JobPatchParameter {
    */
   maxParallelTasks?: number;
   /**
+   * Whether Tasks in this job can be preempted by other high priority jobs. If the value is set to
+   * True, other high priority jobs submitted to the system will take precedence and will be able
+   * requeue tasks from this job. You can update a job's allowTaskPreemption after it has been
+   * created using the update job API.
+   */
+  allowTaskPreemption?: boolean;
+  /**
    * The action the Batch service should take when all Tasks in the Job are in the completed state.
    * If omitted, the completion behavior is left unchanged. You may not change the value from
    * terminatejob to noaction - that is, once you have engaged automatic Job termination, you
@@ -4994,6 +5079,21 @@ export interface JobUpdateParameter {
    * value 0.
    */
   priority?: number;
+  /**
+   * The maximum number of tasks that can be executed in parallel for the job. The value of
+   * maxParallelTasks must be -1 or greater than 0 if specified. If not specified, the default
+   * value is -1, which means there's no limit to the number of tasks that can be run at once. You
+   * can update a job's maxParallelTasks after it has been created using the update job API.
+   * Default value: -1.
+   */
+  maxParallelTasks?: number;
+  /**
+   * Whether Tasks in this job can be preempted by other high priority jobs. If the value is set to
+   * True, other high priority jobs submitted to the system will take precedence and will be able
+   * requeue tasks from this job. You can update a job's allowTaskPreemption after it has been
+   * created using the update job API.
+   */
+  allowTaskPreemption?: boolean;
   /**
    * The execution constraints for the Job. If omitted, the constraints are cleared.
    */
@@ -5076,7 +5176,7 @@ export interface PoolResizeParameter {
    */
   targetDedicatedNodes?: number;
   /**
-   * The desired number of low-priority Compute Nodes in the Pool.
+   * The desired number of Spot/Low-priority Compute Nodes in the Pool.
    */
   targetLowPriorityNodes?: number;
   /**
@@ -5134,6 +5234,12 @@ export interface PoolUpdatePropertiesParameter {
    * any existing metadata is removed from the Pool.
    */
   metadata: MetadataItem[];
+  /**
+   * The desired node communication mode for the pool. This setting replaces any existing
+   * targetNodeCommunication setting on the Pool. If omitted, the existing setting is default.
+   * Possible values include: 'default', 'classic', 'simplified'
+   */
+  targetNodeCommunicationMode?: NodeCommunicationMode;
 }
 
 /**
@@ -5174,6 +5280,12 @@ export interface PoolPatchParameter {
    * any metadata is removed from the Pool. If omitted, any existing metadata is left unchanged.
    */
   metadata?: MetadataItem[];
+  /**
+   * The desired node communication mode for the pool. If this element is present, it replaces the
+   * existing targetNodeCommunicationMode configured on the Pool. If omitted, any existing metadata
+   * is left unchanged. Possible values include: 'default', 'classic', 'simplified'
+   */
+  targetNodeCommunicationMode?: NodeCommunicationMode;
 }
 
 /**
@@ -5408,7 +5520,7 @@ export interface PoolNodeCounts {
    */
   dedicated?: NodeCounts;
   /**
-   * The number of low-priority Compute Nodes in each state.
+   * The number of Spot/Low-priority Compute Nodes in each state.
    */
   lowPriority?: NodeCounts;
 }
@@ -9005,8 +9117,7 @@ export interface JobListFromJobScheduleOptionalParams extends msRest.RequestOpti
 /**
  * Optional Parameters.
  */
-export interface JobListPreparationAndReleaseTaskStatusOptionalParams
-  extends msRest.RequestOptionsBase {
+export interface JobListPreparationAndReleaseTaskStatusOptionalParams extends msRest.RequestOptionsBase {
   /**
    * Additional parameters for the operation
    */
@@ -9046,8 +9157,7 @@ export interface JobListFromJobScheduleNextOptionalParams extends msRest.Request
 /**
  * Optional Parameters.
  */
-export interface JobListPreparationAndReleaseTaskStatusNextOptionalParams
-  extends msRest.RequestOptionsBase {
+export interface JobListPreparationAndReleaseTaskStatusNextOptionalParams extends msRest.RequestOptionsBase {
   /**
    * Additional parameters for the operation
    */
@@ -12090,8 +12200,7 @@ export interface CloudJobListResult extends Array<CloudJob> {
  * Job.
  * @extends Array<JobPreparationAndReleaseTaskExecutionInformation>
  */
-export interface CloudJobListPreparationAndReleaseTaskStatusResult
-  extends Array<JobPreparationAndReleaseTaskExecutionInformation> {
+export interface CloudJobListPreparationAndReleaseTaskStatusResult extends Array<JobPreparationAndReleaseTaskExecutionInformation> {
   odatanextLink?: string;
 }
 
@@ -12162,7 +12271,7 @@ export interface NodeVMExtensionList extends Array<NodeVMExtension> {
  * @readonly
  * @enum {string}
  */
-export type OSType = "linux" | "windows";
+export type OSType = 'linux' | 'windows';
 
 /**
  * Defines values for VerificationType.
@@ -12170,7 +12279,7 @@ export type OSType = "linux" | "windows";
  * @readonly
  * @enum {string}
  */
-export type VerificationType = "verified" | "unverified";
+export type VerificationType = 'verified' | 'unverified';
 
 /**
  * Defines values for AccessScope.
@@ -12178,7 +12287,7 @@ export type VerificationType = "verified" | "unverified";
  * @readonly
  * @enum {string}
  */
-export type AccessScope = "job";
+export type AccessScope = 'job';
 
 /**
  * Defines values for CertificateState.
@@ -12186,7 +12295,7 @@ export type AccessScope = "job";
  * @readonly
  * @enum {string}
  */
-export type CertificateState = "active" | "deleting" | "deletefailed";
+export type CertificateState = 'active' | 'deleting' | 'deletefailed';
 
 /**
  * Defines values for CertificateFormat.
@@ -12194,7 +12303,7 @@ export type CertificateState = "active" | "deleting" | "deletefailed";
  * @readonly
  * @enum {string}
  */
-export type CertificateFormat = "pfx" | "cer";
+export type CertificateFormat = 'pfx' | 'cer';
 
 /**
  * Defines values for ContainerWorkingDirectory.
@@ -12202,7 +12311,7 @@ export type CertificateFormat = "pfx" | "cer";
  * @readonly
  * @enum {string}
  */
-export type ContainerWorkingDirectory = "taskWorkingDirectory" | "containerImageDefault";
+export type ContainerWorkingDirectory = 'taskWorkingDirectory' | 'containerImageDefault';
 
 /**
  * Defines values for JobAction.
@@ -12210,7 +12319,7 @@ export type ContainerWorkingDirectory = "taskWorkingDirectory" | "containerImage
  * @readonly
  * @enum {string}
  */
-export type JobAction = "none" | "disable" | "terminate";
+export type JobAction = 'none' | 'disable' | 'terminate';
 
 /**
  * Defines values for DependencyAction.
@@ -12218,7 +12327,7 @@ export type JobAction = "none" | "disable" | "terminate";
  * @readonly
  * @enum {string}
  */
-export type DependencyAction = "satisfy" | "block";
+export type DependencyAction = 'satisfy' | 'block';
 
 /**
  * Defines values for AutoUserScope.
@@ -12226,7 +12335,7 @@ export type DependencyAction = "satisfy" | "block";
  * @readonly
  * @enum {string}
  */
-export type AutoUserScope = "task" | "pool";
+export type AutoUserScope = 'task' | 'pool';
 
 /**
  * Defines values for ElevationLevel.
@@ -12234,7 +12343,7 @@ export type AutoUserScope = "task" | "pool";
  * @readonly
  * @enum {string}
  */
-export type ElevationLevel = "nonadmin" | "admin";
+export type ElevationLevel = 'nonadmin' | 'admin';
 
 /**
  * Defines values for LoginMode.
@@ -12242,7 +12351,7 @@ export type ElevationLevel = "nonadmin" | "admin";
  * @readonly
  * @enum {string}
  */
-export type LoginMode = "batch" | "interactive";
+export type LoginMode = 'batch' | 'interactive';
 
 /**
  * Defines values for OutputFileUploadCondition.
@@ -12250,7 +12359,7 @@ export type LoginMode = "batch" | "interactive";
  * @readonly
  * @enum {string}
  */
-export type OutputFileUploadCondition = "tasksuccess" | "taskfailure" | "taskcompletion";
+export type OutputFileUploadCondition = 'tasksuccess' | 'taskfailure' | 'taskcompletion';
 
 /**
  * Defines values for ComputeNodeFillType.
@@ -12258,7 +12367,7 @@ export type OutputFileUploadCondition = "tasksuccess" | "taskfailure" | "taskcom
  * @readonly
  * @enum {string}
  */
-export type ComputeNodeFillType = "spread" | "pack";
+export type ComputeNodeFillType = 'spread' | 'pack';
 
 /**
  * Defines values for CertificateStoreLocation.
@@ -12266,7 +12375,7 @@ export type ComputeNodeFillType = "spread" | "pack";
  * @readonly
  * @enum {string}
  */
-export type CertificateStoreLocation = "currentuser" | "localmachine";
+export type CertificateStoreLocation = 'currentuser' | 'localmachine';
 
 /**
  * Defines values for CertificateVisibility.
@@ -12274,7 +12383,7 @@ export type CertificateStoreLocation = "currentuser" | "localmachine";
  * @readonly
  * @enum {string}
  */
-export type CertificateVisibility = "starttask" | "task" | "remoteuser";
+export type CertificateVisibility = 'starttask' | 'task' | 'remoteuser';
 
 /**
  * Defines values for CachingType.
@@ -12282,7 +12391,7 @@ export type CertificateVisibility = "starttask" | "task" | "remoteuser";
  * @readonly
  * @enum {string}
  */
-export type CachingType = "none" | "readonly" | "readwrite";
+export type CachingType = 'none' | 'readonly' | 'readwrite';
 
 /**
  * Defines values for StorageAccountType.
@@ -12290,7 +12399,7 @@ export type CachingType = "none" | "readonly" | "readwrite";
  * @readonly
  * @enum {string}
  */
-export type StorageAccountType = "standard_lrs" | "premium_lrs";
+export type StorageAccountType = 'standard_lrs' | 'premium_lrs';
 
 /**
  * Defines values for DiskEncryptionTarget.
@@ -12298,7 +12407,7 @@ export type StorageAccountType = "standard_lrs" | "premium_lrs";
  * @readonly
  * @enum {string}
  */
-export type DiskEncryptionTarget = "osdisk" | "temporarydisk";
+export type DiskEncryptionTarget = 'osdisk' | 'temporarydisk';
 
 /**
  * Defines values for NodePlacementPolicyType.
@@ -12306,7 +12415,7 @@ export type DiskEncryptionTarget = "osdisk" | "temporarydisk";
  * @readonly
  * @enum {string}
  */
-export type NodePlacementPolicyType = "regional" | "zonal";
+export type NodePlacementPolicyType = 'regional' | 'zonal';
 
 /**
  * Defines values for DiffDiskPlacement.
@@ -12314,7 +12423,7 @@ export type NodePlacementPolicyType = "regional" | "zonal";
  * @readonly
  * @enum {string}
  */
-export type DiffDiskPlacement = "CacheDisk";
+export type DiffDiskPlacement = 'CacheDisk';
 
 /**
  * Defines values for DynamicVNetAssignmentScope.
@@ -12322,7 +12431,7 @@ export type DiffDiskPlacement = "CacheDisk";
  * @readonly
  * @enum {string}
  */
-export type DynamicVNetAssignmentScope = "none" | "job";
+export type DynamicVNetAssignmentScope = 'none' | 'job';
 
 /**
  * Defines values for InboundEndpointProtocol.
@@ -12330,7 +12439,7 @@ export type DynamicVNetAssignmentScope = "none" | "job";
  * @readonly
  * @enum {string}
  */
-export type InboundEndpointProtocol = "tcp" | "udp";
+export type InboundEndpointProtocol = 'tcp' | 'udp';
 
 /**
  * Defines values for NetworkSecurityGroupRuleAccess.
@@ -12338,7 +12447,7 @@ export type InboundEndpointProtocol = "tcp" | "udp";
  * @readonly
  * @enum {string}
  */
-export type NetworkSecurityGroupRuleAccess = "allow" | "deny";
+export type NetworkSecurityGroupRuleAccess = 'allow' | 'deny';
 
 /**
  * Defines values for IPAddressProvisioningType.
@@ -12346,7 +12455,15 @@ export type NetworkSecurityGroupRuleAccess = "allow" | "deny";
  * @readonly
  * @enum {string}
  */
-export type IPAddressProvisioningType = "batchmanaged" | "usermanaged" | "nopublicipaddresses";
+export type IPAddressProvisioningType = 'batchmanaged' | 'usermanaged' | 'nopublicipaddresses';
+
+/**
+ * Defines values for NodeCommunicationMode.
+ * Possible values include: 'default', 'classic', 'simplified'
+ * @readonly
+ * @enum {string}
+ */
+export type NodeCommunicationMode = 'default' | 'classic' | 'simplified';
 
 /**
  * Defines values for PoolLifetimeOption.
@@ -12354,7 +12471,7 @@ export type IPAddressProvisioningType = "batchmanaged" | "usermanaged" | "nopubl
  * @readonly
  * @enum {string}
  */
-export type PoolLifetimeOption = "jobschedule" | "job";
+export type PoolLifetimeOption = 'jobschedule' | 'job';
 
 /**
  * Defines values for OnAllTasksComplete.
@@ -12362,7 +12479,7 @@ export type PoolLifetimeOption = "jobschedule" | "job";
  * @readonly
  * @enum {string}
  */
-export type OnAllTasksComplete = "noaction" | "terminatejob";
+export type OnAllTasksComplete = 'noaction' | 'terminatejob';
 
 /**
  * Defines values for OnTaskFailure.
@@ -12370,7 +12487,7 @@ export type OnAllTasksComplete = "noaction" | "terminatejob";
  * @readonly
  * @enum {string}
  */
-export type OnTaskFailure = "noaction" | "performexitoptionsjobaction";
+export type OnTaskFailure = 'noaction' | 'performexitoptionsjobaction';
 
 /**
  * Defines values for JobScheduleState.
@@ -12378,7 +12495,7 @@ export type OnTaskFailure = "noaction" | "performexitoptionsjobaction";
  * @readonly
  * @enum {string}
  */
-export type JobScheduleState = "active" | "completed" | "disabled" | "terminating" | "deleting";
+export type JobScheduleState = 'active' | 'completed' | 'disabled' | 'terminating' | 'deleting';
 
 /**
  * Defines values for ErrorCategory.
@@ -12386,7 +12503,7 @@ export type JobScheduleState = "active" | "completed" | "disabled" | "terminatin
  * @readonly
  * @enum {string}
  */
-export type ErrorCategory = "usererror" | "servererror";
+export type ErrorCategory = 'usererror' | 'servererror';
 
 /**
  * Defines values for JobState.
@@ -12395,14 +12512,7 @@ export type ErrorCategory = "usererror" | "servererror";
  * @readonly
  * @enum {string}
  */
-export type JobState =
-  | "active"
-  | "disabling"
-  | "disabled"
-  | "enabling"
-  | "terminating"
-  | "completed"
-  | "deleting";
+export type JobState = 'active' | 'disabling' | 'disabled' | 'enabling' | 'terminating' | 'completed' | 'deleting';
 
 /**
  * Defines values for JobPreparationTaskState.
@@ -12410,7 +12520,7 @@ export type JobState =
  * @readonly
  * @enum {string}
  */
-export type JobPreparationTaskState = "running" | "completed";
+export type JobPreparationTaskState = 'running' | 'completed';
 
 /**
  * Defines values for TaskExecutionResult.
@@ -12418,7 +12528,7 @@ export type JobPreparationTaskState = "running" | "completed";
  * @readonly
  * @enum {string}
  */
-export type TaskExecutionResult = "success" | "failure";
+export type TaskExecutionResult = 'success' | 'failure';
 
 /**
  * Defines values for JobReleaseTaskState.
@@ -12426,7 +12536,7 @@ export type TaskExecutionResult = "success" | "failure";
  * @readonly
  * @enum {string}
  */
-export type JobReleaseTaskState = "running" | "completed";
+export type JobReleaseTaskState = 'running' | 'completed';
 
 /**
  * Defines values for StatusLevelTypes.
@@ -12434,7 +12544,7 @@ export type JobReleaseTaskState = "running" | "completed";
  * @readonly
  * @enum {string}
  */
-export type StatusLevelTypes = "Error" | "Info" | "Warning";
+export type StatusLevelTypes = 'Error' | 'Info' | 'Warning';
 
 /**
  * Defines values for PoolState.
@@ -12442,7 +12552,7 @@ export type StatusLevelTypes = "Error" | "Info" | "Warning";
  * @readonly
  * @enum {string}
  */
-export type PoolState = "active" | "deleting";
+export type PoolState = 'active' | 'deleting';
 
 /**
  * Defines values for AllocationState.
@@ -12450,7 +12560,7 @@ export type PoolState = "active" | "deleting";
  * @readonly
  * @enum {string}
  */
-export type AllocationState = "steady" | "resizing" | "stopping";
+export type AllocationState = 'steady' | 'resizing' | 'stopping';
 
 /**
  * Defines values for PoolIdentityType.
@@ -12458,7 +12568,7 @@ export type AllocationState = "steady" | "resizing" | "stopping";
  * @readonly
  * @enum {string}
  */
-export type PoolIdentityType = "UserAssigned" | "None";
+export type PoolIdentityType = 'UserAssigned' | 'None';
 
 /**
  * Defines values for TaskState.
@@ -12466,7 +12576,7 @@ export type PoolIdentityType = "UserAssigned" | "None";
  * @readonly
  * @enum {string}
  */
-export type TaskState = "active" | "preparing" | "running" | "completed";
+export type TaskState = 'active' | 'preparing' | 'running' | 'completed';
 
 /**
  * Defines values for TaskAddStatus.
@@ -12474,7 +12584,7 @@ export type TaskState = "active" | "preparing" | "running" | "completed";
  * @readonly
  * @enum {string}
  */
-export type TaskAddStatus = "success" | "clienterror" | "servererror";
+export type TaskAddStatus = 'success' | 'clienterror' | 'servererror';
 
 /**
  * Defines values for SubtaskState.
@@ -12482,7 +12592,7 @@ export type TaskAddStatus = "success" | "clienterror" | "servererror";
  * @readonly
  * @enum {string}
  */
-export type SubtaskState = "preparing" | "running" | "completed";
+export type SubtaskState = 'preparing' | 'running' | 'completed';
 
 /**
  * Defines values for StartTaskState.
@@ -12490,7 +12600,7 @@ export type SubtaskState = "preparing" | "running" | "completed";
  * @readonly
  * @enum {string}
  */
-export type StartTaskState = "running" | "completed";
+export type StartTaskState = 'running' | 'completed';
 
 /**
  * Defines values for ComputeNodeState.
@@ -12500,20 +12610,7 @@ export type StartTaskState = "running" | "completed";
  * @readonly
  * @enum {string}
  */
-export type ComputeNodeState =
-  | "idle"
-  | "rebooting"
-  | "reimaging"
-  | "running"
-  | "unusable"
-  | "creating"
-  | "starting"
-  | "waitingforstarttask"
-  | "starttaskfailed"
-  | "unknown"
-  | "leavingpool"
-  | "offline"
-  | "preempted";
+export type ComputeNodeState = 'idle' | 'rebooting' | 'reimaging' | 'running' | 'unusable' | 'creating' | 'starting' | 'waitingforstarttask' | 'starttaskfailed' | 'unknown' | 'leavingpool' | 'offline' | 'preempted';
 
 /**
  * Defines values for SchedulingState.
@@ -12521,7 +12618,7 @@ export type ComputeNodeState =
  * @readonly
  * @enum {string}
  */
-export type SchedulingState = "enabled" | "disabled";
+export type SchedulingState = 'enabled' | 'disabled';
 
 /**
  * Defines values for DisableJobOption.
@@ -12529,7 +12626,7 @@ export type SchedulingState = "enabled" | "disabled";
  * @readonly
  * @enum {string}
  */
-export type DisableJobOption = "requeue" | "terminate" | "wait";
+export type DisableJobOption = 'requeue' | 'terminate' | 'wait';
 
 /**
  * Defines values for ComputeNodeDeallocationOption.
@@ -12537,11 +12634,7 @@ export type DisableJobOption = "requeue" | "terminate" | "wait";
  * @readonly
  * @enum {string}
  */
-export type ComputeNodeDeallocationOption =
-  | "requeue"
-  | "terminate"
-  | "taskcompletion"
-  | "retaineddata";
+export type ComputeNodeDeallocationOption = 'requeue' | 'terminate' | 'taskcompletion' | 'retaineddata';
 
 /**
  * Defines values for ComputeNodeRebootOption.
@@ -12549,7 +12642,7 @@ export type ComputeNodeDeallocationOption =
  * @readonly
  * @enum {string}
  */
-export type ComputeNodeRebootOption = "requeue" | "terminate" | "taskcompletion" | "retaineddata";
+export type ComputeNodeRebootOption = 'requeue' | 'terminate' | 'taskcompletion' | 'retaineddata';
 
 /**
  * Defines values for ComputeNodeReimageOption.
@@ -12557,7 +12650,7 @@ export type ComputeNodeRebootOption = "requeue" | "terminate" | "taskcompletion"
  * @readonly
  * @enum {string}
  */
-export type ComputeNodeReimageOption = "requeue" | "terminate" | "taskcompletion" | "retaineddata";
+export type ComputeNodeReimageOption = 'requeue' | 'terminate' | 'taskcompletion' | 'retaineddata';
 
 /**
  * Defines values for DisableComputeNodeSchedulingOption.
@@ -12565,17 +12658,16 @@ export type ComputeNodeReimageOption = "requeue" | "terminate" | "taskcompletion
  * @readonly
  * @enum {string}
  */
-export type DisableComputeNodeSchedulingOption = "requeue" | "terminate" | "taskcompletion";
+export type DisableComputeNodeSchedulingOption = 'requeue' | 'terminate' | 'taskcompletion';
 
 /**
  * Contains response data for the list operation.
  */
-export type ApplicationListResponse = ApplicationListResult &
-  ApplicationListHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type ApplicationListResponse = ApplicationListResult & ApplicationListHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -12591,17 +12683,16 @@ export type ApplicationListResponse = ApplicationListResult &
        */
       parsedBody: ApplicationListResult;
     };
-  };
+};
 
 /**
  * Contains response data for the get operation.
  */
-export type ApplicationGetResponse = ApplicationSummary &
-  ApplicationGetHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type ApplicationGetResponse = ApplicationSummary & ApplicationGetHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -12617,17 +12708,16 @@ export type ApplicationGetResponse = ApplicationSummary &
        */
       parsedBody: ApplicationSummary;
     };
-  };
+};
 
 /**
  * Contains response data for the listUsageMetrics operation.
  */
-export type PoolListUsageMetricsResponse = PoolListUsageMetricsResult &
-  PoolListUsageMetricsHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type PoolListUsageMetricsResponse = PoolListUsageMetricsResult & PoolListUsageMetricsHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -12643,17 +12733,16 @@ export type PoolListUsageMetricsResponse = PoolListUsageMetricsResult &
        */
       parsedBody: PoolListUsageMetricsResult;
     };
-  };
+};
 
 /**
  * Contains response data for the getAllLifetimeStatistics operation.
  */
-export type PoolGetAllLifetimeStatisticsResponse = PoolStatistics &
-  PoolGetAllLifetimeStatisticsHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type PoolGetAllLifetimeStatisticsResponse = PoolStatistics & PoolGetAllLifetimeStatisticsHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -12669,7 +12758,7 @@ export type PoolGetAllLifetimeStatisticsResponse = PoolStatistics &
        */
       parsedBody: PoolStatistics;
     };
-  };
+};
 
 /**
  * Contains response data for the add operation.
@@ -12679,22 +12768,21 @@ export type PoolAddResponse = PoolAddHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: PoolAddHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: PoolAddHeaders;
+    };
 };
 
 /**
  * Contains response data for the list operation.
  */
-export type PoolListResponse = CloudPoolListResult &
-  PoolListHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type PoolListResponse = CloudPoolListResult & PoolListHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -12710,7 +12798,7 @@ export type PoolListResponse = CloudPoolListResult &
        */
       parsedBody: CloudPoolListResult;
     };
-  };
+};
 
 /**
  * Contains response data for the deleteMethod operation.
@@ -12720,11 +12808,11 @@ export type PoolDeleteResponse = PoolDeleteHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: PoolDeleteHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: PoolDeleteHeaders;
+    };
 };
 
 /**
@@ -12740,32 +12828,31 @@ export type PoolExistsResponse = PoolExistsHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: PoolExistsHeaders;
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: PoolExistsHeaders;
 
-    /**
-     * The response body as text (string format)
-     */
-    bodyAsText: string;
+      /**
+       * The response body as text (string format)
+       */
+      bodyAsText: string;
 
-    /**
-     * The response body as parsed JSON or XML
-     */
-    parsedBody: boolean;
-  };
+      /**
+       * The response body as parsed JSON or XML
+       */
+      parsedBody: boolean;
+    };
 };
 
 /**
  * Contains response data for the get operation.
  */
-export type PoolGetResponse = CloudPool &
-  PoolGetHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type PoolGetResponse = CloudPool & PoolGetHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -12781,7 +12868,7 @@ export type PoolGetResponse = CloudPool &
        */
       parsedBody: CloudPool;
     };
-  };
+};
 
 /**
  * Contains response data for the patch operation.
@@ -12791,11 +12878,11 @@ export type PoolPatchResponse = PoolPatchHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: PoolPatchHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: PoolPatchHeaders;
+    };
 };
 
 /**
@@ -12806,11 +12893,11 @@ export type PoolDisableAutoScaleResponse = PoolDisableAutoScaleHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: PoolDisableAutoScaleHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: PoolDisableAutoScaleHeaders;
+    };
 };
 
 /**
@@ -12821,22 +12908,21 @@ export type PoolEnableAutoScaleResponse = PoolEnableAutoScaleHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: PoolEnableAutoScaleHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: PoolEnableAutoScaleHeaders;
+    };
 };
 
 /**
  * Contains response data for the evaluateAutoScale operation.
  */
-export type PoolEvaluateAutoScaleResponse = AutoScaleRun &
-  PoolEvaluateAutoScaleHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type PoolEvaluateAutoScaleResponse = AutoScaleRun & PoolEvaluateAutoScaleHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -12852,7 +12938,7 @@ export type PoolEvaluateAutoScaleResponse = AutoScaleRun &
        */
       parsedBody: AutoScaleRun;
     };
-  };
+};
 
 /**
  * Contains response data for the resize operation.
@@ -12862,11 +12948,11 @@ export type PoolResizeResponse = PoolResizeHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: PoolResizeHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: PoolResizeHeaders;
+    };
 };
 
 /**
@@ -12877,11 +12963,11 @@ export type PoolStopResizeResponse = PoolStopResizeHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: PoolStopResizeHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: PoolStopResizeHeaders;
+    };
 };
 
 /**
@@ -12892,11 +12978,11 @@ export type PoolUpdatePropertiesResponse = PoolUpdatePropertiesHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: PoolUpdatePropertiesHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: PoolUpdatePropertiesHeaders;
+    };
 };
 
 /**
@@ -12907,22 +12993,21 @@ export type PoolRemoveNodesResponse = PoolRemoveNodesHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: PoolRemoveNodesHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: PoolRemoveNodesHeaders;
+    };
 };
 
 /**
  * Contains response data for the listSupportedImages operation.
  */
-export type AccountListSupportedImagesResponse = AccountListSupportedImagesResult &
-  AccountListSupportedImagesHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type AccountListSupportedImagesResponse = AccountListSupportedImagesResult & AccountListSupportedImagesHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -12938,17 +13023,16 @@ export type AccountListSupportedImagesResponse = AccountListSupportedImagesResul
        */
       parsedBody: AccountListSupportedImagesResult;
     };
-  };
+};
 
 /**
  * Contains response data for the listPoolNodeCounts operation.
  */
-export type AccountListPoolNodeCountsResponse = PoolNodeCountsListResult &
-  AccountListPoolNodeCountsHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type AccountListPoolNodeCountsResponse = PoolNodeCountsListResult & AccountListPoolNodeCountsHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -12964,17 +13048,16 @@ export type AccountListPoolNodeCountsResponse = PoolNodeCountsListResult &
        */
       parsedBody: PoolNodeCountsListResult;
     };
-  };
+};
 
 /**
  * Contains response data for the getAllLifetimeStatistics operation.
  */
-export type JobGetAllLifetimeStatisticsResponse = JobStatistics &
-  JobGetAllLifetimeStatisticsHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type JobGetAllLifetimeStatisticsResponse = JobStatistics & JobGetAllLifetimeStatisticsHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -12990,7 +13073,7 @@ export type JobGetAllLifetimeStatisticsResponse = JobStatistics &
        */
       parsedBody: JobStatistics;
     };
-  };
+};
 
 /**
  * Contains response data for the deleteMethod operation.
@@ -13000,22 +13083,21 @@ export type JobDeleteResponse = JobDeleteHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobDeleteHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobDeleteHeaders;
+    };
 };
 
 /**
  * Contains response data for the get operation.
  */
-export type JobGetResponse = CloudJob &
-  JobGetHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type JobGetResponse = CloudJob & JobGetHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13031,7 +13113,7 @@ export type JobGetResponse = CloudJob &
        */
       parsedBody: CloudJob;
     };
-  };
+};
 
 /**
  * Contains response data for the patch operation.
@@ -13041,11 +13123,11 @@ export type JobPatchResponse = JobPatchHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobPatchHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobPatchHeaders;
+    };
 };
 
 /**
@@ -13056,11 +13138,11 @@ export type JobUpdateResponse = JobUpdateHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobUpdateHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobUpdateHeaders;
+    };
 };
 
 /**
@@ -13071,11 +13153,11 @@ export type JobDisableResponse = JobDisableHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobDisableHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobDisableHeaders;
+    };
 };
 
 /**
@@ -13086,11 +13168,11 @@ export type JobEnableResponse = JobEnableHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobEnableHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobEnableHeaders;
+    };
 };
 
 /**
@@ -13101,11 +13183,11 @@ export type JobTerminateResponse = JobTerminateHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobTerminateHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobTerminateHeaders;
+    };
 };
 
 /**
@@ -13116,22 +13198,21 @@ export type JobAddResponse = JobAddHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobAddHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobAddHeaders;
+    };
 };
 
 /**
  * Contains response data for the list operation.
  */
-export type JobListResponse = CloudJobListResult &
-  JobListHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type JobListResponse = CloudJobListResult & JobListHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13147,17 +13228,16 @@ export type JobListResponse = CloudJobListResult &
        */
       parsedBody: CloudJobListResult;
     };
-  };
+};
 
 /**
  * Contains response data for the listFromJobSchedule operation.
  */
-export type JobListFromJobScheduleResponse = CloudJobListResult &
-  JobListFromJobScheduleHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type JobListFromJobScheduleResponse = CloudJobListResult & JobListFromJobScheduleHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13173,17 +13253,16 @@ export type JobListFromJobScheduleResponse = CloudJobListResult &
        */
       parsedBody: CloudJobListResult;
     };
-  };
+};
 
 /**
  * Contains response data for the listPreparationAndReleaseTaskStatus operation.
  */
-export type JobListPreparationAndReleaseTaskStatusResponse = CloudJobListPreparationAndReleaseTaskStatusResult &
-  JobListPreparationAndReleaseTaskStatusHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type JobListPreparationAndReleaseTaskStatusResponse = CloudJobListPreparationAndReleaseTaskStatusResult & JobListPreparationAndReleaseTaskStatusHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13199,17 +13278,16 @@ export type JobListPreparationAndReleaseTaskStatusResponse = CloudJobListPrepara
        */
       parsedBody: CloudJobListPreparationAndReleaseTaskStatusResult;
     };
-  };
+};
 
 /**
  * Contains response data for the getTaskCounts operation.
  */
-export type JobGetTaskCountsResponse = TaskCountsResult &
-  JobGetTaskCountsHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type JobGetTaskCountsResponse = TaskCountsResult & JobGetTaskCountsHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13225,7 +13303,7 @@ export type JobGetTaskCountsResponse = TaskCountsResult &
        */
       parsedBody: TaskCountsResult;
     };
-  };
+};
 
 /**
  * Contains response data for the add operation.
@@ -13235,22 +13313,21 @@ export type CertificateAddResponse = CertificateAddHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: CertificateAddHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: CertificateAddHeaders;
+    };
 };
 
 /**
  * Contains response data for the list operation.
  */
-export type CertificateListResponse = CertificateListResult &
-  CertificateListHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type CertificateListResponse = CertificateListResult & CertificateListHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13266,7 +13343,7 @@ export type CertificateListResponse = CertificateListResult &
        */
       parsedBody: CertificateListResult;
     };
-  };
+};
 
 /**
  * Contains response data for the cancelDeletion operation.
@@ -13276,11 +13353,11 @@ export type CertificateCancelDeletionResponse = CertificateCancelDeletionHeaders
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: CertificateCancelDeletionHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: CertificateCancelDeletionHeaders;
+    };
 };
 
 /**
@@ -13291,22 +13368,21 @@ export type CertificateDeleteResponse = CertificateDeleteHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: CertificateDeleteHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: CertificateDeleteHeaders;
+    };
 };
 
 /**
  * Contains response data for the get operation.
  */
-export type CertificateGetResponse = Certificate &
-  CertificateGetHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type CertificateGetResponse = Certificate & CertificateGetHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13322,7 +13398,7 @@ export type CertificateGetResponse = Certificate &
        */
       parsedBody: Certificate;
     };
-  };
+};
 
 /**
  * Contains response data for the deleteFromTask operation.
@@ -13332,11 +13408,11 @@ export type FileDeleteFromTaskResponse = FileDeleteFromTaskHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: FileDeleteFromTaskHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: FileDeleteFromTaskHeaders;
+    };
 };
 
 /**
@@ -13363,11 +13439,11 @@ export type FileGetFromTaskResponse = FileGetFromTaskHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: FileGetFromTaskHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: FileGetFromTaskHeaders;
+    };
 };
 
 /**
@@ -13378,11 +13454,11 @@ export type FileGetPropertiesFromTaskResponse = FileGetPropertiesFromTaskHeaders
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: FileGetPropertiesFromTaskHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: FileGetPropertiesFromTaskHeaders;
+    };
 };
 
 /**
@@ -13393,11 +13469,11 @@ export type FileDeleteFromComputeNodeResponse = FileDeleteFromComputeNodeHeaders
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: FileDeleteFromComputeNodeHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: FileDeleteFromComputeNodeHeaders;
+    };
 };
 
 /**
@@ -13424,11 +13500,11 @@ export type FileGetFromComputeNodeResponse = FileGetFromComputeNodeHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: FileGetFromComputeNodeHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: FileGetFromComputeNodeHeaders;
+    };
 };
 
 /**
@@ -13439,22 +13515,21 @@ export type FileGetPropertiesFromComputeNodeResponse = FileGetPropertiesFromComp
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: FileGetPropertiesFromComputeNodeHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: FileGetPropertiesFromComputeNodeHeaders;
+    };
 };
 
 /**
  * Contains response data for the listFromTask operation.
  */
-export type FileListFromTaskResponse = NodeFileListResult &
-  FileListFromTaskHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type FileListFromTaskResponse = NodeFileListResult & FileListFromTaskHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13470,17 +13545,16 @@ export type FileListFromTaskResponse = NodeFileListResult &
        */
       parsedBody: NodeFileListResult;
     };
-  };
+};
 
 /**
  * Contains response data for the listFromComputeNode operation.
  */
-export type FileListFromComputeNodeResponse = NodeFileListResult &
-  FileListFromComputeNodeHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type FileListFromComputeNodeResponse = NodeFileListResult & FileListFromComputeNodeHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13496,7 +13570,7 @@ export type FileListFromComputeNodeResponse = NodeFileListResult &
        */
       parsedBody: NodeFileListResult;
     };
-  };
+};
 
 /**
  * Contains response data for the exists operation.
@@ -13511,21 +13585,21 @@ export type JobScheduleExistsResponse = JobScheduleExistsHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobScheduleExistsHeaders;
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobScheduleExistsHeaders;
 
-    /**
-     * The response body as text (string format)
-     */
-    bodyAsText: string;
+      /**
+       * The response body as text (string format)
+       */
+      bodyAsText: string;
 
-    /**
-     * The response body as parsed JSON or XML
-     */
-    parsedBody: boolean;
-  };
+      /**
+       * The response body as parsed JSON or XML
+       */
+      parsedBody: boolean;
+    };
 };
 
 /**
@@ -13536,22 +13610,21 @@ export type JobScheduleDeleteResponse = JobScheduleDeleteHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobScheduleDeleteHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobScheduleDeleteHeaders;
+    };
 };
 
 /**
  * Contains response data for the get operation.
  */
-export type JobScheduleGetResponse = CloudJobSchedule &
-  JobScheduleGetHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type JobScheduleGetResponse = CloudJobSchedule & JobScheduleGetHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13567,7 +13640,7 @@ export type JobScheduleGetResponse = CloudJobSchedule &
        */
       parsedBody: CloudJobSchedule;
     };
-  };
+};
 
 /**
  * Contains response data for the patch operation.
@@ -13577,11 +13650,11 @@ export type JobSchedulePatchResponse = JobSchedulePatchHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobSchedulePatchHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobSchedulePatchHeaders;
+    };
 };
 
 /**
@@ -13592,11 +13665,11 @@ export type JobScheduleUpdateResponse = JobScheduleUpdateHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobScheduleUpdateHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobScheduleUpdateHeaders;
+    };
 };
 
 /**
@@ -13607,11 +13680,11 @@ export type JobScheduleDisableResponse = JobScheduleDisableHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobScheduleDisableHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobScheduleDisableHeaders;
+    };
 };
 
 /**
@@ -13622,11 +13695,11 @@ export type JobScheduleEnableResponse = JobScheduleEnableHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobScheduleEnableHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobScheduleEnableHeaders;
+    };
 };
 
 /**
@@ -13637,11 +13710,11 @@ export type JobScheduleTerminateResponse = JobScheduleTerminateHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobScheduleTerminateHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobScheduleTerminateHeaders;
+    };
 };
 
 /**
@@ -13652,22 +13725,21 @@ export type JobScheduleAddResponse = JobScheduleAddHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: JobScheduleAddHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: JobScheduleAddHeaders;
+    };
 };
 
 /**
  * Contains response data for the list operation.
  */
-export type JobScheduleListResponse = CloudJobScheduleListResult &
-  JobScheduleListHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type JobScheduleListResponse = CloudJobScheduleListResult & JobScheduleListHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13683,7 +13755,7 @@ export type JobScheduleListResponse = CloudJobScheduleListResult &
        */
       parsedBody: CloudJobScheduleListResult;
     };
-  };
+};
 
 /**
  * Contains response data for the add operation.
@@ -13693,22 +13765,21 @@ export type TaskAddResponse = TaskAddHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: TaskAddHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: TaskAddHeaders;
+    };
 };
 
 /**
  * Contains response data for the list operation.
  */
-export type TaskListResponse = CloudTaskListResult &
-  TaskListHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type TaskListResponse = CloudTaskListResult & TaskListHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13724,17 +13795,16 @@ export type TaskListResponse = CloudTaskListResult &
        */
       parsedBody: CloudTaskListResult;
     };
-  };
+};
 
 /**
  * Contains response data for the addCollection operation.
  */
-export type TaskAddCollectionResponse = TaskAddCollectionResult &
-  TaskAddCollectionHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type TaskAddCollectionResponse = TaskAddCollectionResult & TaskAddCollectionHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13750,7 +13820,7 @@ export type TaskAddCollectionResponse = TaskAddCollectionResult &
        */
       parsedBody: TaskAddCollectionResult;
     };
-  };
+};
 
 /**
  * Contains response data for the deleteMethod operation.
@@ -13760,22 +13830,21 @@ export type TaskDeleteResponse = TaskDeleteHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: TaskDeleteHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: TaskDeleteHeaders;
+    };
 };
 
 /**
  * Contains response data for the get operation.
  */
-export type TaskGetResponse = CloudTask &
-  TaskGetHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type TaskGetResponse = CloudTask & TaskGetHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13791,7 +13860,7 @@ export type TaskGetResponse = CloudTask &
        */
       parsedBody: CloudTask;
     };
-  };
+};
 
 /**
  * Contains response data for the update operation.
@@ -13801,22 +13870,21 @@ export type TaskUpdateResponse = TaskUpdateHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: TaskUpdateHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: TaskUpdateHeaders;
+    };
 };
 
 /**
  * Contains response data for the listSubtasks operation.
  */
-export type TaskListSubtasksResponse = CloudTaskListSubtasksResult &
-  TaskListSubtasksHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type TaskListSubtasksResponse = CloudTaskListSubtasksResult & TaskListSubtasksHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13832,7 +13900,7 @@ export type TaskListSubtasksResponse = CloudTaskListSubtasksResult &
        */
       parsedBody: CloudTaskListSubtasksResult;
     };
-  };
+};
 
 /**
  * Contains response data for the terminate operation.
@@ -13842,11 +13910,11 @@ export type TaskTerminateResponse = TaskTerminateHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: TaskTerminateHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: TaskTerminateHeaders;
+    };
 };
 
 /**
@@ -13857,11 +13925,11 @@ export type TaskReactivateResponse = TaskReactivateHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: TaskReactivateHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: TaskReactivateHeaders;
+    };
 };
 
 /**
@@ -13872,11 +13940,11 @@ export type ComputeNodeAddUserResponse = ComputeNodeAddUserHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: ComputeNodeAddUserHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: ComputeNodeAddUserHeaders;
+    };
 };
 
 /**
@@ -13887,11 +13955,11 @@ export type ComputeNodeDeleteUserResponse = ComputeNodeDeleteUserHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: ComputeNodeDeleteUserHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: ComputeNodeDeleteUserHeaders;
+    };
 };
 
 /**
@@ -13902,22 +13970,21 @@ export type ComputeNodeUpdateUserResponse = ComputeNodeUpdateUserHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: ComputeNodeUpdateUserHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: ComputeNodeUpdateUserHeaders;
+    };
 };
 
 /**
  * Contains response data for the get operation.
  */
-export type ComputeNodeGetResponse = ComputeNode &
-  ComputeNodeGetHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type ComputeNodeGetResponse = ComputeNode & ComputeNodeGetHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -13933,7 +14000,7 @@ export type ComputeNodeGetResponse = ComputeNode &
        */
       parsedBody: ComputeNode;
     };
-  };
+};
 
 /**
  * Contains response data for the reboot operation.
@@ -13943,11 +14010,11 @@ export type ComputeNodeRebootResponse = ComputeNodeRebootHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: ComputeNodeRebootHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: ComputeNodeRebootHeaders;
+    };
 };
 
 /**
@@ -13958,11 +14025,11 @@ export type ComputeNodeReimageResponse = ComputeNodeReimageHeaders & {
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: ComputeNodeReimageHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: ComputeNodeReimageHeaders;
+    };
 };
 
 /**
@@ -13973,11 +14040,11 @@ export type ComputeNodeDisableSchedulingResponse = ComputeNodeDisableSchedulingH
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: ComputeNodeDisableSchedulingHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: ComputeNodeDisableSchedulingHeaders;
+    };
 };
 
 /**
@@ -13988,22 +14055,21 @@ export type ComputeNodeEnableSchedulingResponse = ComputeNodeEnableSchedulingHea
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: ComputeNodeEnableSchedulingHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: ComputeNodeEnableSchedulingHeaders;
+    };
 };
 
 /**
  * Contains response data for the getRemoteLoginSettings operation.
  */
-export type ComputeNodeGetRemoteLoginSettingsResponse = ComputeNodeGetRemoteLoginSettingsResult &
-  ComputeNodeGetRemoteLoginSettingsHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type ComputeNodeGetRemoteLoginSettingsResponse = ComputeNodeGetRemoteLoginSettingsResult & ComputeNodeGetRemoteLoginSettingsHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -14019,7 +14085,7 @@ export type ComputeNodeGetRemoteLoginSettingsResponse = ComputeNodeGetRemoteLogi
        */
       parsedBody: ComputeNodeGetRemoteLoginSettingsResult;
     };
-  };
+};
 
 /**
  * Contains response data for the getRemoteDesktop operation.
@@ -14045,22 +14111,21 @@ export type ComputeNodeGetRemoteDesktopResponse = ComputeNodeGetRemoteDesktopHea
    * The underlying HTTP response.
    */
   _response: msRest.HttpResponse & {
-    /**
-     * The parsed HTTP response headers.
-     */
-    parsedHeaders: ComputeNodeGetRemoteDesktopHeaders;
-  };
+      /**
+       * The parsed HTTP response headers.
+       */
+      parsedHeaders: ComputeNodeGetRemoteDesktopHeaders;
+    };
 };
 
 /**
  * Contains response data for the uploadBatchServiceLogs operation.
  */
-export type ComputeNodeUploadBatchServiceLogsResponse = UploadBatchServiceLogsResult &
-  ComputeNodeUploadBatchServiceLogsHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type ComputeNodeUploadBatchServiceLogsResponse = UploadBatchServiceLogsResult & ComputeNodeUploadBatchServiceLogsHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -14076,17 +14141,16 @@ export type ComputeNodeUploadBatchServiceLogsResponse = UploadBatchServiceLogsRe
        */
       parsedBody: UploadBatchServiceLogsResult;
     };
-  };
+};
 
 /**
  * Contains response data for the list operation.
  */
-export type ComputeNodeListResponse = ComputeNodeListResult &
-  ComputeNodeListHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type ComputeNodeListResponse = ComputeNodeListResult & ComputeNodeListHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -14102,17 +14166,16 @@ export type ComputeNodeListResponse = ComputeNodeListResult &
        */
       parsedBody: ComputeNodeListResult;
     };
-  };
+};
 
 /**
  * Contains response data for the get operation.
  */
-export type ComputeNodeExtensionGetResponse = NodeVMExtension &
-  ComputeNodeExtensionGetHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type ComputeNodeExtensionGetResponse = NodeVMExtension & ComputeNodeExtensionGetHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -14128,17 +14191,16 @@ export type ComputeNodeExtensionGetResponse = NodeVMExtension &
        */
       parsedBody: NodeVMExtension;
     };
-  };
+};
 
 /**
  * Contains response data for the list operation.
  */
-export type ComputeNodeExtensionListResponse = NodeVMExtensionList &
-  ComputeNodeExtensionListHeaders & {
-    /**
-     * The underlying HTTP response.
-     */
-    _response: msRest.HttpResponse & {
+export type ComputeNodeExtensionListResponse = NodeVMExtensionList & ComputeNodeExtensionListHeaders & {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: msRest.HttpResponse & {
       /**
        * The parsed HTTP response headers.
        */
@@ -14154,4 +14216,4 @@ export type ComputeNodeExtensionListResponse = NodeVMExtensionList &
        */
       parsedBody: NodeVMExtensionList;
     };
-  };
+};

@@ -1,12 +1,35 @@
 # Release History
 
-## 11.3.0-beta.6 (Unreleased)
+## 11.3.0-beta.9 (Unreleased)
 
 ### Features Added
 
+- Enable `OcrSkill` and `ImageAnalysisSkill`. [#23495](https://github.com/Azure/azure-sdk-for-js/pull/23495)
+
 ### Breaking Changes
 
+- Update `SearchIndexerDataNoneIdentity.odatatype`. [#23495](https://github.com/Azure/azure-sdk-for-js/pull/23495)
+
 ### Bugs Fixed
+
+### Other Changes
+
+## 11.3.0-beta.8 (2022-09-06)
+
+- Added `core-http-compat` dependency
+- Enabled national cloud support for Azure Search SDK. Please refer [#22887](https://github.com/Azure/azure-sdk-for-js/pull/22887) for further details.
+
+## 11.3.0-beta.7 (2022-03-08)
+
+### Features Added
+
+- Added new APIs `createAlias`, `createOrUpdateAlias`, `deleteAlias`, `getAlias` & `listAliases` operations to the `SearchIndexClient`.
+
+## 11.3.0-beta.6 (2022-02-08)
+
+### Features Added
+
+- Added new type of SearchIndexer skill - `AzureMachineLearningSkill`. Please refer [#20183](https://github.com/Azure/azure-sdk-for-js/pull/20183) for further details.
 
 ### Other Changes
 

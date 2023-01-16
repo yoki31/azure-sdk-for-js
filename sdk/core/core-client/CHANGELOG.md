@@ -1,6 +1,6 @@
 # Release History
 
-## 1.4.1 (Unreleased)
+## 1.7.1 (Unreleased)
 
 ### Features Added
 
@@ -8,9 +8,48 @@
 
 ### Bugs Fixed
 
-- Addressed an issue where the `onResponse` callback wouldn't be called in certain cases where an unexpected response was received from the service. [PR #19702](https://github.com/Azure/azure-sdk-for-js/pull/19702)
+### Other Changes
+
+- Only deserialize headers that are mapped in OperationSpec when using a header mapper. Previously core-client would include all header values when deserializing, leading to result objects having unintended extra metadata.
+
+## 1.7.0 (2023-01-05)
+
+### Features Added
+
+- Ported support for `xmlIsMsText` from `@azure/core-http`.
+
+### Bugs Fixed
+
+- Fix a serializer issue where resettable streams were not being accepted.
+- Fix an issue where XML options are not propagated during deserialization.
+
+## 1.6.1 (2022-08-04)
+
+### Bugs Fixed
+
+- Fix serializer to find the correct discriminator index. Please refer to [#22523](https://github.com/Azure/azure-sdk-for-js/pull/22523) for further details.
 
 ### Other Changes
+
+- Removed the constraints check during serialization. Please refer [#21839](https://github.com/Azure/azure-sdk-for-js/issues/21839) for further details.
+
+## 1.6.0 (2022-05-05)
+
+### Features Added
+
+- Added a new property endpoint in ServiceClientOptions and mark the baseUri as deprecated to encourage people to use endpoint. See issue link [here](https://github.com/Azure/autorest.typescript/issues/1337)
+- Upgraded our `@azure/core-tracing` dependency to version 1.0
+- Add callbacks to support Storage challenge authentication [PR#21678](https://github.com/Azure/azure-sdk-for-js/pull/21678)
+
+## 1.5.0 (2022-02-03)
+
+### Features Added
+
+- Added new `CommonClientOptions` member `additionalPolicies` to allow passing custom pipeline policies to client constructors. [PR #19920](https://github.com/Azure/azure-sdk-for-js/pull/19920)
+
+### Bugs Fixed
+
+- Addressed an issue where the `onResponse` callback wouldn't be called in certain cases where an unexpected response was received from the service. [PR #19702](https://github.com/Azure/azure-sdk-for-js/pull/19702)
 
 ## 1.4.0 (2022-01-06)
 

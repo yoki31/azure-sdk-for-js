@@ -93,10 +93,12 @@ export class GallerySharingProfileImpl implements GallerySharingProfile {
       { resourceGroupName, galleryName, sharingUpdate, options },
       updateOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -146,11 +148,11 @@ const updateOperationSpec: coreClient.OperationSpec = {
     }
   },
   requestBody: Parameters.sharingUpdate,
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.galleryName
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],

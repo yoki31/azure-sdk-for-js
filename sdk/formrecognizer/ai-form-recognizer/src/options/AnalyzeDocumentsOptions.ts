@@ -3,16 +3,16 @@
 
 import { OperationOptions } from "@azure/core-client";
 import {
-  AnalyzedDocument,
   AnalyzeResult,
+  AnalyzedDocument,
   DocumentAnalysisPollOperationState,
-} from "../lro/analyze";
+} from "../lro/analysis";
 import { PollerOptions } from "./PollerOptions";
 
 /**
  * Options for the document analysis operation.
  */
-export interface AnalyzeDocumentsOptions<Result = AnalyzeResult<AnalyzedDocument>>
+export interface AnalyzeDocumentOptions<Result = AnalyzeResult<AnalyzedDocument>>
   extends OperationOptions,
     PollerOptions<DocumentAnalysisPollOperationState<Result>> {
   /**

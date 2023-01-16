@@ -1,12 +1,158 @@
 # Release History
 
-## 2.0.2 (Unreleased)
+## 3.1.3 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 3.1.2 (2022-12-05)
+
+### Bugs Fixed
+
+- Fixed bug in `ManagedIdentity Credential` where "expiresInSeconds" was taking the absolute timestamp instead of relative expiration time period in seconds.
+### Other Changes
+
+- Enable msal logging based on log level specified by user for Azure SDK.
+- Upgraded version dependencies on msal libraries, since they have additional logging added.
+
+## 3.1.1 (2022-11-18)
+
+### Bugs Fixed
+
+- Fixed bug to update "expiresOnTimestamp" field in Managed Identity to be in seconds and not milliseconds.
+
+## 3.1.0 (2022-11-08)
+
+### Other Changes
+
+- Docs improvements for cross-language alignment
+
+## 3.0.1 (2022-11-07)
+
+### Bugs Fixed
+
+- Fixed bug to enable `additionallyAllowedTenants` to pass through to MSAL Flow.
+
+## 3.1.0-beta.1 (2022-10-13)
+
+### Features Added
+
+- Added Token Caching support to Managed Identity Credential
+
+## 3.0.0 (2022-09-19)
+
+### Features Added
+
+- Added `additionallyAllowedTenants` to the following credential options to force explicit opt-in behavior for multi-tenant authentication via the options property bag to the following:
+  - `AuthorizationCodeCredentialOptions`
+  - `AzureApplicationCredentialOptions`
+  - `AzureCliCredentialOptions`
+  - `AzurePowerShellCredentialOptions`
+  - `ClientAssertionCredentialOptions`
+  - `ClientCertificateCredentialOptions`
+  - `ClientSecretCredentialOptions`
+  - `DefaultAzureCredentialOptions`
+  - `DeviceCodeCredentialOptions`
+  - `EnvironmentCredentialOptions`
+  - `InteractiveCredentialOptions`
+  - `OnBehalfOfCredentialOptions`
+  - `UsernamePasswordCredentialOptions`
+  - `VisualStudioCodeCredentialOptions`
+
+### Breaking Changes
+
+- Credential types supporting multi-tenant authentication will now throw an error if the requested tenant ID doesn't match the credential's tenant ID, and is not included in the `additionallyAllowedTenants` option. Applications must now explicitly add additional tenants to the `additionallyAllowedTenants` list, or add `"*"` to list, to enable acquiring tokens from tenants other than the originally specified tenant ID.  See [BREAKING_CHANGES.md](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/BREAKING_CHANGES.md).
+
+### Bugs Fixed
+
+- Changed the way token expiration for managed identity tokens is calculated to handle different server formats. See [PR #23232](https://github.com/Azure/azure-sdk-for-js/pull/23232)
+## 3.0.0-beta.1 (2022-08-24)
+
+### Features Added
+
+- Added support in `EnvironmentCredential` to read a certificate password from an environment variable `AZURE_CLIENT_CERTIFICATE_PASSWORD`
+- Added samples for supporting AAD authentication in Azure Redis Cache
+
+### Breaking Changes
+
+- Removed `VisualStudioCodeCredential` from `DefaultAzureCredential` token chain. [Issue 20500](https://github.com/Azure/azure-sdk-for-js/issues/20500) tracks this.
+
+## 2.1.0 (2022-07-08)
+
+### Features Added
+
+- Added support for new credential `ClientAssertionCredential`, which accepts a callback function for the signed JWT assertion for a client certificate. See [MSAL Client Assertion for more information](https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-node/docs/initialize-confidential-client-application.md).
+
+### Bugs Fixed
+
+- Fixed a bug that would break the AzureCliCredential if the Azure CLI reported a warning. See: [21075](https://github.com/Azure/azure-sdk-for-js/issues/21075).
+- Fixed a bug in `AuthorizationCodeCredential` where the tenant id was not being used. The `common` tenant was the only tenant being used by this credential.
+- Fixed a bug in `AuthorizationCodeCredential` where the public client was not being used. Due to this bug, without passing in the client secret, this credential would fail.
+- Fixed a bug in `DefaultAzureCredential` and `AzureCLICredential` where the errors thrown by the latter credential were not of type `CredentialUnavailableError`. This caused only the error of `AzureCLICredential` being thrown and the other chained errors of `DefaultAzureCredential` were not thrown. See: [22066](https://github.com/Azure/azure-sdk-for-js/issues/22066)
+
+### Other Changes
+
+- Upgraded to `@azure/core-tracing` version `^1.0.0`.
+- Improved the errors displayed on the `AzureCliCredential`.
+
+## 2.0.5 (2022-06-22)
+
+### Bugs Fixed
+
+- Fixed a bug in `InteractiveBrowserCredential` for Mac OS where the [app was not getting closed](https://github.com/Azure/azure-sdk-for-js/issues/21726) after the authorization succeeded.
+
+## 2.1.0-beta.2 (2022-03-22)
+
+### Features Added
+
+- Added stronger types to the `DefaultAzureCredential` and `ManagedIdentityCredential` constructors so that TypeScript users will trigger a type error by providing both a Managed Identity client ID and resource ID to the same credential instance.
+- Added stronger types to the `ClientCertificateCredential` and `OnBehalfOfCredential` constructors so that TypeScript users will trigger a type error by providing both a Client certificate and certificate path to the same credential instance.
+- Added support for App Service 2019 resource in Managed Identity Credential.
+- All of our credentials now support a new option on their constructor: `loggingOptions`, which allows configuring the logging options of the HTTP pipelines.
+- Within the new `loggingOptions` we have also added `allowLoggingAccountIdentifiers`, a property that if set to true logs information specific to the authenticated account after each successful authentication, including: the Client ID, the Tenant ID, the Object ID of the authenticated user, and if possible the User Principal Name.
+
+### Bugs Fixed
+
+- Fixed a bug that caused [Continuous Access Enforcement (CAE)](https://docs.microsoft.com/azure/active-directory/conditional-access/concept-continuous-access-evaluation) and [Conditional Access authentication context](https://techcommunity.microsoft.com/t5/azure-active-directory-identity/granular-conditional-access-for-sensitive-data-and-actions/ba-p/1751775) authentication to fail with newer versions of MSAL.
+
+## 2.1.0-beta.1 (2022-03-02)
+
+### Features Added
+
+- Added support for specifying a custom `resourceId` when creating a `ManagedIdentityCredential` or `DefaultAzureCredential`.
+  - In some scenarios where a user-assigned managed identity is required, the identity may be known by an ARM resource ID, but not a client ID (such as when user-assigned identities are created using an ARM template). The `resourceId` option allows an app to select its managed identity by its ARM resource ID to support such scenarios.
+  - If `resourceId` is provided, the managed identity providers for Azure App Service (2017), Azure Arc, Azure Cloud Shell, Azure Service Fabric and Token Exchange authentication will log a warning since this parameter is not supported by the identity endpoints in those services. The authentication attempts will be sent, but the parameter will be ignored by the service.
+- Added `clientId` to the optional parameters of the `ManagedIdentityCredential`.
+- Updated the Troubleshoot guide to have error codes and error messages for the Identity Customer Service Support.
+
+## 2.0.4 (2022-02-18)
+
+### Bugs Fixed
+
+- Fixed a regression in version 2.0.3 in which providing an options bag, but _not_ a client ID, to the `ManagedIdentityCredential` constructor would discard the `options` parameter.
+
+## 2.0.3 (2022-02-16)
+
+### Features Added
+
+- Added log warning for non-support of user assigned identity in Managed Identity credentials in Cloud Shell environments.
+
+### Bugs Fixed
+
+- Fixed bug that duplicated the tenant Id on the URI of outgoing requests when passing an `authorityHost` ending with a tenant Id.
+- `ManagedIdentityCredential` now won't retry when it tries to ping the IMDS endpoint.
+- Now we are specifying the maximum number of retries to 3 to ensure that maximum retries won't change without notice.
+
+## 2.0.2 (2022-02-03)
 
 ### Features Added
 
 - Improved the error message when `InteractiveBrowserCredential` is used with an unavailable port (such as when no `redirectUri` is provided, and the port `80` is busy) and when no browser is available.
-
-### Breaking Changes
 
 ### Bugs Fixed
 
@@ -14,6 +160,8 @@
 - The `ManagedIdentityCredential` now properly parses expiration dates from token exchange requests.
 
 ### Other Changes
+
+- Moved the `@types/stoppable` dependency to the `devDependencies`.
 
 ## 2.0.1 (2021-10-28)
 
@@ -29,7 +177,7 @@
 
 After multiple beta releases over the past year, we're proud to announce the general availability of version 2 of the `@azure/identity` package. This version includes the best parts of v1, plus several improvements.
 
-This changelog entry showcases the changes that have been made from version 1 of this package. See the [v1-to-v2 migration guide](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/migration-v1-v2.md) for details on how to upgrade your application to use the version 2 of `@azure/identity`. For information on troubleshooting the Identity package, see the [troubleshooting guide](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/Troubleshooting.md).
+This changelog entry showcases the changes that have been made from version 1 of this package. See the [v1-to-v2 migration guide](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/migration-v1-v2.md) for details on how to upgrade your application to use the version 2 of `@azure/identity`. For information on troubleshooting the Identity package, see the [troubleshooting guide](https://aka.ms/azsdk/js/identity/troubleshoot).
 
 ### Features Added
 
@@ -54,8 +202,8 @@ useIdentityPlugin(cachePersistencePlugin);
 async function main() {
   const credential = new DeviceCodeCredential({
     tokenCachePersistenceOptions: {
-      enabled: true
-    }
+      enabled: true,
+    },
   });
 }
 ```
@@ -110,7 +258,7 @@ Azure Service Fabric support hasn't been added on the initial version 2 of Ident
 - `InteractiveBrowserCredential` has a new `loginHint` constructor option, which allows a username to be pre-selected for interactive logins.
 - In `AzureCliCredential`, we allow specifying a `tenantId` in the parameters through the `AzureCliCredentialOptions`.
 - A new error, named `AuthenticationRequiredError`, has been added. This error shows up when a credential fails to authenticate silently.
-- Errors and logged exceptions may point to the new [troubleshooting guidelines](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/Troubleshooting.md).
+- Errors and logged exceptions may point to the new [troubleshooting guidelines](https://aka.ms/azsdk/js/identity/troubleshoot).
 - On all of the credentials we're providing, the initial authentication attempt in the lifetime of your app will include an additional request to first discover relevant endpoint metadata information from Azure.
 
 ### Breaking changes
@@ -121,6 +269,7 @@ Azure Service Fabric support hasn't been added on the initial version 2 of Ident
 - We have also renamed the error `CredentialUnavailable` to `CredentialUnavailableError`, to align with the naming convention used for error classes in the Azure SDKs in JavaScript.
 - In v1 of Identity some `getToken` calls could resolve with `null` in the case the authentication request succeeded with a malformed output. In v2, issues with the `getToken` method will always throw errors.
 - Breaking changes to InteractiveBrowserCredential
+
   - The `InteractiveBrowserCredential` will use the [Auth Code Flow](https://docs.microsoft.com/azure/active-directory/develop/v2-oauth2-auth-code-flow) with [PKCE](https://tools.ietf.org/html/rfc7636) rather than [Implicit Grant Flow](https://docs.microsoft.com/azure/active-directory/develop/v2-oauth2-implicit-grant-flow) to better support browsers with enhanced security restrictions. Learn how to migrate in the [migration guide](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/migration-v1-v2.md). Read more about the latest `InteractiveBrowserCredential` [here](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/interactive-browser-credential.md).
   - The default client ID used for `InteractiveBrowserCredential` was viable only in Node.js and not for the browser. Therefore, on v2 client ID is a required parameter when using this credential in browser apps.
   - Identity v2 also removes the `postLogoutRedirectUri` from the options to the constructor for `InteractiveBrowserCredential`. This option wasn't being used. Instead of using this option, use MSAL directly. For more information, see [Authenticating with the @azure/msal-browser Public Client](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/samples/AzureIdentityExamples.md#authenticating-with-the-azuremsal-browser-public-client).

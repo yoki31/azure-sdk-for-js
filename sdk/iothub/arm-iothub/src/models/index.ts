@@ -134,13 +134,21 @@ export interface IotHubProperties {
   cloudToDevice?: CloudToDeviceProperties;
   /** IoT hub comments. */
   comments?: string;
+  /** The device streams properties of iothub. */
+  deviceStreams?: IotHubPropertiesDeviceStreams;
   /** The capabilities and features enabled for the IoT hub. */
   features?: Capabilities;
+  /** The encryption properties for the IoT hub. */
+  encryption?: EncryptionPropertiesDescription;
   /**
    * Primary and secondary location for iot hub
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly locations?: IotHubLocationDescription[];
+  /** This property when set to true, will enable data residency, thus, disabling disaster recovery. */
+  enableDataResidency?: boolean;
+  /** This property store root certificate related information */
+  rootCertificate?: RootCertificateProperties;
 }
 
 /** The properties of an IoT hub shared access policy. */
@@ -278,6 +286,8 @@ export interface RoutingEndpoints {
   eventHubs?: RoutingEventHubProperties[];
   /** The list of storage container endpoints that IoT hub routes messages to, based on the routing rules. */
   storageContainers?: RoutingStorageContainerProperties[];
+  /** The list of Cosmos DB collection endpoints that IoT hub routes messages to, based on the routing rules. */
+  cosmosDBSqlCollections?: RoutingCosmosDBSqlApiProperties[];
 }
 
 /** The properties related to service bus queue endpoint types. */
@@ -382,6 +392,36 @@ export interface RoutingStorageContainerProperties {
   encoding?: RoutingStorageContainerPropertiesEncoding;
 }
 
+/** The properties related to a cosmos DB sql collection endpoint. */
+export interface RoutingCosmosDBSqlApiProperties {
+  /** The name that identifies this endpoint. The name can only include alphanumeric characters, periods, underscores, hyphens and has a maximum length of 64 characters. The following names are reserved:  events, fileNotifications, $default. Endpoint names must be unique across endpoint types. */
+  name: string;
+  /** Id of the cosmos DB sql collection endpoint */
+  id?: string;
+  /** The subscription identifier of the cosmos DB account. */
+  subscriptionId?: string;
+  /** The name of the resource group of the cosmos DB account. */
+  resourceGroup?: string;
+  /** The url of the cosmos DB account. It must include the protocol https:// */
+  endpointUri: string;
+  /** Method used to authenticate against the cosmos DB sql collection endpoint */
+  authenticationType?: AuthenticationType;
+  /** Managed identity properties of routing cosmos DB collection endpoint. */
+  identity?: ManagedIdentity;
+  /** The primary key of the cosmos DB account. */
+  primaryKey?: string;
+  /** The secondary key of the cosmos DB account. */
+  secondaryKey?: string;
+  /** The name of the cosmos DB database in the cosmos DB account. */
+  databaseName: string;
+  /** The name of the cosmos DB sql collection in the cosmos DB database. */
+  collectionName: string;
+  /** The name of the partition key associated with this cosmos DB sql collection if one exists. This is an optional parameter. */
+  partitionKeyName?: string;
+  /** The template for generating a synthetic partition key value for use with this cosmos DB sql collection. The template must include at least one of the following placeholders: {iothub}, {deviceid}, {DD}, {MM}, and {YYYY}. Any one placeholder may be specified at most once, but order and non-placeholder components are arbitrary. This parameter is only required if PartitionKeyName is specified. */
+  partitionKeyTemplate?: string;
+}
+
 /** The properties of a routing rule that your IoT hub uses to route messages to endpoints. */
 export interface RouteProperties {
   /** The name of the route. The name can only include alphanumeric characters, periods, underscores, hyphens, has a maximum length of 64 characters, and must be unique. */
@@ -464,12 +504,45 @@ export interface FeedbackProperties {
   maxDeliveryCount?: number;
 }
 
+/** The device streams properties of iothub. */
+export interface IotHubPropertiesDeviceStreams {
+  /** List of Device Streams Endpoints. */
+  streamingEndpoints?: string[];
+}
+
+/** The encryption properties for the IoT hub. */
+export interface EncryptionPropertiesDescription {
+  /** The source of the key. */
+  keySource?: string;
+  /** The properties of the KeyVault key. */
+  keyVaultProperties?: KeyVaultKeyProperties[];
+}
+
+/** The properties of the KeyVault key. */
+export interface KeyVaultKeyProperties {
+  /** The identifier of the key. */
+  keyIdentifier?: string;
+  /** Managed identity properties of KeyVault Key. */
+  identity?: ManagedIdentity;
+}
+
 /** Public representation of one of the locations where a resource is provisioned. */
 export interface IotHubLocationDescription {
   /** The name of the Azure region */
   location?: string;
   /** The role of the region, can be either primary or secondary. The primary region is where the IoT hub is currently provisioned. The secondary region is the Azure disaster recovery (DR) paired region and also the region where the IoT hub can failover to. */
   role?: IotHubReplicaRoleType;
+}
+
+/** This property store root certificate related information */
+export interface RootCertificateProperties {
+  /** This property when set to true, hub will use G2 cert; while it's set to false, hub uses Baltimore Cert. */
+  enableRootCertificateV2?: boolean;
+  /**
+   * the last update time to root certificate flag.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly lastUpdatedTimeUtc?: Date;
 }
 
 /** Information about the SKU of the IoT hub. */
@@ -496,7 +569,7 @@ export interface ArmIdentity {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly tenantId?: string;
-  /** The type of identity used for the resource. The type 'SystemAssigned, UserAssigned' includes both an implicitly created identity and a set of user assigned identities. The type 'None' will remove any identities from the service. */
+  /** The type of identity used for the resource. The type 'SystemAssigned,UserAssigned' includes both an implicitly created identity and a set of user assigned identities. The type 'None' will remove any identities from the service. */
   type?: ResourceIdentityType;
   /** Dictionary of <ArmUserIdentity> */
   userAssignedIdentities?: { [propertyName: string]: ArmUserIdentity };
@@ -507,6 +580,22 @@ export interface ArmUserIdentity {
   readonly principalId?: string;
   /** NOTE: This property will not be serialized. It can only be populated by the server. */
   readonly clientId?: string;
+}
+
+/** Metadata pertaining to creation and last modification of the resource. */
+export interface SystemData {
+  /** The identity that created the resource. */
+  createdBy?: string;
+  /** The type of identity that created the resource. */
+  createdByType?: CreatedByType;
+  /** The timestamp of resource creation (UTC). */
+  createdAt?: Date;
+  /** The identity that last modified the resource. */
+  lastModifiedBy?: string;
+  /** The type of identity that last modified the resource. */
+  lastModifiedByType?: CreatedByType;
+  /** The timestamp of resource last modification (UTC) */
+  lastModifiedAt?: Date;
 }
 
 /** The common properties of an Azure resource. */
@@ -1168,7 +1257,7 @@ export interface CertificateBodyDescription {
 }
 
 /** The description of the IoT hub. */
-export type IotHubDescription = Resource & {
+export interface IotHubDescription extends Resource {
   /** The Etag field is *not* required. If it is provided in the response body, it must also be provided as a header per the normal ETag convention. */
   etag?: string;
   /** IotHub properties */
@@ -1177,11 +1266,48 @@ export type IotHubDescription = Resource & {
   sku: IotHubSkuInfo;
   /** The managed identities for the IotHub. */
   identity?: ArmIdentity;
-};
+  /**
+   * The system meta data relating to this resource.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly systemData?: SystemData;
+}
+
+/** Defines headers for IotHubResource_createOrUpdate operation. */
+export interface IotHubResourceCreateOrUpdateHeaders {
+  /** URL to query for status of the operation. */
+  azureAsyncOperation?: string;
+}
+
+/** Defines headers for IotHubResource_update operation. */
+export interface IotHubResourceUpdateHeaders {
+  /** URL to query for status of the operation. */
+  azureAsyncOperation?: string;
+}
+
+/** Defines headers for IotHubResource_delete operation. */
+export interface IotHubResourceDeleteHeaders {
+  /** URL to query for status of the operation. */
+  azureAsyncOperation?: string;
+}
+
+/** Defines headers for PrivateEndpointConnections_update operation. */
+export interface PrivateEndpointConnectionsUpdateHeaders {
+  /** URL to query for status of the operation. */
+  azureAsyncOperation?: string;
+}
+
+/** Defines headers for PrivateEndpointConnections_delete operation. */
+export interface PrivateEndpointConnectionsDeleteHeaders {
+  /** URL to query for status of the operation. */
+  azureAsyncOperation?: string;
+}
 
 /** Known values of {@link PublicNetworkAccess} that the service accepts. */
 export enum KnownPublicNetworkAccess {
+  /** Enabled */
   Enabled = "Enabled",
+  /** Disabled */
   Disabled = "Disabled"
 }
 
@@ -1197,7 +1323,9 @@ export type PublicNetworkAccess = string;
 
 /** Known values of {@link DefaultAction} that the service accepts. */
 export enum KnownDefaultAction {
+  /** Deny */
   Deny = "Deny",
+  /** Allow */
   Allow = "Allow"
 }
 
@@ -1213,6 +1341,7 @@ export type DefaultAction = string;
 
 /** Known values of {@link NetworkRuleIPAction} that the service accepts. */
 export enum KnownNetworkRuleIPAction {
+  /** Allow */
   Allow = "Allow"
 }
 
@@ -1227,9 +1356,13 @@ export type NetworkRuleIPAction = string;
 
 /** Known values of {@link PrivateLinkServiceConnectionStatus} that the service accepts. */
 export enum KnownPrivateLinkServiceConnectionStatus {
+  /** Pending */
   Pending = "Pending",
+  /** Approved */
   Approved = "Approved",
+  /** Rejected */
   Rejected = "Rejected",
+  /** Disconnected */
   Disconnected = "Disconnected"
 }
 
@@ -1247,7 +1380,9 @@ export type PrivateLinkServiceConnectionStatus = string;
 
 /** Known values of {@link AuthenticationType} that the service accepts. */
 export enum KnownAuthenticationType {
+  /** KeyBased */
   KeyBased = "keyBased",
+  /** IdentityBased */
   IdentityBased = "identityBased"
 }
 
@@ -1263,8 +1398,11 @@ export type AuthenticationType = string;
 
 /** Known values of {@link RoutingStorageContainerPropertiesEncoding} that the service accepts. */
 export enum KnownRoutingStorageContainerPropertiesEncoding {
+  /** Avro */
   Avro = "Avro",
+  /** AvroDeflate */
   AvroDeflate = "AvroDeflate",
+  /** Json */
   Json = "JSON"
 }
 
@@ -1281,12 +1419,22 @@ export type RoutingStorageContainerPropertiesEncoding = string;
 
 /** Known values of {@link RoutingSource} that the service accepts. */
 export enum KnownRoutingSource {
+  /** Invalid */
   Invalid = "Invalid",
+  /** DeviceMessages */
   DeviceMessages = "DeviceMessages",
+  /** TwinChangeEvents */
   TwinChangeEvents = "TwinChangeEvents",
+  /** DeviceLifecycleEvents */
   DeviceLifecycleEvents = "DeviceLifecycleEvents",
+  /** DeviceJobLifecycleEvents */
   DeviceJobLifecycleEvents = "DeviceJobLifecycleEvents",
-  DeviceConnectionStateEvents = "DeviceConnectionStateEvents"
+  /** DigitalTwinChangeEvents */
+  DigitalTwinChangeEvents = "DigitalTwinChangeEvents",
+  /** DeviceConnectionStateEvents */
+  DeviceConnectionStateEvents = "DeviceConnectionStateEvents",
+  /** MqttBrokerMessages */
+  MqttBrokerMessages = "MqttBrokerMessages"
 }
 
 /**
@@ -1299,13 +1447,17 @@ export enum KnownRoutingSource {
  * **TwinChangeEvents** \
  * **DeviceLifecycleEvents** \
  * **DeviceJobLifecycleEvents** \
- * **DeviceConnectionStateEvents**
+ * **DigitalTwinChangeEvents** \
+ * **DeviceConnectionStateEvents** \
+ * **MqttBrokerMessages**
  */
 export type RoutingSource = string;
 
 /** Known values of {@link Capabilities} that the service accepts. */
 export enum KnownCapabilities {
+  /** None */
   None = "None",
+  /** DeviceManagement */
   DeviceManagement = "DeviceManagement"
 }
 
@@ -1321,7 +1473,9 @@ export type Capabilities = string;
 
 /** Known values of {@link IotHubReplicaRoleType} that the service accepts. */
 export enum KnownIotHubReplicaRoleType {
+  /** Primary */
   Primary = "primary",
+  /** Secondary */
   Secondary = "secondary"
 }
 
@@ -1337,12 +1491,19 @@ export type IotHubReplicaRoleType = string;
 
 /** Known values of {@link IotHubSku} that the service accepts. */
 export enum KnownIotHubSku {
+  /** F1 */
   F1 = "F1",
+  /** S1 */
   S1 = "S1",
+  /** S2 */
   S2 = "S2",
+  /** S3 */
   S3 = "S3",
+  /** B1 */
   B1 = "B1",
+  /** B2 */
   B2 = "B2",
+  /** B3 */
   B3 = "B3"
 }
 
@@ -1361,17 +1522,51 @@ export enum KnownIotHubSku {
  */
 export type IotHubSku = string;
 
+/** Known values of {@link CreatedByType} that the service accepts. */
+export enum KnownCreatedByType {
+  /** User */
+  User = "User",
+  /** Application */
+  Application = "Application",
+  /** ManagedIdentity */
+  ManagedIdentity = "ManagedIdentity",
+  /** Key */
+  Key = "Key"
+}
+
+/**
+ * Defines values for CreatedByType. \
+ * {@link KnownCreatedByType} can be used interchangeably with CreatedByType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **User** \
+ * **Application** \
+ * **ManagedIdentity** \
+ * **Key**
+ */
+export type CreatedByType = string;
+
 /** Known values of {@link JobType} that the service accepts. */
 export enum KnownJobType {
+  /** Unknown */
   Unknown = "unknown",
+  /** Export */
   Export = "export",
+  /** Import */
   Import = "import",
+  /** Backup */
   Backup = "backup",
+  /** ReadDeviceProperties */
   ReadDeviceProperties = "readDeviceProperties",
+  /** WriteDeviceProperties */
   WriteDeviceProperties = "writeDeviceProperties",
+  /** UpdateDeviceConfiguration */
   UpdateDeviceConfiguration = "updateDeviceConfiguration",
+  /** RebootDevice */
   RebootDevice = "rebootDevice",
+  /** FactoryResetDevice */
   FactoryResetDevice = "factoryResetDevice",
+  /** FirmwareUpdate */
   FirmwareUpdate = "firmwareUpdate"
 }
 
@@ -1395,10 +1590,15 @@ export type JobType = string;
 
 /** Known values of {@link EndpointHealthStatus} that the service accepts. */
 export enum KnownEndpointHealthStatus {
+  /** Unknown */
   Unknown = "unknown",
+  /** Healthy */
   Healthy = "healthy",
+  /** Degraded */
   Degraded = "degraded",
+  /** Unhealthy */
   Unhealthy = "unhealthy",
+  /** Dead */
   Dead = "dead"
 }
 
@@ -1417,8 +1617,11 @@ export type EndpointHealthStatus = string;
 
 /** Known values of {@link TestResultStatus} that the service accepts. */
 export enum KnownTestResultStatus {
+  /** Undefined */
   Undefined = "undefined",
+  /** False */
   False = "false",
+  /** True */
   True = "true"
 }
 
@@ -1435,7 +1638,9 @@ export type TestResultStatus = string;
 
 /** Known values of {@link RouteErrorSeverity} that the service accepts. */
 export enum KnownRouteErrorSeverity {
+  /** Error */
   Error = "error",
+  /** Warning */
   Warning = "warning"
 }
 
@@ -1533,7 +1738,8 @@ export interface IotHubResourceUpdateOptionalParams
 }
 
 /** Contains response data for the update operation. */
-export type IotHubResourceUpdateResponse = IotHubDescription;
+export type IotHubResourceUpdateResponse = IotHubResourceUpdateHeaders &
+  IotHubDescription;
 
 /** Optional parameters. */
 export interface IotHubResourceDeleteOptionalParams

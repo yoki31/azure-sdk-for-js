@@ -1,9 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-export { GenericDocumentResult } from "./GenericDocumentResult";
-export { LayoutResult } from "./LayoutResult";
-
 export {
   DocumentPhoneNumberField,
   DocumentDateField,
@@ -18,5 +15,22 @@ export {
   DocumentValueField,
   DocumentSelectionMarkField,
   DocumentSignatureField,
+  DocumentCurrencyField,
+  DocumentAddressField,
   DocumentField,
 } from "./fields";
+export {
+  BoundingRegion,
+  DocumentKeyValueElement,
+  DocumentKeyValuePair,
+  DocumentLine,
+  DocumentParagraph,
+  DocumentSelectionMark,
+  DocumentTable,
+  DocumentCaption,
+  DocumentTableCell,
+  DocumentFootnote,
+  DocumentWord,
+  HasBoundingPolygon,
+  DocumentPage,
+} from "./documentElements";

@@ -23,6 +23,7 @@ import {
   BlobInventoryPolicy as BlobInventoryPolicyMapper,
   PrivateEndpointConnection as PrivateEndpointConnectionMapper,
   ObjectReplicationPolicy as ObjectReplicationPolicyMapper,
+  LocalUser as LocalUserMapper,
   EncryptionScope as EncryptionScopeMapper,
   BlobServiceProperties as BlobServicePropertiesMapper,
   BlobContainer as BlobContainerMapper,
@@ -35,7 +36,8 @@ import {
   LeaseShareRequest as LeaseShareRequestMapper,
   QueueServiceProperties as QueueServicePropertiesMapper,
   StorageQueue as StorageQueueMapper,
-  TableServiceProperties as TableServicePropertiesMapper
+  TableServiceProperties as TableServicePropertiesMapper,
+  Table as TableMapper
 } from "../models/mappers";
 
 export const accept: OperationParameter = {
@@ -65,7 +67,7 @@ export const $host: OperationURLParameter = {
 export const apiVersion: OperationQueryParameter = {
   parameterPath: "apiVersion",
   mapper: {
-    defaultValue: "2021-06-01",
+    defaultValue: "2022-09-01",
     isConstant: true,
     serializedName: "api-version",
     type: {
@@ -114,7 +116,6 @@ export const resourceGroupName: OperationURLParameter = {
   parameterPath: "resourceGroupName",
   mapper: {
     constraints: {
-      Pattern: new RegExp("^[-\\w\\._\\(\\)]+$"),
       MaxLength: 90,
       MinLength: 1
     },
@@ -182,6 +183,18 @@ export const parameters2: OperationParameter = {
 export const parameters3: OperationParameter = {
   parameterPath: "parameters",
   mapper: ServiceSasParametersMapper
+};
+
+export const failoverType: OperationQueryParameter = {
+  parameterPath: ["options", "failoverType"],
+  mapper: {
+    defaultValue: "Planned",
+    isConstant: true,
+    serializedName: "failoverType",
+    type: {
+      name: "String"
+    }
+  }
 };
 
 export const requestType: OperationQueryParameter = {
@@ -305,6 +318,26 @@ export const properties3: OperationParameter = {
   mapper: ObjectReplicationPolicyMapper
 };
 
+export const username: OperationURLParameter = {
+  parameterPath: "username",
+  mapper: {
+    constraints: {
+      MaxLength: 64,
+      MinLength: 3
+    },
+    serializedName: "username",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const properties4: OperationParameter = {
+  parameterPath: "properties",
+  mapper: LocalUserMapper
+};
+
 export const encryptionScope: OperationParameter = {
   parameterPath: "encryptionScope",
   mapper: EncryptionScopeMapper
@@ -319,6 +352,40 @@ export const encryptionScopeName: OperationURLParameter = {
     },
     serializedName: "encryptionScopeName",
     required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const maxpagesize: OperationQueryParameter = {
+  parameterPath: ["options", "maxpagesize"],
+  mapper: {
+    constraints: {
+      InclusiveMaximum: 5000,
+      InclusiveMinimum: 1
+    },
+    serializedName: "$maxpagesize",
+    type: {
+      name: "Number"
+    }
+  }
+};
+
+export const filter: OperationQueryParameter = {
+  parameterPath: ["options", "filter"],
+  mapper: {
+    serializedName: "$filter",
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const include: OperationQueryParameter = {
+  parameterPath: ["options", "include"],
+  mapper: {
+    serializedName: "$include",
     type: {
       name: "String"
     }
@@ -342,7 +409,7 @@ export const blobServicesName: OperationURLParameter = {
   }
 };
 
-export const maxpagesize: OperationQueryParameter = {
+export const maxpagesize1: OperationQueryParameter = {
   parameterPath: ["options", "maxpagesize"],
   mapper: {
     serializedName: "$maxpagesize",
@@ -352,17 +419,7 @@ export const maxpagesize: OperationQueryParameter = {
   }
 };
 
-export const filter: OperationQueryParameter = {
-  parameterPath: ["options", "filter"],
-  mapper: {
-    serializedName: "$filter",
-    type: {
-      name: "String"
-    }
-  }
-};
-
-export const include: OperationQueryParameter = {
+export const include1: OperationQueryParameter = {
   parameterPath: ["options", "include"],
   mapper: {
     serializedName: "$include",
@@ -497,7 +554,7 @@ export const xMsSnapshot: OperationParameter = {
   }
 };
 
-export const include1: OperationQueryParameter = {
+export const include2: OperationQueryParameter = {
   parameterPath: ["options", "include"],
   mapper: {
     serializedName: "$include",
@@ -570,6 +627,11 @@ export const tableServiceName: OperationURLParameter = {
       name: "String"
     }
   }
+};
+
+export const parameters12: OperationParameter = {
+  parameterPath: ["options", "parameters"],
+  mapper: TableMapper
 };
 
 export const tableName: OperationURLParameter = {

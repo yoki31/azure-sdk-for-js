@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { isNode } from "@azure/core-http";
+import { isNode } from "@azure/core-util";
 import { PageSettings } from "@azure/core-paging";
 import { DefaultAzureCredential } from "@azure/identity";
 import chai from "chai";
@@ -336,7 +336,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
               let errorWasThrown = false;
               try {
                 getIter().byPage(settings);
-              } catch (error) {
+              } catch (error: any) {
                 errorWasThrown = true;
                 should.equal(
                   error.message,
@@ -403,7 +403,8 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
           );
           should.equal(
             (await serviceBusAdministrationClient.getNamespaceProperties()).name,
-            (host.match("(.*).servicebus.windows.net") || [])[1],
+            (host.match("(.*).servicebus.(windows.net|usgovcloudapi.net|chinacloudapi.cn)") ||
+              [])[1],
             "Unexpected namespace name in the getNamespaceProperties response"
           );
           await serviceBusAdministrationClient.deleteQueue(managementQueue1);
@@ -426,7 +427,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
 
         should.equal(
           (await serviceBusAdministrationClient.getNamespaceProperties()).name,
-          (host.match("(.*).servicebus.windows.net") || [])[1],
+          (host.match("(.*).servicebus.(windows.net|usgovcloudapi.net|chinacloudapi.cn)") || [])[1],
           "Unexpected namespace name in the getNamespaceProperties response"
         );
       });
@@ -1191,7 +1192,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
               managementTopic1,
               managementSubscription1
             );
-          } catch (err) {
+          } catch (err: any) {
             error = err;
           }
 
@@ -1282,7 +1283,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
                 managementTopic1,
                 managementSubscription1
               );
-            } catch (err) {
+            } catch (err: any) {
               error = err;
             }
 
@@ -1306,7 +1307,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
                 managementTopic1,
                 managementSubscription1
               );
-            } catch (err) {
+            } catch (err: any) {
               error = err;
             }
 
@@ -1327,7 +1328,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
               case EntityType.QUEUE:
                 try {
                   await getEntity(entityType, "notexisting");
-                } catch (err) {
+                } catch (err: any) {
                   error = err;
                 }
                 break;
@@ -1335,7 +1336,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
               case EntityType.TOPIC:
                 try {
                   error = await getEntity(entityType, "notexisting");
-                } catch (err) {
+                } catch (err: any) {
                   error = err;
                 }
 
@@ -1344,7 +1345,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
               case EntityType.SUBSCRIPTION:
                 try {
                   error = await getEntity(entityType, "notexisting", managementTopic1);
-                } catch (err) {
+                } catch (err: any) {
                   error = err;
                 }
                 break;
@@ -1357,7 +1358,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
                     managementTopic1,
                     managementSubscription1
                   );
-                } catch (err) {
+                } catch (err: any) {
                   error = err;
                 }
                 break;
@@ -2111,7 +2112,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
               "accessedAt",
               "maxMessageSizeInKilobytes",
             ]);
-          } catch (err) {
+          } catch (err: any) {
             checkForValidErrorScenario(err, testCase.output);
           }
         });
@@ -2212,7 +2213,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
               testCase.output.forwardDeadLetteredMessagesTo,
               "forwardDeadLetteredMessagesTo value mismatch"
             );
-          } catch (err) {
+          } catch (err: any) {
             checkForValidErrorScenario(err, testCase.output);
           }
         });
@@ -2280,7 +2281,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
               "accessedAt",
               "maxMessageSizeInKilobytes",
             ]);
-          } catch (err) {
+          } catch (err: any) {
             checkForValidErrorScenario(err, testCase.output);
           }
         });
@@ -2352,7 +2353,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
               "modifiedAt",
               "accessedAt",
             ]);
-          } catch (err) {
+          } catch (err: any) {
             checkForValidErrorScenario(err, testCase.output);
           }
         });
@@ -2414,7 +2415,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
               testCase.output.forwardDeadLetteredMessagesTo,
               "forwardDeadLetteredMessagesTo value mismatch"
             );
-          } catch (err) {
+          } catch (err: any) {
             checkForValidErrorScenario(err, testCase.output);
           }
         });
@@ -2509,7 +2510,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
               "modifiedAt",
               "accessedAt",
             ]);
-          } catch (err) {
+          } catch (err: any) {
             checkForValidErrorScenario(err, testCase.output);
           }
         });
@@ -3116,7 +3117,7 @@ versionsToTest(serviceApiVersions, {}, (serviceVersion) => {
               undefined,
               atomClient
             );
-          } catch (err) {
+          } catch (err: any) {
             error = err;
           }
           assert.include(

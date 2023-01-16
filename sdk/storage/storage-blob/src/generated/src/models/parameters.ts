@@ -103,7 +103,7 @@ export const timeoutInSeconds: OperationQueryParameter = {
 export const version: OperationParameter = {
   parameterPath: "version",
   mapper: {
-    defaultValue: "2021-02-12",
+    defaultValue: "2021-12-02",
     isConstant: true,
     serializedName: "x-ms-version",
     type: {
@@ -775,11 +775,10 @@ export const encryptionKeySha256: OperationParameter = {
 };
 
 export const encryptionAlgorithm: OperationParameter = {
-  parameterPath: ["options", "encryptionAlgorithm"],
+  parameterPath: ["options", "cpkInfo", "encryptionAlgorithm"],
   mapper: {
-    defaultValue: "AES256",
-    isConstant: true,
     serializedName: "x-ms-encryption-algorithm",
+    xmlName: "x-ms-encryption-algorithm",
     type: {
       name: "String"
     }
@@ -1046,7 +1045,8 @@ export const tier: OperationParameter = {
         "P80",
         "Hot",
         "Cool",
-        "Archive"
+        "Archive",
+        "Cold"
       ]
     }
   }
@@ -1210,6 +1210,18 @@ export const copySourceAuthorization: OperationParameter = {
   }
 };
 
+export const copySourceTags: OperationParameter = {
+  parameterPath: ["options", "copySourceTags"],
+  mapper: {
+    serializedName: "x-ms-copy-source-tag-option",
+    xmlName: "x-ms-copy-source-tag-option",
+    type: {
+      name: "Enum",
+      allowedValues: ["REPLACE", "COPY"]
+    }
+  }
+};
+
 export const comp15: OperationQueryParameter = {
   parameterPath: "comp",
   mapper: {
@@ -1280,7 +1292,8 @@ export const tier1: OperationParameter = {
         "P80",
         "Hot",
         "Cool",
-        "Archive"
+        "Archive",
+        "Cold"
       ]
     }
   }

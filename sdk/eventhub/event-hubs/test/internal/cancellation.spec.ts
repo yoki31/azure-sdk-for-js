@@ -99,7 +99,7 @@ testWithServiceTypes((serviceVersion) => {
           try {
             await client.initialize({ abortSignal, timeoutInMs: 60000 });
             throw new Error(TEST_FAILURE);
-          } catch (err) {
+          } catch (err: any) {
             should.equal(err.name, "AbortError");
             should.equal(err.message, "The operation was aborted.");
           }
@@ -110,7 +110,7 @@ testWithServiceTypes((serviceVersion) => {
           try {
             await client.receiveBatch(10, undefined, abortSignal);
             throw new Error(TEST_FAILURE);
-          } catch (err) {
+          } catch (err: any) {
             should.equal(err.name, "AbortError");
             should.equal(err.message, "The operation was aborted.");
           }
@@ -123,7 +123,7 @@ testWithServiceTypes((serviceVersion) => {
             const abortSignal = getSignal();
             await client.receiveBatch(10, undefined, abortSignal);
             throw new Error(TEST_FAILURE);
-          } catch (err) {
+          } catch (err: any) {
             should.equal(err.name, "AbortError");
             should.equal(err.message, "The operation was aborted.");
           }
@@ -134,7 +134,7 @@ testWithServiceTypes((serviceVersion) => {
     describe("EventHubSender", () => {
       let client: EventHubSender;
       beforeEach("instantiate EventHubSender", () => {
-        client = new EventHubSender(context);
+        client = new EventHubSender(context, { enableIdempotentProducer: false });
       });
 
       afterEach("close EventHubSender", () => {
@@ -147,7 +147,7 @@ testWithServiceTypes((serviceVersion) => {
           try {
             await client["_getLink"]({ abortSignal });
             throw new Error(TEST_FAILURE);
-          } catch (err) {
+          } catch (err: any) {
             should.equal(err.name, "AbortError");
             should.equal(err.message, "The operation was aborted.");
           }
@@ -158,7 +158,7 @@ testWithServiceTypes((serviceVersion) => {
           try {
             await client.getMaxMessageSize({ abortSignal });
             throw new Error(TEST_FAILURE);
-          } catch (err) {
+          } catch (err: any) {
             should.equal(err.name, "AbortError");
             should.equal(err.message, "The operation was aborted.");
           }
@@ -169,7 +169,7 @@ testWithServiceTypes((serviceVersion) => {
           try {
             await client.send([{ body: "unsung hero" }], { abortSignal });
             throw new Error(TEST_FAILURE);
-          } catch (err) {
+          } catch (err: any) {
             should.equal(err.name, "AbortError");
             should.equal(err.message, "The operation was aborted.");
           }

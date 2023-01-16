@@ -1,5 +1,26 @@
 # Release History
+
+## 2.1.1 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 2.1.0 (2022-11-17)
     
+**Features**
+
+  - Added Interface Change
+  - Added Interface ProxyResource
+    
+## 2.0.1 (2022-04-11)
+
+  - Bug fix
+
 ## 2.0.0 (2021-12-30)
 
 The package of @azure/arm-changeanalysis is using our next generation design principles since version 2.0.0, which contains breaking changes.

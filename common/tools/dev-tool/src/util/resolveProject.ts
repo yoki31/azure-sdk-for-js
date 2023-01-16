@@ -27,6 +27,14 @@ declare global {
     name: string;
     version: string;
     description: string;
+    main: string;
+    types: string;
+    typesVersions?: {
+      [k: string]: {
+        [k: string]: string[];
+      };
+    };
+    module?: string;
     bin?: Record<string, string>;
     files: string[];
     scripts: Record<string, string>;

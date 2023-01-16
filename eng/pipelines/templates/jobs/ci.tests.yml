@@ -4,7 +4,7 @@ parameters:
     default: not-specified
   - name: TestProxy
     type: boolean
-    default: false
+    default: true
   - name: Artifacts
     type: object
     default: []
@@ -40,7 +40,6 @@ jobs:
     pool:
       name: $(Pool)
       vmImage: $(OSVmImage)
-
     ${{ if eq(parameters.UsePlatformContainer, 'true') }}:
       # Add a default so the job doesn't fail when the matrix is empty
       container: $[ variables['Container'] ]

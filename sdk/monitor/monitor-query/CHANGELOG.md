@@ -1,6 +1,6 @@
 # Release History
 
-## 1.0.1 (Unreleased)
+## 1.0.4 (Unreleased)
 
 ### Features Added
 
@@ -8,9 +8,24 @@
 
 ### Bugs Fixed
 
-- Fixed the `timeInterval` field of `MetricsQueryResult` object to correctly return all the fields of `QueryTimeInterval`.
-
 ### Other Changes
+
+## 1.0.3 (2022-10-05)
+
+### Bugs Fixed
+
+- #23349 Fixed endpoint resolution to allow endpoints from sovereign clouds
+
+## 1.0.2 (2022-06-07)
+
+### Bugs Fixed
+
+- Fixed a typo in the string for user-provided scope for `MetricsQueryClient` and `LogsQueryClient`.
+## 1.0.1 (2022-02-10)
+
+### Bugs Fixed
+
+- Fixed the `timeInterval` field of `MetricsQueryResult` object to correctly return all the fields of `QueryTimeInterval`.
 
 ## 1.0.0 (2021-10-07)
 

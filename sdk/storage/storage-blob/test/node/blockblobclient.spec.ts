@@ -10,8 +10,8 @@ import {
   genearteRandomUint8Array,
   getBSU,
   getConnectionStringFromEnvironment,
-  getTokenBSU,
-  getTokenCredential,
+  getStorageAccessTokenWithDefaultCredential,
+  getTokenBSUWithDefaultCredential,
   recorderEnvSetup,
 } from "../utils";
 import {
@@ -26,7 +26,7 @@ import {
 } from "../../src";
 import { TokenCredential } from "@azure/core-http";
 import { assertClientUsesTokenCredential } from "../utils/assert";
-import { isPlaybackMode, record, Recorder } from "@azure-tools/test-recorder";
+import { record, Recorder } from "@azure-tools/test-recorder";
 import { streamToBuffer3 } from "../../src/utils/utils.node";
 import * as crypto from "crypto";
 import { BLOCK_BLOB_MAX_UPLOAD_BLOB_BYTES } from "../../src/utils/constants";
@@ -245,11 +245,7 @@ describe("syncUploadFromURL", () => {
   });
 
   it("stageBlockFromURL - source SAS and destination bearer token", async function (this: Context) {
-    if (!isPlaybackMode()) {
-      // Enable this when STG78 - version 2020-10-02 is enabled on production.
-      this.skip();
-    }
-    const stokenBlobServiceClient = getTokenBSU();
+    const stokenBlobServiceClient = getTokenBSUWithDefaultCredential();
     const tokenNewBlockBlobClient = stokenBlobServiceClient
       .getContainerClient(containerClient.containerName)
       .getBlockBlobClient(blockBlobClient.name);
@@ -277,15 +273,10 @@ describe("syncUploadFromURL", () => {
   });
 
   it("stageBlockFromURL - source bear token and destination account key", async function (this: Context) {
-    if (!isPlaybackMode()) {
-      // Enable this when STG78 - version 2020-10-02 is enabled on production.
-      this.skip();
-    }
     const body = "HelloWorld";
     await blockBlobClient.upload(body, body.length);
 
-    const tokenCredential = getTokenCredential();
-    const accessToken = await tokenCredential.getToken([]);
+    const accessToken = await getStorageAccessTokenWithDefaultCredential();
 
     const newBlockBlobClient = containerClient.getBlockBlobClient(
       recorder.getUniqueName("newblockblob")
@@ -327,17 +318,12 @@ describe("syncUploadFromURL", () => {
   });
 
   it("stageBlockFromURL - destination bearer token", async function (this: Context) {
-    if (!isPlaybackMode()) {
-      // Enable this when STG78 - version 2020-10-02 is enabled on production.
-      this.skip();
-    }
     const body = "HelloWorld";
     await blockBlobClient.upload(body, body.length);
 
-    const tokenCredential = getTokenCredential();
-    const accessToken = await tokenCredential.getToken([]);
+    const accessToken = await getStorageAccessTokenWithDefaultCredential();
 
-    const stokenBlobServiceClient = getTokenBSU();
+    const stokenBlobServiceClient = getTokenBSUWithDefaultCredential();
     const newBlobName = recorder.getUniqueName("newblockblob");
     const newBlockBlobClient = containerClient.getBlockBlobClient(newBlobName);
     const tokenNewBlockBlobClient = stokenBlobServiceClient
@@ -380,11 +366,7 @@ describe("syncUploadFromURL", () => {
   });
 
   it("syncUploadFromURL - source SAS and destination bearer token", async function (this: Context) {
-    if (!isPlaybackMode()) {
-      // Enable this when STG78 - version 2020-10-02 is enabled on production.
-      this.skip();
-    }
-    const stokenBlobServiceClient = getTokenBSU();
+    const stokenBlobServiceClient = getTokenBSUWithDefaultCredential();
     const tokenNewBlockBlobClient = stokenBlobServiceClient
       .getContainerClient(containerClient.containerName)
       .getBlockBlobClient(blockBlobClient.name);
@@ -398,15 +380,10 @@ describe("syncUploadFromURL", () => {
   });
 
   it("syncUploadFromURL - source bear token and destination account key", async function (this: Context) {
-    if (!isPlaybackMode()) {
-      // Enable this when STG78 - version 2020-10-02 is enabled on production.
-      this.skip();
-    }
     const body = "HelloWorld";
     await blockBlobClient.upload(body, body.length);
 
-    const tokenCredential = getTokenCredential();
-    const accessToken = await tokenCredential.getToken([]);
+    const accessToken = await getStorageAccessTokenWithDefaultCredential();
 
     const newBlockBlobClient = containerClient.getBlockBlobClient(
       recorder.getUniqueName("newblockblob")
@@ -426,17 +403,12 @@ describe("syncUploadFromURL", () => {
   });
 
   it("syncUploadFromURL - destination bearer token", async function (this: Context) {
-    if (!isPlaybackMode()) {
-      // Enable this when STG78 - version 2020-10-02 is enabled on production.
-      this.skip();
-    }
     const body = "HelloWorld";
     await blockBlobClient.upload(body, body.length);
 
-    const tokenCredential = getTokenCredential();
-    const accessToken = await tokenCredential.getToken([]);
+    const accessToken = await getStorageAccessTokenWithDefaultCredential();
 
-    const stokenBlobServiceClient = getTokenBSU();
+    const stokenBlobServiceClient = getTokenBSUWithDefaultCredential();
     const newBlobName = recorder.getUniqueName("newblockblob");
     const newBlockBlobClient = containerClient.getBlockBlobClient(newBlobName);
     const tokenNewBlockBlobClient = stokenBlobServiceClient
@@ -500,6 +472,57 @@ describe("syncUploadFromURL", () => {
     assert.deepStrictEqual(getTagsRes.tags, tags);
   });
 
+  it("syncUploadFromURL - with COPY tags", async () => {
+    const tags = {
+      tag1: "val1",
+    };
+    await sourceBlob.setTags(tags);
+    const expiryTime = recorder.newDate("tagtestexpiry");
+    expiryTime.setDate(expiryTime.getDate() + 1);
+    const sas = generateBlobSASQueryParameters(
+      {
+        expiresOn: expiryTime,
+        permissions: BlobSASPermissions.parse("rt"),
+        containerName: sourceBlob.containerName,
+        blobName: sourceBlob.name,
+      },
+      sourceBlob.credential as StorageSharedKeyCredential
+    );
+    const urlWithSAS = sourceBlob.url + "?" + sas;
+    await blockBlobClient.syncUploadFromURL(urlWithSAS, { copySourceTags: "COPY" });
+
+    // Validate source and destination blob content match.
+    const downloadRes = await blockBlobClient.download();
+    const downloadBuffer = await streamToBuffer3(downloadRes.readableStreamBody!);
+    assert.ok(downloadBuffer.compare(Buffer.from(content)) === 0);
+
+    // Validate tags set correctly
+    const getTagsRes = await blockBlobClient.getTags();
+    assert.deepStrictEqual(getTagsRes.tags, tags);
+  });
+
+  it("syncUploadFromURL - with REPLACE tags", async () => {
+    await sourceBlob.setTags({
+      tag1: "val1",
+    });
+    const tags = {
+      tag2: "val2",
+    };
+    await blockBlobClient.syncUploadFromURL(sourceBlobURLWithSAS, {
+      tags: tags,
+      copySourceTags: "REPLACE",
+    });
+
+    // Validate source and destination blob content match.
+    const downloadRes = await blockBlobClient.download();
+    const downloadBuffer = await streamToBuffer3(downloadRes.readableStreamBody!);
+    assert.ok(downloadBuffer.compare(Buffer.from(content)) === 0);
+
+    // Validate tags set correctly
+    const getTagsRes = await blockBlobClient.getTags();
+    assert.deepStrictEqual(getTagsRes.tags, tags);
+  });
+
   it("copySourceBlobProperties = false", async () => {
     const blobHTTPHeaders = {
       blobContentLanguage: "blobContentLanguage1",
@@ -543,7 +566,7 @@ describe("syncUploadFromURL", () => {
         },
       });
       assert.fail("Should have failed with unmet condition.");
-    } catch (err) {
+    } catch (err: any) {
       assert.deepStrictEqual(err.code, "TargetConditionNotMet");
     }
   });
@@ -562,7 +585,7 @@ describe("syncUploadFromURL", () => {
         },
       });
       assert.fail("Should have failed with unmet condition.");
-    } catch (err) {
+    } catch (err: any) {
       assert.deepStrictEqual(err.code, "SourceConditionNotMet");
     }
   });
@@ -579,7 +602,7 @@ describe("syncUploadFromURL", () => {
         sourceContentMD5: invalidMD5,
       });
       assert.fail("Should have failed with unmet condition.");
-    } catch (err) {
+    } catch (err: any) {
       assert.deepStrictEqual(err.code, "Md5Mismatch");
     }
   });
@@ -605,7 +628,7 @@ describe("syncUploadFromURL", () => {
       await blockBlobClient.syncUploadFromURL(sourceBlobURLWithSAS, {
         timeoutInSeconds: 1,
       });
-    } catch (err) {
+    } catch (err: any) {
       assert.deepStrictEqual(err.code, "OperationTimedOut");
       exceptionCaught = true;
     }

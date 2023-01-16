@@ -1,16 +1,16 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
+import { assert } from "@azure/test-utils";
 import { Context } from "mocha";
-import { env, Recorder } from "@azure-tools/test-recorder";
+import { Recorder, env, isLiveMode } from "@azure-tools/test-recorder";
 import { PollerStoppedError } from "@azure/core-lro";
 
 import { SecretClient, SecretProperties } from "../../src";
-import { assertThrowsAbortError, getServiceVersion } from "../utils/utils.common";
-import { testPollerProperties } from "../utils/recorderUtils";
-import { authenticate } from "../utils/testAuthentication";
-import TestClient from "../utils/testClient";
+import { assertThrowsAbortError, getServiceVersion } from "./utils/common";
+import { testPollerProperties } from "./utils/recorderUtils";
+import { authenticate } from "./utils/testAuthentication";
+import TestClient from "./utils/testClient";
 
 describe("Secrets client - Long Running Operations - recoverDelete", () => {
   const secretPrefix = `lroRecover${env.CERTIFICATE_NAME || "SecretName"}`;
@@ -94,7 +94,10 @@ describe("Secrets client - Long Running Operations - recoverDelete", () => {
 
   // On playback mode, the tests happen too fast for the timeout to work
   it("can attempt to recover a deleted secret with requestOptions timeout", async function (this: Context) {
-    recorder.skip(undefined, "Timeout tests don't work on playback mode.");
+    if (!isLiveMode()) {
+      this.skip();
+    }
+
     const secretName = testClient.formatName(
       `${secretPrefix}-${this!.test!.title}-${secretSuffix}`
     );

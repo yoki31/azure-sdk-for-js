@@ -82,7 +82,9 @@ export class DataLakeServiceClient extends StorageClient {
           extractedCreds.accountName!,
           extractedCreds.accountKey
         );
-        options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+        if (!options.proxyOptions) {
+          options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+        }
         const pipeline = newPipeline(sharedKeyCredential, options);
         return new DataLakeServiceClient(toDfsEndpointUrl(extractedCreds.url), pipeline);
       } else {
@@ -212,7 +214,7 @@ export class DataLakeServiceClient extends StorageClient {
     );
     try {
       return await this.blobServiceClient.getUserDelegationKey(startsOn, expiresOn, updatedOptions);
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -388,7 +390,7 @@ export class DataLakeServiceClient extends StorageClient {
         fileSystemClient,
         fileSystemRenameResponse: res.containerRenameResponse,
       };
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -437,7 +439,7 @@ export class DataLakeServiceClient extends StorageClient {
         fileSystemClient,
         fileSystemUndeleteResponse: res.containerUndeleteResponse,
       };
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -465,7 +467,7 @@ export class DataLakeServiceClient extends StorageClient {
         abortSignal: options.abortSignal,
         tracingOptions: updatedOptions.tracingOptions,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,
@@ -495,7 +497,7 @@ export class DataLakeServiceClient extends StorageClient {
         abortSignal: options.abortSignal,
         tracingOptions: updatedOptions.tracingOptions,
       });
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
         message: e.message,

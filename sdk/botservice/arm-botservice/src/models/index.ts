@@ -77,14 +77,20 @@ export interface BotProperties {
   isCmekEnabled?: boolean;
   /** The CMK Url */
   cmekKeyVaultUrl?: string;
-  /** The CMK encryption status */
-  cmekEncryptionStatus?: string;
+  /**
+   * The CMK encryption status
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly cmekEncryptionStatus?: string;
   /** Whether the bot is in an isolated network */
   publicNetworkAccess?: PublicNetworkAccess;
   /** Whether the bot is streaming supported */
   isStreamingSupported?: boolean;
-  /** Whether the bot is developerAppInsightsApiKey set */
-  isDeveloperAppInsightsApiKeySet?: boolean;
+  /**
+   * Whether the bot is developerAppInsightsApiKey set
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly isDeveloperAppInsightsApiKeySet?: boolean;
   /**
    * Token used to migrate non Azure bot to azure subscription
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -844,7 +850,7 @@ export interface ConnectionItemName {
 }
 
 /** The Private Endpoint Connection resource. */
-export type PrivateEndpointConnection = PrivateLinkResourceBase & {
+export interface PrivateEndpointConnection extends PrivateLinkResourceBase {
   /** The resource of private end point. */
   privateEndpoint?: PrivateEndpoint;
   /** A collection of information about the state of the connection between service consumer and provider. */
@@ -854,10 +860,10 @@ export type PrivateEndpointConnection = PrivateLinkResourceBase & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly provisioningState?: PrivateEndpointConnectionProvisioningState;
-};
+}
 
 /** A private link resource */
-export type PrivateLinkResource = PrivateLinkResourceBase & {
+export interface PrivateLinkResource extends PrivateLinkResourceBase {
   /**
    * The private link resource group id.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -870,151 +876,159 @@ export type PrivateLinkResource = PrivateLinkResourceBase & {
   readonly requiredMembers?: string[];
   /** The private link resource Private link DNS zone name. */
   requiredZoneNames?: string[];
-};
+}
 
 /** Bot resource definition */
-export type Bot = Resource & {
+export interface Bot extends Resource {
   /** The set of properties specific to bot resource */
   properties?: BotProperties;
-};
+}
 
 /** Bot channel resource definition */
-export type BotChannel = Resource & {
+export interface BotChannel extends Resource {
   /** The set of properties specific to bot channel resource */
   properties?: ChannelUnion;
-};
+}
 
 /** Bot channel resource definition */
-export type ConnectionSetting = Resource & {
+export interface ConnectionSetting extends Resource {
   /** The set of properties specific to bot channel resource */
   properties?: ConnectionSettingProperties;
-};
+}
 
 /** Alexa channel definition */
-export type AlexaChannel = Channel & {
+export interface AlexaChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "AlexaChannel";
   /** The set of properties specific to Alexa channel resource */
   properties?: AlexaChannelProperties;
-};
+}
 
 /** Facebook channel definition */
-export type FacebookChannel = Channel & {
+export interface FacebookChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "FacebookChannel";
   /** The set of properties specific to bot facebook channel */
   properties?: FacebookChannelProperties;
-};
+}
 
 /** Email channel definition */
-export type EmailChannel = Channel & {
+export interface EmailChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "EmailChannel";
   /** The set of properties specific to email channel resource */
   properties?: EmailChannelProperties;
-};
+}
 
 /** Microsoft Teams channel definition */
-export type MsTeamsChannel = Channel & {
+export interface MsTeamsChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "MsTeamsChannel";
   /** The set of properties specific to Microsoft Teams channel resource */
   properties?: MsTeamsChannelProperties;
-};
+}
 
 /** Skype channel definition */
-export type SkypeChannel = Channel & {
+export interface SkypeChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "SkypeChannel";
   /** The set of properties specific to Skype channel resource */
   properties?: SkypeChannelProperties;
-};
+}
 
 /** Kik channel definition */
-export type KikChannel = Channel & {
+export interface KikChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "KikChannel";
   /** The set of properties specific to Kik channel resource */
   properties?: KikChannelProperties;
-};
+}
 
 /** Web Chat channel definition */
-export type WebChatChannel = Channel & {
+export interface WebChatChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "WebChatChannel";
   /** The set of properties specific to Web Chat channel resource */
   properties?: WebChatChannelProperties;
-};
+}
 
 /** Direct Line channel definition */
-export type DirectLineChannel = Channel & {
+export interface DirectLineChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "DirectLineChannel";
   /** The set of properties specific to Direct Line channel resource */
   properties?: DirectLineChannelProperties;
-};
+}
 
 /** Telegram channel definition */
-export type TelegramChannel = Channel & {
+export interface TelegramChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "TelegramChannel";
   /** The set of properties specific to Telegram channel resource */
   properties?: TelegramChannelProperties;
-};
+}
 
 /** Sms channel definition */
-export type SmsChannel = Channel & {
+export interface SmsChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "SmsChannel";
   /** The set of properties specific to Sms channel resource */
   properties?: SmsChannelProperties;
-};
+}
 
 /** Slack channel definition */
-export type SlackChannel = Channel & {
+export interface SlackChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "SlackChannel";
   /** The set of properties specific to Slack channel resource */
   properties?: SlackChannelProperties;
-};
+}
 
 /** Line channel definition */
-export type LineChannel = Channel & {
+export interface LineChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "LineChannel";
   /** The set of properties specific to line channel resource */
   properties?: LineChannelProperties;
-};
+}
 
 /** DirectLine Speech channel definition */
-export type DirectLineSpeechChannel = Channel & {
+export interface DirectLineSpeechChannel extends Channel {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   channelName: "DirectLineSpeechChannel";
   /** The set of properties specific to DirectLine Speech channel resource */
   properties?: DirectLineSpeechChannelProperties;
-};
+}
 
 /** A site for the channel */
-export type Site = WebChatSite &
-  DirectLineSite & {
-    /** Whether this site is token enabled for channel */
-    isTokenEnabled?: boolean;
-    /** Entity Tag */
-    eTag?: string;
-  };
+export interface Site extends WebChatSite, DirectLineSite {
+  /** Whether this site is token enabled for channel */
+  isTokenEnabled?: boolean;
+  /** Entity Tag */
+  eTag?: string;
+}
 
 /** The ARM channel of list channel with keys operation response. */
-export type ListChannelWithKeysResponse = BotChannel & {
+export interface ListChannelWithKeysResponse extends BotChannel {
   /** The set of properties specific to bot channel resource */
   resource?: ChannelUnion;
   /** Channel settings */
   setting?: ChannelSettings;
-};
+  /** Provisioning state of the resource */
+  provisioningState?: string;
+  /** Entity tag of the resource */
+  entityTag?: string;
+  /** Changed time of the resource */
+  changedTime?: string;
+}
 
 /** Known values of {@link MsaAppType} that the service accepts. */
 export enum KnownMsaAppType {
+  /** UserAssignedMSI */
   UserAssignedMSI = "UserAssignedMSI",
+  /** SingleTenant */
   SingleTenant = "SingleTenant",
+  /** MultiTenant */
   MultiTenant = "MultiTenant"
 }
 
@@ -1031,7 +1045,9 @@ export type MsaAppType = string;
 
 /** Known values of {@link PublicNetworkAccess} that the service accepts. */
 export enum KnownPublicNetworkAccess {
+  /** Enabled */
   Enabled = "Enabled",
+  /** Disabled */
   Disabled = "Disabled"
 }
 
@@ -1047,8 +1063,11 @@ export type PublicNetworkAccess = string;
 
 /** Known values of {@link PrivateEndpointServiceConnectionStatus} that the service accepts. */
 export enum KnownPrivateEndpointServiceConnectionStatus {
+  /** Pending */
   Pending = "Pending",
+  /** Approved */
   Approved = "Approved",
+  /** Rejected */
   Rejected = "Rejected"
 }
 
@@ -1065,9 +1084,13 @@ export type PrivateEndpointServiceConnectionStatus = string;
 
 /** Known values of {@link PrivateEndpointConnectionProvisioningState} that the service accepts. */
 export enum KnownPrivateEndpointConnectionProvisioningState {
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Creating */
   Creating = "Creating",
+  /** Deleting */
   Deleting = "Deleting",
+  /** Failed */
   Failed = "Failed"
 }
 
@@ -1085,7 +1108,9 @@ export type PrivateEndpointConnectionProvisioningState = string;
 
 /** Known values of {@link SkuName} that the service accepts. */
 export enum KnownSkuName {
+  /** F0 */
   F0 = "F0",
+  /** S1 */
   S1 = "S1"
 }
 
@@ -1101,7 +1126,9 @@ export type SkuName = string;
 
 /** Known values of {@link SkuTier} that the service accepts. */
 export enum KnownSkuTier {
+  /** Free */
   Free = "Free",
+  /** Standard */
   Standard = "Standard"
 }
 
@@ -1117,10 +1144,15 @@ export type SkuTier = string;
 
 /** Known values of {@link Kind} that the service accepts. */
 export enum KnownKind {
+  /** Sdk */
   Sdk = "sdk",
+  /** Designer */
   Designer = "designer",
+  /** Bot */
   Bot = "bot",
+  /** Function */
   Function = "function",
+  /** Azurebot */
   Azurebot = "azurebot"
 }
 
@@ -1139,10 +1171,15 @@ export type Kind = string;
 
 /** Known values of {@link OperationResultStatus} that the service accepts. */
 export enum KnownOperationResultStatus {
+  /** Canceled */
   Canceled = "Canceled",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Requested */
   Requested = "Requested",
+  /** Running */
   Running = "Running"
 }
 
@@ -1172,7 +1209,8 @@ export type ChannelName =
   | "DirectLineChannel"
   | "SmsChannel"
   | "LineChannel"
-  | "DirectLineSpeechChannel";
+  | "DirectLineSpeechChannel"
+  | "OutlookChannel";
 /** Defines values for RegenerateKeysChannelName. */
 export type RegenerateKeysChannelName = "WebChatChannel" | "DirectLineChannel";
 /** Defines values for Key. */

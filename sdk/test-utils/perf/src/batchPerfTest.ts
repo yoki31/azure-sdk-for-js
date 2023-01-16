@@ -8,9 +8,8 @@ import {
   testProxyHttpPolicy,
 } from "./testProxyHttpClient";
 import { HttpClient } from "@azure/core-http";
-import { Pipeline } from "@azure/core-rest-pipeline";
 import { PerfTestBase } from "./perfTestBase";
-import { PerfParallel } from "./parallel";
+import { AdditionalPolicyConfig } from "@azure/core-client";
 
 /**
  * Enables writing perf tests where the number of operations are dynamic for the method/call being tested.
@@ -53,28 +52,32 @@ export abstract class BatchPerfTest<
   }
 
   /**
-   * configureClient
+   * configureClientOptions
    *
    * For core-v2 - libraries depending on core-rest-pipeline
-   * Apply this method on the client to get the proxy tool support.
+   * Apply this method on the client options to get the proxy tool support.
    *
-   * Note: Client must expose the pipeline property which is required for the perf framework to add its policies correctly
+   * Note: Client Options must have "additionalPolicies" as part of the options.
    */
-  public configureClient<T>(client: T & { pipeline: Pipeline }): T {
+  public configureClientOptions<T extends { additionalPolicies?: AdditionalPolicyConfig[] }>(
+    options: T
+  ): T {
     if (this.testProxy) {
       this.testProxyHttpClient = new TestProxyHttpClient(
         this.testProxy,
         this.parsedOptions["insecure"].value ?? false
       );
-      client.pipeline.addPolicy(
-        testProxyHttpPolicy(
+      if (!options.additionalPolicies) options.additionalPolicies = [];
+      options.additionalPolicies.push({
+        policy: testProxyHttpPolicy(
           this.testProxyHttpClient,
           this.testProxy.startsWith("https"),
           this.parsedOptions["insecure"].value ?? false
-        )
-      );
+        ),
+        position: "perRetry",
+      });
     }
-    return client;
+    return options;
   }
 
   /**
@@ -84,17 +87,15 @@ export abstract class BatchPerfTest<
    * as well as the lastMillisecondsElapsed that reports the last test execution's elapsed time in comparison
    * to the beginning of the execution of runLoop.
    *
-   * @param parallel Object where to log the results from each execution.
    * @param durationMilliseconds When to abort any execution.
    * @param abortController Allows us to send through a signal determining when to abort any execution.
    */
   public async runAll(
-    parallel: PerfParallel,
     durationMilliseconds: number,
     abortController: AbortController
   ): Promise<void> {
-    parallel.completedOperations = 0;
-    parallel.lastMillisecondsElapsed = 0;
+    this.completedOperations = 0;
+    this.lastMillisecondsElapsed = 0;
     const start = process.hrtime();
     while (!abortController.signal.aborted) {
       const completedOperations = await this.runBatch(abortController.signal);
@@ -102,8 +103,8 @@ export abstract class BatchPerfTest<
       const elapsed = process.hrtime(start);
       const elapsedMilliseconds = elapsed[0] * 1000 + elapsed[1] / 1000000;
 
-      parallel.completedOperations += completedOperations;
-      parallel.lastMillisecondsElapsed = elapsedMilliseconds;
+      this.completedOperations += completedOperations;
+      this.lastMillisecondsElapsed = elapsedMilliseconds;
 
       // In runTest we create a setTimeout that is intended to abort the abortSignal
       // once the durationMilliseconds have elapsed. That setTimeout might not get queued

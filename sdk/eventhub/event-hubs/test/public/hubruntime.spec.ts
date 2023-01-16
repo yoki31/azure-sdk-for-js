@@ -1,15 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { EnvVarKeys, getEnvVars, setTracerForTest } from "./utils/testUtils";
+import { EnvVarKeys, getEnvVars } from "./utils/testUtils";
 import {
   EventHubBufferedProducerClient,
   EventHubConsumerClient,
   EventHubProducerClient,
   MessagingError,
 } from "../../src";
-import { context, setSpan } from "@azure/core-tracing";
-import { SpanGraph } from "@azure/test-utils";
+import { assert } from "@azure/test-utils";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { createMockServer } from "./utils/mockService";
@@ -45,7 +44,7 @@ testWithServiceTypes((serviceVersion) => {
       "EventHubConsumerClient",
       "EventHubProducerClient",
     ] as const;
-    const clientMap = new Map<typeof clientTypes[number], ClientCommonMethods>();
+    const clientMap = new Map<(typeof clientTypes)[number], ClientCommonMethods>();
 
     const service = {
       connectionString: env[EnvVarKeys.EVENTHUB_CONNECTION_STRING],
@@ -106,38 +105,10 @@ testWithServiceTypes((serviceVersion) => {
 
         it("can be manually traced", async () => {
           const client = clientMap.get(clientType)!;
-          const { tracer, resetTracer } = setTracerForTest();
-
-          const rootSpan = tracer.startSpan("root");
-          const ids = await client.getPartitionIds({
-            tracingOptions: {
-              tracingContext: setSpan(context.active(), rootSpan),
-            },
-          });
-          ids.should.have.members(arrayOfIncreasingNumbersFromZero(ids.length));
-          rootSpan.end();
-
-          const rootSpans = tracer.getRootSpans();
-          rootSpans.length.should.equal(1, "Should only have one root span.");
-          rootSpans[0].should.equal(rootSpan, "The root span should match what was passed in.");
-
-          const expectedGraph: SpanGraph = {
-            roots: [
-              {
-                name: rootSpan.name,
-                children: [
-                  {
-                    name: "Azure.EventHubs.getEventHubProperties",
-                    children: [],
-                  },
-                ],
-              },
-            ],
-          };
-
-          tracer.getSpanGraph(rootSpan.spanContext().traceId).should.eql(expectedGraph);
-          tracer.getActiveSpans().length.should.equal(0, "All spans should have had end called.");
-          resetTracer();
+          await assert.supportsTracing(
+            (options) => client.getPartitionIds(options),
+            ["ManagementClient.getEventHubProperties"]
+          );
         });
       });
 
@@ -155,40 +126,10 @@ testWithServiceTypes((serviceVersion) => {
 
         it("can be manually traced", async function (): Promise<void> {
           const client = clientMap.get(clientType)!;
-          const { tracer, resetTracer } = setTracerForTest();
-
-          const rootSpan = tracer.startSpan("root");
-          const hubRuntimeInfo = await client.getEventHubProperties({
-            tracingOptions: {
-              tracingContext: setSpan(context.active(), rootSpan),
-            },
-          });
-          hubRuntimeInfo.partitionIds.should.have.members(
-            arrayOfIncreasingNumbersFromZero(hubRuntimeInfo.partitionIds.length)
+          await assert.supportsTracing(
+            (options) => client.getEventHubProperties(options),
+            ["ManagementClient.getEventHubProperties"]
           );
-          rootSpan.end();
-
-          const rootSpans = tracer.getRootSpans();
-          rootSpans.length.should.equal(1, "Should only have one root span.");
-          rootSpans[0].should.equal(rootSpan, "The root span should match what was passed in.");
-
-          const expectedGraph: SpanGraph = {
-            roots: [
-              {
-                name: rootSpan.name,
-                children: [
-                  {
-                    name: "Azure.EventHubs.getEventHubProperties",
-                    children: [],
-                  },
-                ],
-              },
-            ],
-          };
-
-          tracer.getSpanGraph(rootSpan.spanContext().traceId).should.eql(expectedGraph);
-          tracer.getActiveSpans().length.should.equal(0, "All spans should have had end called.");
-          resetTracer();
         });
       });
 
@@ -198,7 +139,7 @@ testWithServiceTypes((serviceVersion) => {
             const client = clientMap.get(clientType)!;
             await client.getPartitionProperties(undefined as any);
             throw new Error("Test failure");
-          } catch (err) {
+          } catch (err: any) {
             (err as any).name.should.equal("TypeError");
             (err as any).message.should.equal(
               `getPartitionProperties called without required argument "partitionId"`
@@ -231,7 +172,7 @@ testWithServiceTypes((serviceVersion) => {
             const client = clientMap.get(clientType)!;
             await client.getPartitionProperties("boo");
             throw new Error("Test failure");
-          } catch (err) {
+          } catch (err: any) {
             should.exist(err);
             should.equal((err as MessagingError).code, "ArgumentOutOfRangeError");
           }
@@ -239,42 +180,10 @@ testWithServiceTypes((serviceVersion) => {
 
         it("can be manually traced", async () => {
           const client = clientMap.get(clientType)!;
-          const { tracer, resetTracer } = setTracerForTest();
-
-          const rootSpan = tracer.startSpan("root");
-          const partitionRuntimeInfo = await client.getPartitionProperties("0", {
-            tracingOptions: {
-              tracingContext: setSpan(context.active(), rootSpan),
-            },
-          });
-          partitionRuntimeInfo.partitionId.should.equal("0");
-          partitionRuntimeInfo.eventHubName.should.equal(service.path);
-          partitionRuntimeInfo.lastEnqueuedOnUtc.should.be.instanceof(Date);
-          should.exist(partitionRuntimeInfo.lastEnqueuedSequenceNumber);
-          should.exist(partitionRuntimeInfo.lastEnqueuedOffset);
-          rootSpan.end();
-
-          const rootSpans = tracer.getRootSpans();
-          rootSpans.length.should.equal(1, "Should only have one root span.");
-          rootSpans[0].should.equal(rootSpan, "The root span should match what was passed in.");
-
-          const expectedGraph: SpanGraph = {
-            roots: [
-              {
-                name: rootSpan.name,
-                children: [
-                  {
-                    name: "Azure.EventHubs.getPartitionProperties",
-                    children: [],
-                  },
-                ],
-              },
-            ],
-          };
-
-          tracer.getSpanGraph(rootSpan.spanContext().traceId).should.eql(expectedGraph);
-          tracer.getActiveSpans().length.should.equal(0, "All spans should have had end called.");
-          resetTracer();
+          await assert.supportsTracing(
+            (options) => client.getPartitionProperties("0", options),
+            ["ManagementClient.getPartitionProperties"]
+          );
         });
       });
     });
